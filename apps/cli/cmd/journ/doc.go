@@ -56,6 +56,7 @@ func docListCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	registerTagCompletion(cmd)
 	cmd.Flags().StringVarP(&filter.Search, "query", "q", "", "match the title and body")
 	cmd.Flags().IntVar(&filter.Limit, "limit", 0, "maximum rows")
 	cmd.Flags().IntVar(&filter.Offset, "offset", 0, "rows to skip")
@@ -116,7 +117,9 @@ func docCreateCommand() *cobra.Command {
 			in := client.DocInput{Title: &args[0]}
 			setIf(&in.Slug, slug)
 			setIf(&in.Body, text)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			journ, err := api()
 			if err != nil {
@@ -133,7 +136,8 @@ func docCreateCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&slug, "slug", "", "derived from the title when omitted")
 	cmd.Flags().StringVar(&body, "body", "", "markdown body, or - for stdin")
-	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }
@@ -155,7 +159,9 @@ func docUpdateCommand() *cobra.Command {
 			setIf(&in.Title, title)
 			setIf(&in.Slug, slug)
 			setIf(&in.Body, text)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			if in == (client.DocInput{}) {
 				return errors.New("nothing to update: pass at least one field")
@@ -177,7 +183,8 @@ func docUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&title, "title", "", "new title")
 	cmd.Flags().StringVar(&slug, "slug", "", "new slug")
 	cmd.Flags().StringVar(&body, "body", "", "replace the body, or - for stdin")
-	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags, comma separated")
+	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }

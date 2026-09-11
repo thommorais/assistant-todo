@@ -69,6 +69,7 @@ func main() {
 		planCommand(),
 		projectCommand(),
 		searchCommand(),
+		tagsCommand(),
 		todoCommand(),
 		useCommand(),
 	)

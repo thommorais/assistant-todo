@@ -96,7 +96,9 @@ func planCreateCommand() *cobra.Command {
 			in := client.PlanInput{Title: &args[0]}
 			setIf(&in.Goal, goal)
 			setIf(&in.Status, status)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			journ, err := api()
 			if err != nil {
@@ -113,7 +115,8 @@ func planCreateCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&goal, "goal", "", "what the plan is for")
 	cmd.Flags().StringVar(&status, "status", "", "defaults to draft")
-	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }
@@ -130,7 +133,9 @@ func planUpdateCommand() *cobra.Command {
 			setIf(&in.Title, title)
 			setIf(&in.Goal, goal)
 			setIf(&in.Status, status)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			if in == (client.PlanInput{}) {
 				return errors.New("nothing to update: pass at least one field")
@@ -152,7 +157,8 @@ func planUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&title, "title", "", "new title")
 	cmd.Flags().StringVar(&goal, "goal", "", "new goal")
 	cmd.Flags().StringVar(&status, "status", "", "draft, active, done or abandoned")
-	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags, comma separated")
+	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }

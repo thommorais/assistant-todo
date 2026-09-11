@@ -57,6 +57,7 @@ snippet so it is judgeable without a second call.
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 	cmd.Flags().StringVar(&kinds, "kind", "", "comma separated: log,doc,todo,plan")
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	registerTagCompletion(cmd)
 	cmd.Flags().IntVar(&query.Limit, "limit", 0, "maximum hits")
 	cmd.Flags().IntVar(&query.Offset, "offset", 0, "hits to skip")
 

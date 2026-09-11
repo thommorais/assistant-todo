@@ -78,6 +78,7 @@ func logListCommand() *cobra.Command {
 	cmd.Flags().StringVar(&filter.PlanID, "plan", "", "entries under this plan")
 	cmd.Flags().StringVar(&filter.TodoID, "todo", "", "entries under this todo")
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	registerTagCompletion(cmd)
 	cmd.Flags().StringVarP(&filter.Search, "query", "q", "", "match the title and body")
 	cmd.Flags().StringVar(&filter.Since, "since", "", "RFC 3339 lower bound")
 	cmd.Flags().StringVar(&filter.Until, "until", "", "RFC 3339 upper bound")
@@ -135,7 +136,9 @@ func logWriteCommand() *cobra.Command {
 			setIf(&in.Ticket, ticket)
 			setIf(&in.PlanID, plan)
 			setIf(&in.TodoID, todo)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			journ, err := api()
 			if err != nil {
@@ -156,7 +159,8 @@ func logWriteCommand() *cobra.Command {
 	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket reference")
 	cmd.Flags().StringVar(&plan, "plan", "", "plan this documents")
 	cmd.Flags().StringVar(&todo, "todo", "", "todo this documents")
-	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }
@@ -180,7 +184,9 @@ func logUpdateCommand() *cobra.Command {
 			setIf(&in.Branch, branch)
 			setIf(&in.PR, pr)
 			setIf(&in.Ticket, ticket)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			if in == (client.LogInput{}) {
 				return errors.New("nothing to update: pass at least one field")
@@ -204,7 +210,8 @@ func logUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&branch, "branch", "", "git branch")
 	cmd.Flags().StringVar(&pr, "pr", "", "pull request number")
 	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket reference")
-	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags, comma separated")
+	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }

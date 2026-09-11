@@ -73,6 +73,7 @@ func todoListCommand() *cobra.Command {
 	cmd.Flags().StringVar(&status, "status", "", "comma separated: pending,in_progress,done,blocked,cancelled")
 	cmd.Flags().StringVar(&filter.Priority, "priority", "", "low, medium or high")
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	registerTagCompletion(cmd)
 	cmd.Flags().StringVarP(&filter.Search, "query", "q", "", "match the title")
 	cmd.Flags().StringVar(&filter.PlanID, "plan", "", "only todos under this plan")
 	cmd.Flags().IntVar(&filter.Limit, "limit", 0, "maximum rows")
@@ -120,7 +121,19 @@ func todoCreateCommand() *cobra.Command {
 			setIf(&in.Priority, priority)
 			setIf(&in.PlanID, plan)
 			setIf(&in.DueDate, due)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
+
+			// An untagged todo is findable only by its title, so it drops out
+			// of every `--tags` query the moment the project has more than a
+			// screenful. Warning rather than failing: a quick capture is a
+			// legitimate use, and stderr keeps piped output clean.
+			if tags == "" {
+				fmt.Fprintln(os.Stderr, "journ: no --tags, so this todo will not surface in a tag query")
+				fmt.Fprintln(os.Stderr, "  context: "+strings.Join(contextTags, ", "))
+				fmt.Fprintln(os.Stderr, "  kind:    "+strings.Join(kindTags, ", "))
+			}
 
 			journ, err := api()
 			if err != nil {
@@ -140,7 +153,8 @@ func todoCreateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&priority, "priority", "", "defaults to medium")
 	cmd.Flags().StringVar(&plan, "plan", "", "plan id to file it under")
 	cmd.Flags().StringVar(&due, "due", "", "due date, RFC 3339")
-	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
+	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }
@@ -160,7 +174,9 @@ func todoUpdateCommand() *cobra.Command {
 			setIf(&in.Priority, priority)
 			setIf(&in.PlanID, plan)
 			setIf(&in.DueDate, due)
-			setTags(&in.Tags, tags)
+			if err := setTags(&in.Tags, tags); err != nil {
+				return err
+			}
 
 			if in == (client.TodoInput{}) {
 				return errors.New("nothing to update: pass at least one field")
@@ -185,7 +201,8 @@ func todoUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&priority, "priority", "", "low, medium or high")
 	cmd.Flags().StringVar(&plan, "plan", "", "move under this plan")
 	cmd.Flags().StringVar(&due, "due", "", "due date, RFC 3339")
-	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags, comma separated")
+	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
+	registerTagCompletion(cmd)
 
 	return cmd
 }
@@ -219,11 +236,16 @@ func setIf(target **string, value string) {
 	}
 }
 
-func setTags(target **[]string, value string) {
-	if value != "" {
-		v := strings.Split(value, ",")
-		*target = &v
+func setTags(target **[]string, value string) error {
+	if value == "" {
+		return nil
 	}
+	tags, err := parseTags(value)
+	if err != nil {
+		return err
+	}
+	*target = &tags
+	return nil
 }
 
 func renderTodo(todo client.Todo) error {
