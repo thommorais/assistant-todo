@@ -12,6 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
+import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
+import { Route as AuthenticatedSlugDocsRouteImport } from './routes/_authenticated/$slug/docs'
+import { Route as AuthenticatedSlugLogsRouteImport } from './routes/_authenticated/$slug/logs'
+import { Route as AuthenticatedSlugTodosRouteImport } from './routes/_authenticated/$slug/todos'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -27,27 +32,82 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSlugRoute = AuthenticatedSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSlugIndexRoute = AuthenticatedSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugDocsRoute = AuthenticatedSlugDocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugLogsRoute = AuthenticatedSlugLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
+const AuthenticatedSlugTodosRoute = AuthenticatedSlugTodosRouteImport.update({
+  id: '/todos',
+  path: '/todos',
+  getParentRoute: () => AuthenticatedSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/$slug': typeof AuthenticatedSlugRouteWithChildren
+  '/$slug/docs': typeof AuthenticatedSlugDocsRoute
+  '/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/$slug/todos': typeof AuthenticatedSlugTodosRoute
+  '/$slug/': typeof AuthenticatedSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthenticatedIndexRoute
+  '/$slug/docs': typeof AuthenticatedSlugDocsRoute
+  '/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/$slug/todos': typeof AuthenticatedSlugTodosRoute
+  '/$slug': typeof AuthenticatedSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/$slug/docs': typeof AuthenticatedSlugDocsRoute
+  '/_authenticated/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/_authenticated/$slug/todos': typeof AuthenticatedSlugTodosRoute
+  '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/$slug'
+    | '/$slug/docs'
+    | '/$slug/logs'
+    | '/$slug/todos'
+    | '/$slug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/'
-  id: '__root__' | '/_authenticated' | '/login' | '/_authenticated/'
+  to: '/login' | '/' | '/$slug/docs' | '/$slug/logs' | '/$slug/todos' | '/$slug'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/$slug'
+    | '/_authenticated/'
+    | '/_authenticated/$slug/docs'
+    | '/_authenticated/$slug/logs'
+    | '/_authenticated/$slug/todos'
+    | '/_authenticated/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,14 +138,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/$slug': {
+      id: '/_authenticated/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof AuthenticatedSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/$slug/': {
+      id: '/_authenticated/$slug/'
+      path: '/'
+      fullPath: '/$slug/'
+      preLoaderRoute: typeof AuthenticatedSlugIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/docs': {
+      id: '/_authenticated/$slug/docs'
+      path: '/docs'
+      fullPath: '/$slug/docs'
+      preLoaderRoute: typeof AuthenticatedSlugDocsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/logs': {
+      id: '/_authenticated/$slug/logs'
+      path: '/logs'
+      fullPath: '/$slug/logs'
+      preLoaderRoute: typeof AuthenticatedSlugLogsRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/todos': {
+      id: '/_authenticated/$slug/todos'
+      path: '/todos'
+      fullPath: '/$slug/todos'
+      preLoaderRoute: typeof AuthenticatedSlugTodosRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
   }
 }
 
+interface AuthenticatedSlugRouteChildren {
+  AuthenticatedSlugDocsRoute: typeof AuthenticatedSlugDocsRoute
+  AuthenticatedSlugLogsRoute: typeof AuthenticatedSlugLogsRoute
+  AuthenticatedSlugTodosRoute: typeof AuthenticatedSlugTodosRoute
+  AuthenticatedSlugIndexRoute: typeof AuthenticatedSlugIndexRoute
+}
+
+const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
+  AuthenticatedSlugDocsRoute: AuthenticatedSlugDocsRoute,
+  AuthenticatedSlugLogsRoute: AuthenticatedSlugLogsRoute,
+  AuthenticatedSlugTodosRoute: AuthenticatedSlugTodosRoute,
+  AuthenticatedSlugIndexRoute: AuthenticatedSlugIndexRoute,
+}
+
+const AuthenticatedSlugRouteWithChildren =
+  AuthenticatedSlugRoute._addFileChildren(AuthenticatedSlugRouteChildren)
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedSlugRoute: typeof AuthenticatedSlugRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedSlugRoute: AuthenticatedSlugRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
