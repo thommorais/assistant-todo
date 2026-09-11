@@ -10,6 +10,7 @@ import (
 type Todo struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`
+	TicketID  string   `json:"ticket_id,omitempty"`
 	PlanID    string   `json:"plan_id,omitempty"`
 	Title     string   `json:"title"`
 	Details   string   `json:"details,omitempty"`
@@ -26,6 +27,7 @@ type Todo struct {
 
 // Pointers: an absent field means "leave alone" on PATCH, "default" on POST.
 type TodoInput struct {
+	TicketID  *string   `json:"ticket_id,omitempty"`
 	PlanID    *string   `json:"plan_id,omitempty"`
 	Title     *string   `json:"title,omitempty"`
 	Details   *string   `json:"details,omitempty"`
@@ -38,6 +40,7 @@ type TodoInput struct {
 }
 
 type TodoFilter struct {
+	TicketID string
 	PlanID   string
 	Status   []string
 	Priority string
@@ -49,6 +52,9 @@ type TodoFilter struct {
 
 func (f TodoFilter) query() string {
 	params := url.Values{}
+	if f.TicketID != "" {
+		params.Set("ticket_id", f.TicketID)
+	}
 	if f.PlanID != "" {
 		params.Set("plan_id", f.PlanID)
 	}

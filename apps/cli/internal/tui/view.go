@@ -115,6 +115,14 @@ func (m model) tabBar() string {
 
 func (m model) rowLines() []string {
 	switch m.tab {
+	case tabTickets:
+		lines := make([]string, 0, len(m.rows.tickets))
+		for _, ticket := range m.rows.tickets {
+			progress := fmt.Sprintf("%d/%d", ticket.Progress.Done, ticket.Progress.Total)
+			lines = append(lines, fmt.Sprintf("%-42s %-12s %s", truncate(ticket.Title, 42), ticket.Status, dim.Render(progress)))
+		}
+		return lines
+
 	case tabPlans:
 		lines := make([]string, 0, len(m.rows.plans))
 		for _, plan := range m.rows.plans {
@@ -181,7 +189,7 @@ func (m model) help() string {
 	case screenDetail:
 		return "esc back · q quit"
 	default:
-		return "↑↓ move · tab switch · 1-4 jump · enter detail · esc back · r reload · q quit"
+		return "↑↓ move · tab switch · 1-5 jump · enter detail · esc back · r reload · q quit"
 	}
 }
 

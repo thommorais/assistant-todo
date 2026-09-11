@@ -76,6 +76,7 @@ func todoListCommand() *cobra.Command {
 	registerTagCompletion(cmd)
 	cmd.Flags().StringVarP(&filter.Search, "query", "q", "", "match the title")
 	cmd.Flags().StringVar(&filter.PlanID, "plan", "", "only todos under this plan")
+	cmd.Flags().StringVar(&filter.TicketID, "ticket", "", "only todos under this ticket")
 	cmd.Flags().IntVar(&filter.Limit, "limit", 0, "maximum rows")
 	cmd.Flags().IntVar(&filter.Offset, "offset", 0, "rows to skip")
 
@@ -103,7 +104,7 @@ func todoGetCommand() *cobra.Command {
 }
 
 func todoCreateCommand() *cobra.Command {
-	var details, status, priority, plan, due, tags string
+	var details, status, priority, plan, ticket, due, tags string
 
 	cmd := &cobra.Command{
 		Use:   "create <title>",
@@ -120,6 +121,7 @@ func todoCreateCommand() *cobra.Command {
 			setIf(&in.Status, status)
 			setIf(&in.Priority, priority)
 			setIf(&in.PlanID, plan)
+			setIf(&in.TicketID, ticket)
 			setIf(&in.DueDate, due)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
@@ -152,6 +154,7 @@ func todoCreateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&status, "status", "", "defaults to pending")
 	cmd.Flags().StringVar(&priority, "priority", "", "defaults to medium")
 	cmd.Flags().StringVar(&plan, "plan", "", "plan id to file it under")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket id to file it under")
 	cmd.Flags().StringVar(&due, "due", "", "due date, RFC 3339")
 	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
 	registerTagCompletion(cmd)
@@ -160,7 +163,7 @@ func todoCreateCommand() *cobra.Command {
 }
 
 func todoUpdateCommand() *cobra.Command {
-	var title, details, status, priority, plan, due, tags string
+	var title, details, status, priority, plan, ticket, due, tags string
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -173,6 +176,7 @@ func todoUpdateCommand() *cobra.Command {
 			setIf(&in.Status, status)
 			setIf(&in.Priority, priority)
 			setIf(&in.PlanID, plan)
+			setIf(&in.TicketID, ticket)
 			setIf(&in.DueDate, due)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
@@ -200,6 +204,7 @@ func todoUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&status, "status", "", "pending, in_progress, done, blocked or cancelled")
 	cmd.Flags().StringVar(&priority, "priority", "", "low, medium or high")
 	cmd.Flags().StringVar(&plan, "plan", "", "move under this plan")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "move under this ticket")
 	cmd.Flags().StringVar(&due, "due", "", "due date, RFC 3339")
 	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
 	registerTagCompletion(cmd)

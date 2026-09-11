@@ -8,55 +8,59 @@ import (
 )
 
 type LogEntry struct {
-	ID        string         `json:"id"`
-	ProjectID string         `json:"project_id"`
-	PlanID    string         `json:"plan_id,omitempty"`
-	TodoID    string         `json:"todo_id,omitempty"`
-	Title     string         `json:"title"`
-	Body      string         `json:"body"`
-	Branch    string         `json:"branch,omitempty"`
-	PR        string         `json:"pr,omitempty"`
-	Ticket    string         `json:"ticket,omitempty"`
-	Meta      map[string]any `json:"meta,omitempty"`
-	Tags      []string       `json:"tags"`
-	CreatedAt string         `json:"created_at"`
-	UpdatedAt string         `json:"updated_at"`
+	ID          string         `json:"id"`
+	ProjectID   string         `json:"project_id"`
+	TicketID    string         `json:"ticket_id,omitempty"`
+	PlanID      string         `json:"plan_id,omitempty"`
+	TodoID      string         `json:"todo_id,omitempty"`
+	Title       string         `json:"title"`
+	Body        string         `json:"body"`
+	Branch      string         `json:"branch,omitempty"`
+	PR          string         `json:"pr,omitempty"`
+	ExternalRef string         `json:"external_ref,omitempty"`
+	Meta        map[string]any `json:"meta,omitempty"`
+	Tags        []string       `json:"tags"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
 }
 
 type LogInput struct {
-	PlanID *string   `json:"plan_id,omitempty"`
-	TodoID *string   `json:"todo_id,omitempty"`
-	Title  *string   `json:"title,omitempty"`
-	Body   *string   `json:"body,omitempty"`
-	Branch *string   `json:"branch,omitempty"`
-	PR     *string   `json:"pr,omitempty"`
-	Ticket *string   `json:"ticket,omitempty"`
-	Tags   *[]string `json:"tags,omitempty"`
+	TicketID    *string   `json:"ticket_id,omitempty"`
+	PlanID      *string   `json:"plan_id,omitempty"`
+	TodoID      *string   `json:"todo_id,omitempty"`
+	Title       *string   `json:"title,omitempty"`
+	Body        *string   `json:"body,omitempty"`
+	Branch      *string   `json:"branch,omitempty"`
+	PR          *string   `json:"pr,omitempty"`
+	ExternalRef *string   `json:"external_ref,omitempty"`
+	Tags        *[]string `json:"tags,omitempty"`
 }
 
 type LogFilter struct {
-	PlanID string
-	TodoID string
-	Branch string
-	Ticket string
-	Tags   []string
-	Search string
-	Since  string
-	Until  string
-	Limit  int
-	Offset int
+	TicketID    string
+	PlanID      string
+	TodoID      string
+	Branch      string
+	ExternalRef string
+	Tags        []string
+	Search      string
+	Since       string
+	Until       string
+	Limit       int
+	Offset      int
 }
 
 func (f LogFilter) query() string {
 	params := url.Values{}
 	for key, value := range map[string]string{
-		"plan_id": f.PlanID,
-		"todo_id": f.TodoID,
-		"branch":  f.Branch,
-		"ticket":  f.Ticket,
-		"q":       f.Search,
-		"since":   f.Since,
-		"until":   f.Until,
+		"ticket_id":    f.TicketID,
+		"plan_id":      f.PlanID,
+		"todo_id":      f.TodoID,
+		"branch":       f.Branch,
+		"external_ref": f.ExternalRef,
+		"q":            f.Search,
+		"since":        f.Since,
+		"until":        f.Until,
 	} {
 		if value != "" {
 			params.Set(key, value)

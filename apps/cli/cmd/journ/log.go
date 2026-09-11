@@ -74,7 +74,8 @@ func logListCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter.Branch, "branch", "", "entries anchored to this branch")
-	cmd.Flags().StringVar(&filter.Ticket, "ticket", "", "entries anchored to this ticket")
+	cmd.Flags().StringVar(&filter.TicketID, "ticket", "", "entries filed under this ticket")
+	cmd.Flags().StringVar(&filter.ExternalRef, "external-ref", "", "entries carrying this external tracker key")
 	cmd.Flags().StringVar(&filter.PlanID, "plan", "", "entries under this plan")
 	cmd.Flags().StringVar(&filter.TodoID, "todo", "", "entries under this todo")
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
@@ -112,7 +113,7 @@ func logGetCommand() *cobra.Command {
 }
 
 func logWriteCommand() *cobra.Command {
-	var body, branch, pr, ticket, plan, todo, tags string
+	var body, branch, pr, ticket, externalRef, plan, todo, tags string
 
 	cmd := &cobra.Command{
 		Use:   "write <title>",
@@ -133,7 +134,8 @@ func logWriteCommand() *cobra.Command {
 			setIf(&in.Body, text)
 			setIf(&in.Branch, branch)
 			setIf(&in.PR, pr)
-			setIf(&in.Ticket, ticket)
+			setIf(&in.TicketID, ticket)
+			setIf(&in.ExternalRef, externalRef)
 			setIf(&in.PlanID, plan)
 			setIf(&in.TodoID, todo)
 			if err := setTags(&in.Tags, tags); err != nil {
@@ -156,7 +158,8 @@ func logWriteCommand() *cobra.Command {
 	cmd.Flags().StringVar(&body, "body", "", "markdown body, or - for stdin")
 	cmd.Flags().StringVar(&branch, "branch", "", "git branch")
 	cmd.Flags().StringVar(&pr, "pr", "", "pull request number")
-	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket reference")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket this belongs to")
+	cmd.Flags().StringVar(&externalRef, "external-ref", "", "key in another tracker, e.g. JIRA-123")
 	cmd.Flags().StringVar(&plan, "plan", "", "plan this documents")
 	cmd.Flags().StringVar(&todo, "todo", "", "todo this documents")
 	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
@@ -166,7 +169,7 @@ func logWriteCommand() *cobra.Command {
 }
 
 func logUpdateCommand() *cobra.Command {
-	var title, body, branch, pr, ticket, tags string
+	var title, body, branch, pr, ticket, externalRef, tags string
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -183,7 +186,8 @@ func logUpdateCommand() *cobra.Command {
 			setIf(&in.Body, text)
 			setIf(&in.Branch, branch)
 			setIf(&in.PR, pr)
-			setIf(&in.Ticket, ticket)
+			setIf(&in.TicketID, ticket)
+			setIf(&in.ExternalRef, externalRef)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
 			}
@@ -209,7 +213,8 @@ func logUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&body, "body", "", "replace the body, or - for stdin")
 	cmd.Flags().StringVar(&branch, "branch", "", "git branch")
 	cmd.Flags().StringVar(&pr, "pr", "", "pull request number")
-	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket reference")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket this belongs to")
+	cmd.Flags().StringVar(&externalRef, "external-ref", "", "key in another tracker")
 	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
 	registerTagCompletion(cmd)
 
@@ -305,7 +310,7 @@ func renderLogDetail(entry client.LogEntry) error {
 	fmt.Println(entry.Title)
 	fmt.Println(strings.Repeat("=", len(entry.Title)))
 
-	for label, value := range map[string]string{"branch": entry.Branch, "pr": entry.PR, "ticket": entry.Ticket} {
+	for label, value := range map[string]string{"branch": entry.Branch, "pr": entry.PR, "external ref": entry.ExternalRef} {
 		if value != "" {
 			fmt.Printf("%s: %s\n", label, value)
 		}

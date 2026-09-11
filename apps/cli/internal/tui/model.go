@@ -15,26 +15,29 @@ const (
 type tab int
 
 const (
-	tabPlans tab = iota
+	tabTickets tab = iota
+	tabPlans
 	tabTodos
 	tabLogs
 	tabDocs
 )
 
 var tabNames = map[tab]string{
-	tabPlans: "plans",
-	tabTodos: "todos",
-	tabLogs:  "logs",
-	tabDocs:  "docs",
+	tabTickets: "tickets",
+	tabPlans:   "plans",
+	tabTodos:   "todos",
+	tabLogs:    "logs",
+	tabDocs:    "docs",
 }
 
-const tabCount = 4
+const tabCount = 5
 
 type rows struct {
-	plans []client.Plan
-	todos []client.Todo
-	logs  []client.LogEntry
-	docs  []client.Doc
+	tickets []client.Ticket
+	plans   []client.Plan
+	todos   []client.Todo
+	logs    []client.LogEntry
+	docs    []client.Doc
 }
 
 // Each tab keeps its own cursor so switching back lands where you left.
@@ -91,6 +94,8 @@ func (m *model) setCursor(at int) {
 
 func (m model) rowCount() int {
 	switch m.tab {
+	case tabTickets:
+		return len(m.rows.tickets)
 	case tabPlans:
 		return len(m.rows.plans)
 	case tabTodos:

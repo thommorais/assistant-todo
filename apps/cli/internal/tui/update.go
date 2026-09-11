@@ -75,7 +75,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "shift+tab", "[":
 		return m.switchTab(-1)
 
-	case "1", "2", "3", "4":
+	case "1", "2", "3", "4", "5":
 		if m.screen == screenProjects {
 			return m, nil
 		}
@@ -165,6 +165,11 @@ func (m model) reloadTab() (tea.Model, tea.Cmd) {
 func (m model) selectedDetail() (title, body string, ok bool) {
 	at := m.cursor()
 	switch m.tab {
+	case tabTickets:
+		if at < len(m.rows.tickets) {
+			ticket := m.rows.tickets[at]
+			return ticket.Title, ticket.Body, true
+		}
 	case tabLogs:
 		if at < len(m.rows.logs) {
 			entry := m.rows.logs[at]

@@ -41,6 +41,9 @@ func loadProject(api *client.Client, ref string) tea.Cmd {
 func loadTab(api *client.Client, which tab, project string) tea.Cmd {
 	return func() tea.Msg {
 		switch which {
+		case tabTickets:
+			tickets, err := api.ListTickets(project, client.TicketFilter{})
+			return tabLoaded{tab: which, rows: rows{tickets: tickets}, err: err}
 		case tabPlans:
 			plans, err := api.ListPlans(project, client.PlanFilter{})
 			return tabLoaded{tab: which, rows: rows{plans: plans}, err: err}

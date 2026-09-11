@@ -10,6 +10,7 @@ import (
 type Doc struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`
+	TicketID  string   `json:"ticket_id,omitempty"`
 	Slug      string   `json:"slug"`
 	Title     string   `json:"title"`
 	Body      string   `json:"body"`
@@ -19,21 +20,26 @@ type Doc struct {
 }
 
 type DocInput struct {
-	Slug  *string   `json:"slug,omitempty"`
-	Title *string   `json:"title,omitempty"`
-	Body  *string   `json:"body,omitempty"`
-	Tags  *[]string `json:"tags,omitempty"`
+	TicketID *string   `json:"ticket_id,omitempty"`
+	Slug     *string   `json:"slug,omitempty"`
+	Title    *string   `json:"title,omitempty"`
+	Body     *string   `json:"body,omitempty"`
+	Tags     *[]string `json:"tags,omitempty"`
 }
 
 type DocFilter struct {
-	Tags   []string
-	Search string
-	Limit  int
-	Offset int
+	TicketID string
+	Tags     []string
+	Search   string
+	Limit    int
+	Offset   int
 }
 
 func (f DocFilter) query() string {
 	params := url.Values{}
+	if f.TicketID != "" {
+		params.Set("ticket_id", f.TicketID)
+	}
 	if len(f.Tags) > 0 {
 		params.Set("tags", strings.Join(f.Tags, ","))
 	}

@@ -54,6 +54,7 @@ func planListCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&status, "status", "", "comma separated: draft,active,done,abandoned")
+	cmd.Flags().StringVar(&filter.TicketID, "ticket", "", "only plans under this ticket")
 	cmd.Flags().IntVar(&filter.Limit, "limit", 0, "maximum rows")
 	cmd.Flags().IntVar(&filter.Offset, "offset", 0, "rows to skip")
 
@@ -81,7 +82,7 @@ func planGetCommand() *cobra.Command {
 }
 
 func planCreateCommand() *cobra.Command {
-	var goal, status, tags string
+	var goal, status, ticket, tags string
 
 	cmd := &cobra.Command{
 		Use:   "create <title>",
@@ -96,6 +97,7 @@ func planCreateCommand() *cobra.Command {
 			in := client.PlanInput{Title: &args[0]}
 			setIf(&in.Goal, goal)
 			setIf(&in.Status, status)
+			setIf(&in.TicketID, ticket)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
 			}
@@ -115,6 +117,7 @@ func planCreateCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&goal, "goal", "", "what the plan is for")
 	cmd.Flags().StringVar(&status, "status", "", "defaults to draft")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "ticket id to file it under")
 	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
 	registerTagCompletion(cmd)
 
@@ -122,7 +125,7 @@ func planCreateCommand() *cobra.Command {
 }
 
 func planUpdateCommand() *cobra.Command {
-	var title, goal, status, tags string
+	var title, goal, status, ticket, tags string
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -133,6 +136,7 @@ func planUpdateCommand() *cobra.Command {
 			setIf(&in.Title, title)
 			setIf(&in.Goal, goal)
 			setIf(&in.Status, status)
+			setIf(&in.TicketID, ticket)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
 			}
@@ -157,6 +161,7 @@ func planUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&title, "title", "", "new title")
 	cmd.Flags().StringVar(&goal, "goal", "", "new goal")
 	cmd.Flags().StringVar(&status, "status", "", "draft, active, done or abandoned")
+	cmd.Flags().StringVar(&ticket, "ticket", "", "move under this ticket")
 	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
 	registerTagCompletion(cmd)
 

@@ -16,6 +16,7 @@ type Progress struct {
 type Plan struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`
+	TicketID  string   `json:"ticket_id,omitempty"`
 	Title     string   `json:"title"`
 	Goal      string   `json:"goal,omitempty"`
 	Status    string   `json:"status"`
@@ -26,20 +27,25 @@ type Plan struct {
 }
 
 type PlanInput struct {
-	Title  *string   `json:"title,omitempty"`
-	Goal   *string   `json:"goal,omitempty"`
-	Status *string   `json:"status,omitempty"`
-	Tags   *[]string `json:"tags,omitempty"`
+	TicketID *string   `json:"ticket_id,omitempty"`
+	Title    *string   `json:"title,omitempty"`
+	Goal     *string   `json:"goal,omitempty"`
+	Status   *string   `json:"status,omitempty"`
+	Tags     *[]string `json:"tags,omitempty"`
 }
 
 type PlanFilter struct {
-	Status []string
-	Limit  int
-	Offset int
+	TicketID string
+	Status   []string
+	Limit    int
+	Offset   int
 }
 
 func (f PlanFilter) query() string {
 	params := url.Values{}
+	if f.TicketID != "" {
+		params.Set("ticket_id", f.TicketID)
+	}
 	if len(f.Status) > 0 {
 		params.Set("status", strings.Join(f.Status, ","))
 	}

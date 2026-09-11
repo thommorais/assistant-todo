@@ -70,6 +70,7 @@ func main() {
 		projectCommand(),
 		searchCommand(),
 		tagsCommand(),
+		ticketCommand(),
 		todoCommand(),
 		useCommand(),
 	)
