@@ -11,6 +11,7 @@ import { Collections, type JournLogsResponse } from '_/pocketbase-types'
 import type { ActionEvent } from '_/types'
 import { getPocketBaseClient } from './client'
 import { filterFor } from './filter-builder'
+import { countRows } from './count-rows'
 import { paginate } from './paginate'
 
 type LogRecord = JournLogsResponse<unknown, string[]>
@@ -60,6 +61,14 @@ export const createLogsAdapter = (): LogsPort => {
 	const collection = client.collection(Collections.JournLogs)
 
 	return {
+		count: async (project, filter = {}): Promise<Result<number>> => {
+			const { expr, params } = columns(project, filter)
+
+			const { data, error } = await tryCatch(countRows(collection, { filter: client.filter(expr, params) }))
+
+			return error ? err(new Error(`Failed to count logs: ${error.message}`, { cause: error })) : ok(data)
+		},
+
 		list: async (project, filter = {}): Promise<Result<readonly LogEntry[]>> => {
 			const { expr, params } = columns(project, filter)
 

@@ -15,6 +15,7 @@ export type LogFilter = {
 }
 
 export type LogsPort = {
+	readonly count: (project: string, filter?: LogFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: LogFilter) => Promise<Result<ReadonlyArray<LogEntry>>>
 	readonly subscribeToList: (
 		project: string,

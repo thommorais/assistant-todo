@@ -12,6 +12,7 @@ export type PlanFilter = {
 }
 
 export type PlansPort = {
+	readonly count: (project: string, filter?: PlanFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: PlanFilter) => Promise<Result<ReadonlyArray<Plan>>>
 	readonly subscribeToList: (
 		project: string,

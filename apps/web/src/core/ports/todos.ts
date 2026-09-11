@@ -13,6 +13,7 @@ export type TodoFilter = {
 }
 
 export type TodosPort = {
+	readonly count: (project: string, filter?: TodoFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: TodoFilter) => Promise<Result<ReadonlyArray<Todo>>>
 	readonly subscribeToList: (
 		project: string,

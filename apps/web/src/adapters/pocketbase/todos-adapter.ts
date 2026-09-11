@@ -10,6 +10,7 @@ import { tryCatch } from '_/lib/try-catch'
 import { Collections, type JournTodosResponse } from '_/pocketbase-types'
 import { getPocketBaseClient } from './client'
 import { filterFor } from './filter-builder'
+import { countRows } from './count-rows'
 import { paginate } from './paginate'
 
 type TodoRecord = JournTodosResponse<string[], string[]>
@@ -36,6 +37,15 @@ const toTodo = (record: TodoRecord): Todo => ({
 	updatedAt: new Date(record.updated),
 })
 
+const columns = (project: string, filter: TodoFilter) =>
+	filterFor<TodoColumns>()([
+		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'status', comparator: 'anyOf', value: filter.status },
+		{ field: 'priority', comparator: 'eq', value: filter.priority },
+		{ field: 'tags', comparator: 'containsAll', value: filter.tags },
+		{ field: 'title', comparator: 'contains', value: filter.search },
+	])
+
 const message = (error: unknown): string => (error instanceof Error ? error.message : 'Unknown error')
 
 export const createTodosAdapter = (): TodosPort => {
@@ -43,14 +53,16 @@ export const createTodosAdapter = (): TodosPort => {
 	const collection = client.collection(Collections.JournTodos)
 
 	return {
+		count: async (project, filter = {}): Promise<Result<number>> => {
+			const { expr, params } = columns(project, filter)
+
+			const { data, error } = await tryCatch(countRows(collection, { filter: client.filter(expr, params) }))
+
+			return error ? err(new Error(`Failed to count todos: ${error.message}`, { cause: error })) : ok(data)
+		},
+
 		list: async (project, filter = {}): Promise<Result<readonly Todo[]>> => {
-			const { expr, params } = filterFor<TodoColumns>()([
-				{ field: 'project.slug', comparator: 'eq', value: project },
-				{ field: 'status', comparator: 'anyOf', value: filter.status },
-				{ field: 'priority', comparator: 'eq', value: filter.priority },
-				{ field: 'tags', comparator: 'containsAll', value: filter.tags },
-				{ field: 'title', comparator: 'contains', value: filter.search },
-			])
+			const { expr, params } = columns(project, filter)
 
 			const { data, error } = await tryCatch(
 				paginate<TodoRecord>(collection, filter, {
@@ -63,13 +75,7 @@ export const createTodosAdapter = (): TodosPort => {
 		},
 		subscribeToList: async (project, update, filter = {}): Promise<Result<Unsubscribe>> => {
 			try {
-				const { expr, params } = filterFor<TodoColumns>()([
-					{ field: 'project.slug', comparator: 'eq', value: project },
-					{ field: 'status', comparator: 'anyOf', value: filter.status },
-					{ field: 'priority', comparator: 'eq', value: filter.priority },
-					{ field: 'tags', comparator: 'containsAll', value: filter.tags },
-					{ field: 'title', comparator: 'contains', value: filter.search },
-				])
+				const { expr, params } = columns(project, filter)
 
 				const unsubscribe = await collection.subscribe<TodoRecord>(
 					'*',

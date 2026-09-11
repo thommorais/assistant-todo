@@ -9,6 +9,7 @@ import { Collections, type JournDocsResponse } from '_/pocketbase-types'
 import type { ActionEvent } from '_/types'
 import { getPocketBaseClient } from './client'
 import { filterFor } from './filter-builder'
+import { countRows } from './count-rows'
 import { paginate } from './paginate'
 
 type DocRecord = JournDocsResponse<string[]>
@@ -49,6 +50,14 @@ export const createDocsAdapter = (): DocsPort => {
 	const collection = client.collection(Collections.JournDocs)
 
 	return {
+		count: async (project, filter = {}): Promise<Result<number>> => {
+			const { expr, params } = columns(project, filter)
+
+			const { data, error } = await tryCatch(countRows(collection, { filter: client.filter(expr, params) }))
+
+			return error ? err(new Error(`Failed to count docs: ${error.message}`, { cause: error })) : ok(data)
+		},
+
 		list: async (project, filter = {}): Promise<Result<readonly Doc[]>> => {
 			const { expr, params } = columns(project, filter)
 

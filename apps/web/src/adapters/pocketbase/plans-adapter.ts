@@ -9,6 +9,7 @@ import { Collections, type JournPlansResponse } from '_/pocketbase-types'
 import type { ActionEvent } from '_/types'
 import { getPocketBaseClient } from './client'
 import { filterFor } from './filter-builder'
+import { countRows } from './count-rows'
 import { paginate } from './paginate'
 
 type PlanRecord = JournPlansResponse<string[]>
@@ -50,6 +51,14 @@ export const createPlansAdapter = (): PlansPort => {
 	const collection = client.collection(Collections.JournPlans)
 
 	return {
+		count: async (project, filter = {}): Promise<Result<number>> => {
+			const { expr, params } = columns(project, filter)
+
+			const { data, error } = await tryCatch(countRows(collection, { filter: client.filter(expr, params) }))
+
+			return error ? err(new Error(`Failed to count plans: ${error.message}`, { cause: error })) : ok(data)
+		},
+
 		list: async (project, filter = {}): Promise<Result<readonly Plan[]>> => {
 			const { expr, params } = columns(project, filter)
 
