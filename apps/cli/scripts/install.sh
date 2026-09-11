@@ -38,7 +38,7 @@ if [[ -n ${JOURN_TOKEN:-} ]]; then
 	exit 0
 fi
 if [[ -f $CREDENTIALS ]]; then
-	echo "Already signed in ($CREDENTIALS). Run '$BINARY login' to switch accounts."
+	echo "Already signed in. Run '$BINARY login' to switch accounts."
 	exit 0
 fi
 

@@ -52,8 +52,7 @@ func loginCommand() *cobra.Command {
 				return err
 			}
 
-			path, _ := config.Path()
-			fmt.Printf("signed in as %s\ntoken cached in %s\n", session.Email, path)
+			fmt.Printf("signed in as %s\n", session.Email)
 			return nil
 		},
 	}
