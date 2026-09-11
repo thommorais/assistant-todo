@@ -1,4 +1,5 @@
-import { useParams } from '@tanstack/react-router'
+import { Link, useParams } from '@tanstack/react-router'
+import { cn } from '@thom/libs/cn'
 import { Badge } from '@thom/ui/badge'
 import { Heading } from '@thom/ui/heading'
 import { useDocs } from '_/app/use-docs'
@@ -7,6 +8,7 @@ import { usePlans } from '_/app/use-plans'
 import { useTicket } from '_/app/use-ticket'
 import { useTodos } from '_/app/use-todos'
 import type { TicketStatus } from '_/core/domain/ticket'
+import { TODO_STATUS_LABELS } from '_/pages/todos/status-labels'
 
 const statusLabels: Record<TicketStatus, string> = {
 	open: 'Open',
@@ -93,9 +95,35 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 				{todos.status === 'ready' && todos.todos.length > 0 && (
 					<ul className='border-border divide-border divide-y border'>
 						{todos.todos.map(todo => (
-							<li key={todo.id} className='flex items-center justify-between gap-4 px-4 py-3 text-sm'>
-								<span>{todo.title}</span>
-								<span className='text-dim shrink-0 text-xs'>{todo.status}</span>
+							<li key={todo.id}>
+								<Link
+									to='/$slug/todos'
+									params={{ slug: project }}
+									search={{ todo: todo.id }}
+									className='hover:bg-accent/40 flex w-full items-center gap-3 px-4 py-3 transition-colors'
+								>
+									<span
+										className={cn(
+											'border-border size-4 shrink-0 border',
+											todo.status === 'done' && 'bg-foreground border-foreground',
+										)}
+									/>
+
+									<span className={cn('flex-1 truncate text-sm', todo.status === 'done' && 'text-dim line-through')}>
+										{todo.title}
+									</span>
+
+									{todo.status === 'blocked' && <Badge color='destructive'>Blocked</Badge>}
+
+									{todo.tags.map(tag => (
+										<Badge key={tag} color='muted'>
+											{tag}
+										</Badge>
+									))}
+
+									<span className='text-dimmer w-16 shrink-0 text-right text-xs'>{todo.priority}</span>
+									<span className='text-dim w-24 shrink-0 text-right text-xs'>{TODO_STATUS_LABELS[todo.status]}</span>
+								</Link>
 							</li>
 						))}
 					</ul>
