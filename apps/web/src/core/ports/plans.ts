@@ -4,6 +4,7 @@ import type { Plan, PlanStatus } from '../domain/plan'
 import type { Unsubscribe } from './subscription'
 
 export type PlanFilter = {
+	readonly ticketId?: string
 	readonly status?: readonly PlanStatus[]
 	readonly tags?: readonly string[]
 	readonly search?: string

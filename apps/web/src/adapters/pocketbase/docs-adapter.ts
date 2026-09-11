@@ -1,5 +1,6 @@
 import type { Doc } from '_/core/domain/doc'
 import { docId as toDocId } from '_/core/domain/doc'
+import { ticketId as toTicketId } from '_/core/domain/ticket'
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import type { DocFilter, DocsPort } from '_/core/ports/docs'
 import type { Unsubscribe } from '_/core/ports/subscription'
@@ -16,6 +17,7 @@ type DocRecord = JournDocsResponse<string[]>
 
 type DocColumns = {
 	'project.slug': string
+	ticket: string
 	slug: string
 	title: string
 	body: string
@@ -29,6 +31,7 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
 const toDoc = (record: DocRecord): Doc => ({
 	id: toDocId(record.id),
 	projectId: toProjectId(record.project),
+	ticketId: record.ticket ? toTicketId(record.ticket) : undefined,
 	slug: record.slug,
 	title: record.title,
 	body: record.body ?? '',
@@ -41,6 +44,7 @@ const toDoc = (record: DocRecord): Doc => ({
 const columns = (project: string, filter: DocFilter) =>
 	filterFor<DocColumns>()([
 		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'ticket', comparator: 'eq', value: filter.ticketId },
 		{ field: 'tags', comparator: 'containsAll', value: filter.tags },
 		{ field: 'title', comparator: 'contains', value: filter.search },
 	])

@@ -4,8 +4,9 @@ import type { LogEntry } from '../domain/log'
 import type { Unsubscribe } from './subscription'
 
 export type LogFilter = {
+	readonly ticketId?: string
 	readonly branch?: string
-	readonly ticket?: string
+	readonly externalRef?: string
 	readonly tags?: readonly string[]
 	readonly search?: string
 	readonly since?: Date

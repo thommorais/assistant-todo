@@ -4,6 +4,7 @@ import type { Doc } from '../domain/doc'
 import type { Unsubscribe } from './subscription'
 
 export type DocFilter = {
+	readonly ticketId?: string
 	readonly tags?: readonly string[]
 	readonly search?: string
 	readonly limit?: number

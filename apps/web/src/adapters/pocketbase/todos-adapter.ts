@@ -1,6 +1,7 @@
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId } from '_/core/domain/plan'
+import { ticketId as toTicketId } from '_/core/domain/ticket'
 import { todoId as toTodoId } from '_/core/domain/todo'
 import type { Unsubscribe } from '_/core/ports/subscription'
 import type { TodoFilter, TodosPort } from '_/core/ports/todos'
@@ -18,11 +19,15 @@ type TodoRecord = JournTodosResponse<string[], string[]>
 type TodoColumns = {
 	'project.slug': string
 	title: string
-} & TodoFilter
+	// The stored column is "ticket"; the filter names it ticketId to match
+	// the domain, so the two cannot simply be intersected.
+	ticket: string
+} & Omit<TodoFilter, 'ticketId'>
 
 const toTodo = (record: TodoRecord): Todo => ({
 	id: toTodoId(record.id),
 	projectId: toProjectId(record.project),
+	ticketId: record.ticket ? toTicketId(record.ticket) : undefined,
 	planId: record.plan ? toPlanId(record.plan) : undefined,
 	title: record.title,
 	details: record.details ?? '',
@@ -40,6 +45,7 @@ const toTodo = (record: TodoRecord): Todo => ({
 const columns = (project: string, filter: TodoFilter) =>
 	filterFor<TodoColumns>()([
 		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'ticket', comparator: 'eq', value: filter.ticketId },
 		{ field: 'status', comparator: 'anyOf', value: filter.status },
 		{ field: 'priority', comparator: 'eq', value: filter.priority },
 		{ field: 'tags', comparator: 'containsAll', value: filter.tags },

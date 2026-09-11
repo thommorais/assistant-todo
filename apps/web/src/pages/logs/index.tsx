@@ -39,7 +39,7 @@ const Logs = () => {
 
 					<div className='flex flex-wrap items-center gap-2 pt-1'>
 						{entry.branch && <span className='text-dimmer font-mono text-xs'>{entry.branch}</span>}
-						{entry.ticket && <span className='text-dimmer font-mono text-xs'>{entry.ticket}</span>}
+						{entry.externalRef && <span className='text-dimmer font-mono text-xs'>{entry.externalRef}</span>}
 						{entry.pr && <span className='text-dimmer font-mono text-xs'>#{entry.pr}</span>}
 						{entry.tags.map(tag => (
 							<Badge key={tag} color='muted'>

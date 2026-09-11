@@ -18,6 +18,8 @@ import { Route as AuthenticatedSlugDocsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSlugLogsRouteImport } from './routes/_authenticated/$slug/logs'
 import { Route as AuthenticatedSlugPlansRouteImport } from './routes/_authenticated/$slug/plans'
 import { Route as AuthenticatedSlugTodosRouteImport } from './routes/_authenticated/$slug/todos'
+import { Route as AuthenticatedSlugTicketsIndexRouteImport } from './routes/_authenticated/$slug/tickets/index'
+import { Route as AuthenticatedSlugTicketsTicketRouteImport } from './routes/_authenticated/$slug/tickets/$ticket'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -63,6 +65,18 @@ const AuthenticatedSlugTodosRoute = AuthenticatedSlugTodosRouteImport.update({
   path: '/todos',
   getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
+const AuthenticatedSlugTicketsIndexRoute =
+  AuthenticatedSlugTicketsIndexRouteImport.update({
+    id: '/tickets/',
+    path: '/tickets/',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
+const AuthenticatedSlugTicketsTicketRoute =
+  AuthenticatedSlugTicketsTicketRouteImport.update({
+    id: '/tickets/$ticket',
+    path: '/tickets/$ticket',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -73,6 +87,8 @@ export interface FileRoutesByFullPath {
   '/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
+  '/$slug/tickets/$ticket': typeof AuthenticatedSlugTicketsTicketRoute
+  '/$slug/tickets/': typeof AuthenticatedSlugTicketsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -82,6 +98,8 @@ export interface FileRoutesByTo {
   '/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
+  '/$slug/tickets/$ticket': typeof AuthenticatedSlugTicketsTicketRoute
+  '/$slug/tickets': typeof AuthenticatedSlugTicketsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,6 +112,8 @@ export interface FileRoutesById {
   '/_authenticated/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/_authenticated/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
+  '/_authenticated/$slug/tickets/$ticket': typeof AuthenticatedSlugTicketsTicketRoute
+  '/_authenticated/$slug/tickets/': typeof AuthenticatedSlugTicketsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/$slug/plans'
     | '/$slug/todos'
     | '/$slug/'
+    | '/$slug/tickets/$ticket'
+    | '/$slug/tickets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -115,6 +137,8 @@ export interface FileRouteTypes {
     | '/$slug/plans'
     | '/$slug/todos'
     | '/$slug'
+    | '/$slug/tickets/$ticket'
+    | '/$slug/tickets'
   id:
     | '__root__'
     | '/_authenticated'
@@ -126,6 +150,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug/plans'
     | '/_authenticated/$slug/todos'
     | '/_authenticated/$slug/'
+    | '/_authenticated/$slug/tickets/$ticket'
+    | '/_authenticated/$slug/tickets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,6 +224,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugTodosRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
+    '/_authenticated/$slug/tickets/': {
+      id: '/_authenticated/$slug/tickets/'
+      path: '/tickets'
+      fullPath: '/$slug/tickets/'
+      preLoaderRoute: typeof AuthenticatedSlugTicketsIndexRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
+    '/_authenticated/$slug/tickets/$ticket': {
+      id: '/_authenticated/$slug/tickets/$ticket'
+      path: '/tickets/$ticket'
+      fullPath: '/$slug/tickets/$ticket'
+      preLoaderRoute: typeof AuthenticatedSlugTicketsTicketRouteImport
+      parentRoute: typeof AuthenticatedSlugRoute
+    }
   }
 }
 
@@ -207,6 +247,8 @@ interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugPlansRoute: typeof AuthenticatedSlugPlansRoute
   AuthenticatedSlugTodosRoute: typeof AuthenticatedSlugTodosRoute
   AuthenticatedSlugIndexRoute: typeof AuthenticatedSlugIndexRoute
+  AuthenticatedSlugTicketsTicketRoute: typeof AuthenticatedSlugTicketsTicketRoute
+  AuthenticatedSlugTicketsIndexRoute: typeof AuthenticatedSlugTicketsIndexRoute
 }
 
 const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
@@ -215,6 +257,8 @@ const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugPlansRoute: AuthenticatedSlugPlansRoute,
   AuthenticatedSlugTodosRoute: AuthenticatedSlugTodosRoute,
   AuthenticatedSlugIndexRoute: AuthenticatedSlugIndexRoute,
+  AuthenticatedSlugTicketsTicketRoute: AuthenticatedSlugTicketsTicketRoute,
+  AuthenticatedSlugTicketsIndexRoute: AuthenticatedSlugTicketsIndexRoute,
 }
 
 const AuthenticatedSlugRouteWithChildren =

@@ -4,6 +4,7 @@ import { useCounts } from '_/app/use-counts'
 import { entities, type Entity } from '_/app/counts'
 
 const labels: Record<Entity, string> = {
+	tickets: 'Tickets',
 	plans: 'Plans',
 	todos: 'Todos',
 	logs: 'Logs',
@@ -18,7 +19,7 @@ const Counts = ({ slug }: { readonly slug: string }) => {
 	}
 
 	return (
-		<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+		<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
 			{entities.map(entity => (
 				<Card key={entity}>
 					<CardHeader>

@@ -6,6 +6,7 @@ import { createLogsAdapter } from '_/adapters/pocketbase/logs-adapter'
 import { createPlansAdapter } from '_/adapters/pocketbase/plans-adapter'
 import { createProjectsAdapter } from '_/adapters/pocketbase/projects-adapter'
 import { createSearchAdapter } from '_/adapters/pocketbase/search-adapter'
+import { createTicketsAdapter } from '_/adapters/pocketbase/tickets-adapter'
 import { createTodosAdapter } from '_/adapters/pocketbase/todos-adapter'
 import type { AuthPort } from '_/core/ports/auth'
 import type { DocsPort } from '_/core/ports/docs'
@@ -14,6 +15,7 @@ import type { PlansPort } from '_/core/ports/plans'
 import type { ProjectsPort } from '_/core/ports/projects'
 import type { SearchPort } from '_/core/ports/search'
 import type { ThemePort } from '_/core/ports/theme'
+import type { TicketsPort } from '_/core/ports/tickets'
 import type { TodosPort } from '_/core/ports/todos'
 
 export type Container = {
@@ -24,6 +26,7 @@ export type Container = {
 	readonly projects: ProjectsPort
 	readonly search: SearchPort
 	readonly theme: ThemePort
+	readonly tickets: TicketsPort
 	readonly todos: TodosPort
 }
 
@@ -35,6 +38,7 @@ export const createContainer = (): Container => ({
 	projects: createProjectsAdapter(),
 	search: createSearchAdapter(),
 	theme: createThemeAdapter(),
+	tickets: createTicketsAdapter(),
 	todos: createTodosAdapter(),
 })
 

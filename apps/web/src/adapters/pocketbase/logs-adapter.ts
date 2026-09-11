@@ -1,6 +1,7 @@
 import type { LogEntry } from '_/core/domain/log'
 import { logId as toLogId } from '_/core/domain/log'
 import { planId as toPlanId } from '_/core/domain/plan'
+import { ticketId as toTicketId } from '_/core/domain/ticket'
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import { todoId as toTodoId } from '_/core/domain/todo'
 import type { LogFilter, LogsPort } from '_/core/ports/logs'
@@ -22,6 +23,7 @@ type LogColumns = {
 	body: string
 	branch: string
 	ticket: string
+	external_ref: string
 	tags: string
 	created: Date
 	updated: Date
@@ -32,13 +34,14 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
 const toLogEntry = (record: LogRecord): LogEntry => ({
 	id: toLogId(record.id),
 	projectId: toProjectId(record.project),
+	ticketId: record.ticket ? toTicketId(record.ticket) : undefined,
 	planId: record.plan ? toPlanId(record.plan) : undefined,
 	todoId: record.todo ? toTodoId(record.todo) : undefined,
 	title: record.title,
 	body: record.body ?? '',
 	branch: record.branch ?? '',
 	pr: record.pr ?? '',
-	ticket: record.ticket ?? '',
+	externalRef: record.external_ref ?? '',
 	tags: record.tags ?? [],
 	createdBy: record.created_by ? toUserId(record.created_by) : undefined,
 	createdAt: new Date(record.created),
@@ -48,8 +51,9 @@ const toLogEntry = (record: LogRecord): LogEntry => ({
 const columns = (project: string, filter: LogFilter) =>
 	filterFor<LogColumns>()([
 		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'ticket', comparator: 'eq', value: filter.ticketId },
 		{ field: 'branch', comparator: 'eq', value: filter.branch },
-		{ field: 'ticket', comparator: 'eq', value: filter.ticket },
+		{ field: 'external_ref', comparator: 'eq', value: filter.externalRef },
 		{ field: 'tags', comparator: 'containsAll', value: filter.tags },
 		{ field: 'title', comparator: 'contains', value: filter.search },
 		{ field: 'created', comparator: 'gte', value: filter.since },

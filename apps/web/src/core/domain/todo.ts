@@ -1,5 +1,6 @@
 import type { Branded } from './branded'
 import type { PlanId } from './plan'
+import type { TicketId } from './ticket'
 import type { ProjectId, UserId } from './project'
 
 export type TodoId = Branded<string, 'TodoId'>
@@ -17,6 +18,7 @@ export type Priority = (typeof PRIORITIES)[number]
 export type Todo = {
 	readonly id: TodoId
 	readonly projectId: ProjectId
+	readonly ticketId: TicketId | undefined
 	readonly planId: PlanId | undefined
 	readonly title: string
 	readonly details: string

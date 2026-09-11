@@ -4,6 +4,7 @@ import type { ActionEvent } from '_/types'
 import type { Priority, Todo, TodoStatus } from '../domain/todo'
 
 export type TodoFilter = {
+	readonly ticketId?: string
 	readonly status?: readonly TodoStatus[]
 	readonly priority?: Priority
 	readonly tags?: readonly string[]

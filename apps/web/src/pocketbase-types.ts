@@ -16,6 +16,7 @@ export const Collections = {
 	JournMembers: "journ_members",
 	JournPlans: "journ_plans",
 	JournProjects: "journ_projects",
+	JournTickets: "journ_tickets",
 	JournTodos: "journ_todos",
 	Users: "users",
 } as const
@@ -106,6 +107,7 @@ export type JournDocsRecord<Ttags = unknown> = {
 	id: string
 	project: RecordIdString
 	slug: string
+	ticket?: RecordIdString
 	tags?: null | Ttags
 	title: string
 	updated: IsoAutoDateString
@@ -121,8 +123,9 @@ export type JournLogsRecord<Tmeta = unknown, Ttags = unknown> = {
 	plan?: RecordIdString
 	pr?: string
 	project: RecordIdString
+	external_ref?: string
 	tags?: null | Ttags
-	ticket?: string
+	ticket?: RecordIdString
 	title: string
 	todo?: RecordIdString
 	updated: IsoAutoDateString
@@ -158,6 +161,7 @@ export type JournPlansRecord<Ttags = unknown> = {
 	project: RecordIdString
 	status: JournPlansStatusOptions
 	tags?: null | Ttags
+	ticket?: RecordIdString
 	title: string
 	updated: IsoAutoDateString
 }
@@ -200,6 +204,38 @@ export type JournTodosRecord<Tdepends_on = unknown, Ttags = unknown> = {
 	project: RecordIdString
 	status: JournTodosStatusOptions
 	tags?: null | Ttags
+	ticket?: RecordIdString
+	title: string
+	updated: IsoAutoDateString
+}
+
+export const JournTicketsStatusOptions = {
+	"open": "open",
+	"in_progress": "in_progress",
+	"blocked": "blocked",
+	"closed": "closed",
+	"cancelled": "cancelled",
+} as const
+export type JournTicketsStatusOptions = typeof JournTicketsStatusOptions[keyof typeof JournTicketsStatusOptions]
+
+export const JournTicketsPriorityOptions = {
+	"low": "low",
+	"medium": "medium",
+	"high": "high",
+} as const
+export type JournTicketsPriorityOptions = typeof JournTicketsPriorityOptions[keyof typeof JournTicketsPriorityOptions]
+export type JournTicketsRecord<Ttags = unknown> = {
+	assignee?: RecordIdString
+	body?: HTMLString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	external_ref?: string
+	id: string
+	priority: JournTicketsPriorityOptions
+	project: RecordIdString
+	slug: string
+	status: JournTicketsStatusOptions
+	tags?: null | Ttags
 	title: string
 	updated: IsoAutoDateString
 }
@@ -228,6 +264,7 @@ export type JournLogsResponse<Tmeta = unknown, Ttags = unknown, Texpand = unknow
 export type JournMembersResponse<Texpand = unknown> = Required<JournMembersRecord> & BaseSystemFields<Texpand>
 export type JournPlansResponse<Ttags = unknown, Texpand = unknown> = Required<JournPlansRecord<Ttags>> & BaseSystemFields<Texpand>
 export type JournProjectsResponse<Texpand = unknown> = Required<JournProjectsRecord> & BaseSystemFields<Texpand>
+export type JournTicketsResponse<Ttags = unknown, Texpand = unknown> = Required<JournTicketsRecord<Ttags>> & BaseSystemFields<Texpand>
 export type JournTodosResponse<Tdepends_on = unknown, Ttags = unknown, Texpand = unknown> = Required<JournTodosRecord<Tdepends_on, Ttags>> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
@@ -244,6 +281,7 @@ export type CollectionRecords = {
 	journ_members: JournMembersRecord
 	journ_plans: JournPlansRecord
 	journ_projects: JournProjectsRecord
+	journ_tickets: JournTicketsRecord
 	journ_todos: JournTodosRecord
 	users: UsersRecord
 }
@@ -259,6 +297,7 @@ export type CollectionResponses = {
 	journ_members: JournMembersResponse
 	journ_plans: JournPlansResponse
 	journ_projects: JournProjectsResponse
+	journ_tickets: JournTicketsResponse
 	journ_todos: JournTodosResponse
 	users: UsersResponse
 }
