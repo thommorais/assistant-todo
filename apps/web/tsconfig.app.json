@@ -1,0 +1,24 @@
+{
+	"extends": "@thom/typescript-config/react-library.json",
+	"compilerOptions": {
+		"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+		"target": "ES2023",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["vite/client"],
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"allowArbitraryExtensions": true,
+		"verbatimModuleSyntax": true,
+		"declaration": false,
+		"declarationMap": false,
+		"noEmit": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"erasableSyntaxOnly": true,
+		"noFallthroughCasesInSwitch": true,
+		"paths": {
+			"_/*": ["./src/*"]
+		}
+	},
+	"include": ["src", "reset.d.ts"]
+}

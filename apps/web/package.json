@@ -1,0 +1,47 @@
+{
+	"name": "@thom/web",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"start": "vite preview",
+		"lint": "oxlint ./src",
+		"format": "oxfmt ./src",
+		"typecheck": "tsc -b",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:watch": "vitest --watch",
+		"clean": "rm -rf dist node_modules"
+	},
+	"dependencies": {
+		"@tanstack/react-router": "^1.170.32",
+		"@thom/ui": "workspace:*",
+		"intlayer": "^8.9.8",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"react-intlayer": "^8.9.8",
+		"tailwind-variants": "catalog:",
+		"zustand": "catalog:"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.29.7",
+		"@rolldown/plugin-babel": "^0.2.3",
+		"@tanstack/router-plugin": "^1.168.35",
+		"@testing-library/react": "^16.3.3",
+		"@testing-library/user-event": "^14.6.1",
+		"@thom/typescript-config": "workspace:*",
+		"@total-typescript/ts-reset": "^0.6.1",
+		"@types/babel__core": "^7.20.5",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"babel-plugin-react-compiler": "^1.0.0",
+		"happy-dom": "^20.14.0",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	}
+}
