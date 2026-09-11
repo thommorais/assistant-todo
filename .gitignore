@@ -55,3 +55,6 @@ apps/base/.gocache/
 # compiled Go binaries
 apps/base/base
 apps/base/pb_data/
+
+# CLI build output
+apps/cli/bin/
