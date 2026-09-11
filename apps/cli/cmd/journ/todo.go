@@ -51,7 +51,12 @@ func todoListCommand() *cobra.Command {
 				filter.Tags = strings.Split(tags, ",")
 			}
 
-			todos, err := api().ListTodos(flagProject, filter)
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+
+			todos, err := journ.ListTodos(flagProject, filter)
 			if err != nil {
 				return err
 			}
@@ -76,7 +81,12 @@ func todoGetCommand() *cobra.Command {
 		Short: "Show one todo",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			todo, err := api().GetTodo(args[0])
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+
+			todo, err := journ.GetTodo(args[0])
 			if err != nil {
 				return err
 			}
@@ -105,7 +115,12 @@ func todoCreateCommand() *cobra.Command {
 			setIf(&in.DueDate, due)
 			setTags(&in.Tags, tags)
 
-			todo, err := api().CreateTodo(flagProject, in)
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+
+			todo, err := journ.CreateTodo(flagProject, in)
 			if err != nil {
 				return err
 			}
@@ -144,7 +159,12 @@ func todoUpdateCommand() *cobra.Command {
 				return errors.New("nothing to update: pass at least one field")
 			}
 
-			todo, err := api().UpdateTodo(args[0], in)
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+
+			todo, err := journ.UpdateTodo(args[0], in)
 			if err != nil {
 				return err
 			}
@@ -169,7 +189,12 @@ func todoDeleteCommand() *cobra.Command {
 		Short: "Delete a todo",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			if err := api().DeleteTodo(args[0]); err != nil {
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+
+			if err := journ.DeleteTodo(args[0]); err != nil {
 				return err
 			}
 			if !flagJSON {

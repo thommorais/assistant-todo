@@ -17,9 +17,12 @@ var (
 	flagJSON    bool
 )
 
-func api() *client.Client {
-	cfg := config.Resolve(flagURL, flagToken)
-	return client.New(cfg.URL, cfg.Token)
+func api() (*client.Client, error) {
+	cfg, err := config.Resolve(flagURL, flagToken)
+	if err != nil {
+		return nil, err
+	}
+	return client.New(cfg.URL, cfg.Token), nil
 }
 
 func main() {
@@ -34,7 +37,15 @@ func main() {
 	root.PersistentFlags().StringVar(&flagToken, "token", "", "auth token (default $JOURN_TOKEN or the cached login)")
 	root.PersistentFlags().BoolVar(&flagJSON, "json", false, "output JSON instead of a table")
 
-	root.AddCommand(configCommand(), loginCommand(), logoutCommand(), todoCommand())
+	root.AddCommand(
+		configCommand(),
+		docCommand(),
+		logCommand(),
+		loginCommand(),
+		logoutCommand(),
+		planCommand(),
+		todoCommand(),
+	)
 
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "journ: "+err.Error())

@@ -21,7 +21,10 @@ func loginCommand() *cobra.Command {
 		Use:   "login",
 		Short: "Authenticate and cache a token",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			cfg := config.Resolve(flagURL, "")
+			cfg, err := config.Resolve(flagURL, "")
+			if err != nil {
+				return err
+			}
 
 			if email == "" {
 				value, err := prompt("Email: ")

@@ -3,8 +3,11 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -34,8 +37,41 @@ func Path() (string, error) {
 	return filepath.Join(dir, "journ", "credentials.json"), nil
 }
 
+// NormalizeURL turns what someone actually types into an origin the client can
+// append paths to. A bare host is the common case when pasting a deployment
+// address, and a pasted URL often carries a path that would otherwise produce
+// a 404 far from its cause.
+func NormalizeURL(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", errors.New("empty URL")
+	}
+
+	if !strings.Contains(trimmed, "://") {
+		// Loopback almost never has TLS; anything else is assumed to.
+		scheme := "https"
+		if host, _, _ := strings.Cut(trimmed, ":"); host == "localhost" || host == "127.0.0.1" || host == "[::1]" {
+			scheme = "http"
+		}
+		trimmed = scheme + "://" + trimmed
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL %q: %w", raw, err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", fmt.Errorf("invalid URL %q: scheme must be http or https, got %q", raw, parsed.Scheme)
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("invalid URL %q: missing host", raw)
+	}
+
+	return parsed.Scheme + "://" + parsed.Host, nil
+}
+
 // Precedence: flag, environment, cached login.
-func Resolve(urlFlag, tokenFlag string) Config {
+func Resolve(urlFlag, tokenFlag string) (Config, error) {
 	cfg := Config{URL: urlFlag, Token: tokenFlag}
 
 	if cfg.URL == "" {
@@ -45,14 +81,12 @@ func Resolve(urlFlag, tokenFlag string) Config {
 		cfg.Token = os.Getenv(EnvToken)
 	}
 
-	if cfg.URL == "" || cfg.Token == "" {
+	// The cache is a pair: a token is only valid for the host that issued it.
+	// Taking one half alongside a token from elsewhere sends a credential to a
+	// server that never issued it, which surfaces as a 401 far from its cause.
+	if cfg.URL == "" && cfg.Token == "" {
 		if stored, err := load(); err == nil {
-			if cfg.URL == "" {
-				cfg.URL = stored.URL
-			}
-			if cfg.Token == "" {
-				cfg.Token = stored.Token
-			}
+			cfg.URL, cfg.Token = stored.URL, stored.Token
 		}
 	}
 
@@ -60,7 +94,13 @@ func Resolve(urlFlag, tokenFlag string) Config {
 		cfg.URL = DefaultURL
 	}
 
-	return cfg
+	normalized, err := NormalizeURL(cfg.URL)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.URL = normalized
+
+	return cfg, nil
 }
 
 func load() (cached, error) {
