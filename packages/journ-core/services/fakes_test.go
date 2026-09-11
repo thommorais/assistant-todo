@@ -1,0 +1,481 @@
+package services_test
+
+import (
+	"context"
+	"fmt"
+	"sort"
+	"strings"
+	"time"
+
+	"journ/journ-core/domain"
+	"journ/journ-core/ports"
+)
+
+// In-memory doubles for the driven ports. They enforce only what storage
+// enforces (existence, uniqueness), never business rules, so a test failing
+// here means the service under test let something through.
+
+type fakeClock struct{ now time.Time }
+
+func (c *fakeClock) Now() time.Time { return c.now }
+
+type seqIDs struct {
+	prefix string
+	n      int
+}
+
+func (g *seqIDs) NewID() string {
+	g.n++
+	return fmt.Sprintf("%s%03d", g.prefix, g.n)
+}
+
+type nopLogger struct{}
+
+func (nopLogger) Debug(string, map[string]any) {}
+func (nopLogger) Info(string, map[string]any)  {}
+func (nopLogger) Warn(string, map[string]any)  {}
+func (nopLogger) Error(string, map[string]any) {}
+
+type fakeProjects struct {
+	items  map[domain.ProjectID]domain.Project
+	emails map[string]domain.UserID
+	// failOn forces the named method to return an error, to test propagation.
+	failOn string
+}
+
+func newFakeProjects() *fakeProjects {
+	return &fakeProjects{
+		items:  map[domain.ProjectID]domain.Project{},
+		emails: map[string]domain.UserID{},
+	}
+}
+
+func (r *fakeProjects) fail(method string) error {
+	if r.failOn == method {
+		return fmt.Errorf("storage exploded in %s", method)
+	}
+	return nil
+}
+
+func (r *fakeProjects) List(_ context.Context, actor domain.UserID, includeArchived bool) ([]domain.Project, error) {
+	if err := r.fail("List"); err != nil {
+		return nil, err
+	}
+	out := []domain.Project{}
+	for _, p := range r.items {
+		if _, member := p.RoleOf(actor); !member {
+			continue
+		}
+		if p.Archived && !includeArchived {
+			continue
+		}
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeProjects) GetByID(_ context.Context, id domain.ProjectID) (domain.Project, error) {
+	if err := r.fail("GetByID"); err != nil {
+		return domain.Project{}, err
+	}
+	p, ok := r.items[id]
+	if !ok {
+		return domain.Project{}, domain.ErrNotFound
+	}
+	return p, nil
+}
+
+func (r *fakeProjects) GetBySlug(_ context.Context, slug string) (domain.Project, error) {
+	for _, p := range r.items {
+		if p.Slug == slug {
+			return p, nil
+		}
+	}
+	return domain.Project{}, domain.ErrNotFound
+}
+
+func (r *fakeProjects) Create(_ context.Context, p domain.Project) (domain.Project, error) {
+	if err := r.fail("Create"); err != nil {
+		return domain.Project{}, err
+	}
+	for _, existing := range r.items {
+		if existing.Slug == p.Slug {
+			return domain.Project{}, domain.ErrConflict
+		}
+	}
+	r.items[p.ID] = p
+	return p, nil
+}
+
+func (r *fakeProjects) Update(_ context.Context, p domain.Project) (domain.Project, error) {
+	if err := r.fail("Update"); err != nil {
+		return domain.Project{}, err
+	}
+	if _, ok := r.items[p.ID]; !ok {
+		return domain.Project{}, domain.ErrNotFound
+	}
+	r.items[p.ID] = p
+	return p, nil
+}
+
+func (r *fakeProjects) Delete(_ context.Context, id domain.ProjectID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+func (r *fakeProjects) AddMember(_ context.Context, id domain.ProjectID, user domain.UserID, role domain.Role) error {
+	p, ok := r.items[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	for i, m := range p.Members {
+		if m.UserID == user {
+			p.Members[i].Role = role
+			r.items[id] = p
+			return nil
+		}
+	}
+	p.Members = append(p.Members, domain.Member{UserID: user, Role: role})
+	r.items[id] = p
+	return nil
+}
+
+func (r *fakeProjects) RemoveMember(_ context.Context, id domain.ProjectID, user domain.UserID) error {
+	p, ok := r.items[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	kept := make([]domain.Member, 0, len(p.Members))
+	for _, m := range p.Members {
+		if m.UserID != user {
+			kept = append(kept, m)
+		}
+	}
+	p.Members = kept
+	r.items[id] = p
+	return nil
+}
+
+func (r *fakeProjects) SetMemberRole(ctx context.Context, id domain.ProjectID, user domain.UserID, role domain.Role) error {
+	return r.AddMember(ctx, id, user, role)
+}
+
+func (r *fakeProjects) FindUserByEmail(_ context.Context, email string) (domain.UserID, error) {
+	id, ok := r.emails[strings.ToLower(email)]
+	if !ok {
+		return "", domain.ErrNotFound
+	}
+	return id, nil
+}
+
+type fakePlans struct {
+	items  map[domain.PlanID]domain.Plan
+	failOn string
+}
+
+func newFakePlans() *fakePlans { return &fakePlans{items: map[domain.PlanID]domain.Plan{}} }
+
+func (r *fakePlans) List(_ context.Context, project domain.ProjectID, statuses []domain.PlanStatus) ([]domain.Plan, error) {
+	if r.failOn == "List" {
+		return nil, fmt.Errorf("storage exploded")
+	}
+	allow := map[domain.PlanStatus]bool{}
+	for _, s := range statuses {
+		allow[s] = true
+	}
+	out := []domain.Plan{}
+	for _, p := range r.items {
+		if p.ProjectID != project {
+			continue
+		}
+		if len(allow) > 0 && !allow[p.Status] {
+			continue
+		}
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakePlans) GetByID(_ context.Context, id domain.PlanID) (domain.Plan, error) {
+	p, ok := r.items[id]
+	if !ok {
+		return domain.Plan{}, domain.ErrNotFound
+	}
+	return p, nil
+}
+
+func (r *fakePlans) Create(_ context.Context, p domain.Plan) (domain.Plan, error) {
+	if r.failOn == "Create" {
+		return domain.Plan{}, fmt.Errorf("storage exploded")
+	}
+	r.items[p.ID] = p
+	return p, nil
+}
+
+func (r *fakePlans) Update(_ context.Context, p domain.Plan) (domain.Plan, error) {
+	if _, ok := r.items[p.ID]; !ok {
+		return domain.Plan{}, domain.ErrNotFound
+	}
+	r.items[p.ID] = p
+	return p, nil
+}
+
+func (r *fakePlans) Delete(_ context.Context, id domain.PlanID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+type fakeTodos struct {
+	items  map[domain.TodoID]domain.Todo
+	failOn string
+}
+
+func newFakeTodos() *fakeTodos { return &fakeTodos{items: map[domain.TodoID]domain.Todo{}} }
+
+func (r *fakeTodos) List(_ context.Context, project domain.ProjectID, f domain.TodoFilter) ([]domain.Todo, error) {
+	if r.failOn == "List" {
+		return nil, fmt.Errorf("storage exploded")
+	}
+	allow := map[domain.TodoStatus]bool{}
+	for _, s := range f.Status {
+		allow[s] = true
+	}
+	out := []domain.Todo{}
+	for _, t := range r.items {
+		if t.ProjectID != project {
+			continue
+		}
+		if f.PlanID != "" && t.PlanID != f.PlanID {
+			continue
+		}
+		if len(allow) > 0 && !allow[t.Status] {
+			continue
+		}
+		if f.Priority != "" && t.Priority != f.Priority {
+			continue
+		}
+		if f.Search != "" && !strings.Contains(strings.ToLower(t.Title), strings.ToLower(f.Search)) {
+			continue
+		}
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTodos) ListByPlan(_ context.Context, plan domain.PlanID) ([]domain.Todo, error) {
+	out := []domain.Todo{}
+	for _, t := range r.items {
+		if t.PlanID == plan {
+			out = append(out, t)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTodos) GetByID(_ context.Context, id domain.TodoID) (domain.Todo, error) {
+	t, ok := r.items[id]
+	if !ok {
+		return domain.Todo{}, domain.ErrNotFound
+	}
+	return t, nil
+}
+
+func (r *fakeTodos) Create(_ context.Context, t domain.Todo) (domain.Todo, error) {
+	if r.failOn == "Create" {
+		return domain.Todo{}, fmt.Errorf("storage exploded")
+	}
+	r.items[t.ID] = t
+	return t, nil
+}
+
+func (r *fakeTodos) Update(_ context.Context, t domain.Todo) (domain.Todo, error) {
+	if _, ok := r.items[t.ID]; !ok {
+		return domain.Todo{}, domain.ErrNotFound
+	}
+	r.items[t.ID] = t
+	return t, nil
+}
+
+func (r *fakeTodos) Delete(_ context.Context, id domain.TodoID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+type fakeLogs struct {
+	items  []domain.LogEntry
+	failOn string
+	// lastFilter records what the service actually asked storage for, so
+	// tests can assert on clamping the service applies before the call.
+	lastFilter domain.LogFilter
+}
+
+func newFakeLogs() *fakeLogs { return &fakeLogs{} }
+
+func (r *fakeLogs) List(_ context.Context, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error) {
+	r.lastFilter = f
+	if r.failOn == "List" {
+		return nil, fmt.Errorf("storage exploded")
+	}
+	out := []domain.LogEntry{}
+	for _, e := range r.items {
+		if e.ProjectID != project {
+			continue
+		}
+		if f.PlanID != "" && e.PlanID != f.PlanID {
+			continue
+		}
+		if f.TodoID != "" && e.TodoID != f.TodoID {
+			continue
+		}
+		if f.Branch != "" && e.Branch != f.Branch {
+			continue
+		}
+		if f.Ticket != "" && e.Ticket != f.Ticket {
+			continue
+		}
+		if f.Search != "" {
+			q := strings.ToLower(f.Search)
+			if !strings.Contains(strings.ToLower(e.Title), q) && !strings.Contains(strings.ToLower(e.Body), q) {
+				continue
+			}
+		}
+		out = append(out, e)
+	}
+	return out, nil
+}
+
+func (r *fakeLogs) GetByID(_ context.Context, id domain.LogID) (domain.LogEntry, error) {
+	for _, e := range r.items {
+		if e.ID == id {
+			return e, nil
+		}
+	}
+	return domain.LogEntry{}, domain.ErrNotFound
+}
+
+func (r *fakeLogs) Create(_ context.Context, e domain.LogEntry) (domain.LogEntry, error) {
+	if r.failOn == "Create" {
+		return domain.LogEntry{}, fmt.Errorf("storage exploded")
+	}
+	r.items = append(r.items, e)
+	return e, nil
+}
+
+func (r *fakeLogs) Update(_ context.Context, e domain.LogEntry) (domain.LogEntry, error) {
+	for i, existing := range r.items {
+		if existing.ID == e.ID {
+			r.items[i] = e
+			return e, nil
+		}
+	}
+	return domain.LogEntry{}, domain.ErrNotFound
+}
+
+func (r *fakeLogs) Delete(_ context.Context, id domain.LogID) error {
+	for i, e := range r.items {
+		if e.ID == id {
+			r.items = append(r.items[:i], r.items[i+1:]...)
+			return nil
+		}
+	}
+	return domain.ErrNotFound
+}
+
+type fakeDocs struct {
+	items map[domain.DocID]domain.Doc
+}
+
+func newFakeDocs() *fakeDocs { return &fakeDocs{items: map[domain.DocID]domain.Doc{}} }
+
+func (r *fakeDocs) List(_ context.Context, project domain.ProjectID, f domain.DocFilter) ([]domain.Doc, error) {
+	out := []domain.Doc{}
+	for _, d := range r.items {
+		if d.ProjectID != project {
+			continue
+		}
+		if f.Search != "" && !strings.Contains(strings.ToLower(d.Title), strings.ToLower(f.Search)) {
+			continue
+		}
+		out = append(out, d)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeDocs) GetByID(_ context.Context, id domain.DocID) (domain.Doc, error) {
+	d, ok := r.items[id]
+	if !ok {
+		return domain.Doc{}, domain.ErrNotFound
+	}
+	return d, nil
+}
+
+func (r *fakeDocs) GetBySlug(_ context.Context, project domain.ProjectID, slug string) (domain.Doc, error) {
+	for _, d := range r.items {
+		if d.ProjectID == project && d.Slug == slug {
+			return d, nil
+		}
+	}
+	return domain.Doc{}, domain.ErrNotFound
+}
+
+func (r *fakeDocs) Create(_ context.Context, d domain.Doc) (domain.Doc, error) {
+	r.items[d.ID] = d
+	return d, nil
+}
+
+func (r *fakeDocs) Update(_ context.Context, d domain.Doc) (domain.Doc, error) {
+	if _, ok := r.items[d.ID]; !ok {
+		return domain.Doc{}, domain.ErrNotFound
+	}
+	r.items[d.ID] = d
+	return d, nil
+}
+
+func (r *fakeDocs) Delete(_ context.Context, id domain.DocID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+type fakeSearch struct {
+	hits []domain.SearchHit
+}
+
+func (r *fakeSearch) Search(_ context.Context, project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+	out := []domain.SearchHit{}
+	for _, h := range r.hits {
+		if h.ProjectID == project {
+			out = append(out, h)
+		}
+	}
+	return out, nil
+}
+
+// compile-time checks that the doubles satisfy the ports they stand in for.
+var (
+	_ ports.ProjectRepository = (*fakeProjects)(nil)
+	_ ports.PlanRepository    = (*fakePlans)(nil)
+	_ ports.TodoRepository    = (*fakeTodos)(nil)
+	_ ports.LogRepository     = (*fakeLogs)(nil)
+	_ ports.DocRepository     = (*fakeDocs)(nil)
+	_ ports.SearchRepository  = (*fakeSearch)(nil)
+	_ ports.Clock             = (*fakeClock)(nil)
+	_ ports.IDGenerator       = (*seqIDs)(nil)
+	_ ports.Logger            = nopLogger{}
+)

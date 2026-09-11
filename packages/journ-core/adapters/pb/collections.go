@@ -1,0 +1,19 @@
+// Package pb implements the driven ports against PocketBase, used in-process
+// via core.App. Records are mapped to domain models at this boundary: nothing
+// above this package ever sees a *core.Record.
+package pb
+
+// Collection and field names. They are constants because the migration, the
+// repositories and the search adapter must all agree on them; a typo in a
+// string literal would surface as an empty result rather than a failure.
+const (
+	ColProjects = "journ_projects"
+	ColMembers  = "journ_members"
+	ColPlans    = "journ_plans"
+	ColTodos    = "journ_todos"
+	ColLogs     = "journ_logs"
+	ColDocs     = "journ_docs"
+
+	// ColUsers is PocketBase's built-in auth collection.
+	ColUsers = "users"
+)

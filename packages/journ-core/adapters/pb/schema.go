@@ -1,0 +1,276 @@
+package pb
+
+import (
+	"github.com/pocketbase/pocketbase/core"
+)
+
+// Membership is modelled as its own collection rather than a multi-relation
+// on the project, because a member carries a role. That also lets every other
+// collection express its access rule as a single subquery against members,
+// so ownership is checked the same way everywhere.
+const (
+	// memberOfProject matches when the requesting user holds any role on the
+	// record's project.
+	memberOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id"
+	// writerOfProject additionally requires a writing role.
+	writerOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id && @collection.journ_members.role != 'viewer'"
+	// ownerOfProject restricts to the administrative role.
+	ownerOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id && @collection.journ_members.role = 'owner'"
+)
+
+func strPtr(s string) *string { return &s }
+
+func autodates() []core.Field {
+	return []core.Field{
+		&core.AutodateField{Name: "created", OnCreate: true},
+		&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
+	}
+}
+
+func ensureProjects(app core.App) error {
+	if _, ok := find(app, ColProjects); ok {
+		return nil
+	}
+	c := core.NewBaseCollection(ColProjects)
+	c.Fields.Add(
+		&core.TextField{Name: "slug", Required: true, Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`, Presentable: true},
+		&core.TextField{Name: "name", Required: true, Max: 120, Presentable: true},
+		&core.TextField{Name: "descr", Max: 2000},
+		&core.BoolField{Name: "archived"},
+	)
+	c.Fields.Add(autodates()...)
+	c.AddIndex("idx_journ_projects_slug", true, "slug", "")
+
+	return app.Save(c)
+}
+
+func ensureMembers(app core.App) error {
+	if _, ok := find(app, ColMembers); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColMembers)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.RelationField{Name: "user", Required: true, CollectionId: users.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: []string{"owner", "editor", "viewer"}},
+	)
+	c.Fields.Add(autodates()...)
+	// One row per user per project: the unique index is what stops a
+	// duplicate membership from producing two conflicting roles.
+	c.AddIndex("idx_journ_members_unique", true, "project, user", "")
+	c.AddIndex("idx_journ_members_user", false, "user", "")
+
+	return app.Save(c)
+}
+
+func ensurePlans(app core.App) error {
+	if _, ok := find(app, ColPlans); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColPlans)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
+		&core.TextField{Name: "goal", Max: 2000},
+		&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"draft", "active", "done", "abandoned"}},
+		&core.JSONField{Name: "tags", MaxSize: 4000},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	c.AddIndex("idx_journ_plans_project", false, "project", "")
+
+	return app.Save(c)
+}
+
+func ensureTodos(app core.App) error {
+	if _, ok := find(app, ColTodos); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	plans, err := app.FindCollectionByNameOrId(ColPlans)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColTodos)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		// Deleting a plan detaches its todos rather than destroying them, so
+		// this relation must not cascade.
+		&core.RelationField{Name: "plan", CollectionId: plans.Id, CascadeDelete: false, MaxSelect: 1},
+		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
+		&core.TextField{Name: "details", Max: 2000},
+		&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"pending", "in_progress", "done", "blocked", "cancelled"}},
+		&core.SelectField{Name: "priority", Required: true, MaxSelect: 1, Values: []string{"low", "medium", "high"}},
+		&core.JSONField{Name: "tags", MaxSize: 4000},
+		&core.NumberField{Name: "position"},
+		&core.JSONField{Name: "depends_on", MaxSize: 4000},
+		&core.DateField{Name: "due_date"},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	c.AddIndex("idx_journ_todos_project", false, "project", "")
+	c.AddIndex("idx_journ_todos_plan", false, "plan", "")
+	c.AddIndex("idx_journ_todos_status", false, "project, status", "")
+
+	return app.Save(c)
+}
+
+func ensureLogs(app core.App) error {
+	if _, ok := find(app, ColLogs); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	plans, err := app.FindCollectionByNameOrId(ColPlans)
+	if err != nil {
+		return err
+	}
+	todos, err := app.FindCollectionByNameOrId(ColTodos)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColLogs)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.RelationField{Name: "plan", CollectionId: plans.Id, CascadeDelete: false, MaxSelect: 1},
+		&core.RelationField{Name: "todo", CollectionId: todos.Id, CascadeDelete: false, MaxSelect: 1},
+		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
+		&core.EditorField{Name: "body", MaxSize: 500000},
+		&core.TextField{Name: "branch", Max: 200},
+		&core.TextField{Name: "pr", Max: 200},
+		&core.TextField{Name: "ticket", Max: 200},
+		&core.JSONField{Name: "meta", MaxSize: 100000},
+		&core.JSONField{Name: "tags", MaxSize: 4000},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	c.AddIndex("idx_journ_logs_project_created", false, "project, created", "")
+	c.AddIndex("idx_journ_logs_plan", false, "plan", "")
+	c.AddIndex("idx_journ_logs_todo", false, "todo", "")
+	c.AddIndex("idx_journ_logs_branch", false, "branch", "")
+	c.AddIndex("idx_journ_logs_ticket", false, "ticket", "")
+
+	return app.Save(c)
+}
+
+func ensureDocs(app core.App) error {
+	if _, ok := find(app, ColDocs); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColDocs)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.TextField{Name: "slug", Required: true, Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`},
+		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
+		&core.EditorField{Name: "body", MaxSize: 500000},
+		&core.JSONField{Name: "tags", MaxSize: 4000},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	// Slugs address a doc within its project, so uniqueness is per project.
+	c.AddIndex("idx_journ_docs_slug", true, "project, slug", "")
+
+	return app.Save(c)
+}
+
+// applyRules sets the access rules once every collection exists. Splitting
+// this from creation is what lets a rule reference journ_members: PocketBase
+// resolves @collection references at save time, so the target must already be
+// there.
+//
+// These rules govern direct REST access to the collections. The journ API
+// checks the same permissions in its service layer, so they are a second line
+// of defence rather than the only one.
+func applyRules(app core.App) error {
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	// A project is visible to its members; only owners may change or remove
+	// it. Creating one is open to any authenticated user, who becomes its
+	// first owner through the membership row written alongside.
+	memberOfThis := "@collection.journ_members.project = id && @collection.journ_members.user = @request.auth.id"
+	ownerOfThis := memberOfThis + " && @collection.journ_members.role = 'owner'"
+	projects.ListRule = strPtr(memberOfThis)
+	projects.ViewRule = strPtr(memberOfThis)
+	projects.CreateRule = strPtr("@request.auth.id != ''")
+	projects.UpdateRule = strPtr(ownerOfThis)
+	projects.DeleteRule = strPtr(ownerOfThis)
+	if err := app.Save(projects); err != nil {
+		return err
+	}
+
+	members, err := app.FindCollectionByNameOrId(ColMembers)
+	if err != nil {
+		return err
+	}
+	// Members see the roster of projects they belong to; only owners change
+	// it, and the last-owner rule is enforced by the API above this.
+	members.ListRule = strPtr(memberOfProject)
+	members.ViewRule = strPtr(memberOfProject)
+	members.CreateRule = strPtr(ownerOfProject)
+	members.UpdateRule = strPtr(ownerOfProject)
+	members.DeleteRule = strPtr(ownerOfProject)
+	if err := app.Save(members); err != nil {
+		return err
+	}
+
+	for _, name := range []string{ColPlans, ColTodos, ColDocs, ColLogs} {
+		c, err := app.FindCollectionByNameOrId(name)
+		if err != nil {
+			return err
+		}
+		c.ListRule = strPtr(memberOfProject)
+		c.ViewRule = strPtr(memberOfProject)
+		c.CreateRule = strPtr(writerOfProject)
+		c.UpdateRule = strPtr(writerOfProject)
+		c.DeleteRule = strPtr(writerOfProject)
+		if err := app.Save(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
