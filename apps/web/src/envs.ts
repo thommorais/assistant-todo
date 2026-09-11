@@ -50,7 +50,10 @@ const createEnvs = (parsed: MergedSafeParseReturn): Envs => {
 
 const clientSchema = z.object({
 	NODE_ENV: z.enum(['development', 'test', 'production']),
-	API_URL: z.union([z.url(), z.literal('')]).default('http://127.0.0.1:8090'),
+	PUBLIC_API_URL: z
+		.union([z.url(), z.literal('')])
+		.default('http://127.0.0.1:8090')
+		.transform(value => (value === '' ? '/' : value)),
 })
 
 // Don't touch
@@ -71,6 +74,7 @@ const processEnv: PROCESS_ENV = {
 	// Server-side env vars (unused in the SPA; kept for schema parity)
 	NODE_ENV: viteEnv.MODE as 'development' | 'test' | 'production',
 	API_URL: viteEnv.VITE_API_URL ?? 'http://127.0.0.1:8090',
+	PUBLIC_API_URL: viteEnv.VITE_API_URL,
 }
 
 const ENVS = createEnvs(parseEnvs(processEnv, clientSchema))
