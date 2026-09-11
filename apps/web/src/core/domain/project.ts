@@ -1,7 +1,4 @@
-declare const brand: unique symbol
-
-type Branded<T, B extends string> = T & { readonly [brand]: B }
-
+import type { Branded } from './branded'
 export type ProjectId = Branded<string, 'ProjectId'>
 export type UserId = Branded<string, 'UserId'>
 

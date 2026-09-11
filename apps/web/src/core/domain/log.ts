@@ -1,10 +1,7 @@
+import type { Branded } from './branded'
 import type { PlanId } from './plan'
 import type { ProjectId, UserId } from './project'
 import type { TodoId } from './todo'
-
-declare const brand: unique symbol
-
-type Branded<T, B extends string> = T & { readonly [brand]: B }
 
 export type LogId = Branded<string, 'LogId'>
 

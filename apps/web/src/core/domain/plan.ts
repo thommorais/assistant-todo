@@ -1,8 +1,5 @@
+import type { Branded } from './branded'
 import type { ProjectId, UserId } from './project'
-
-declare const brand: unique symbol
-
-type Branded<T, B extends string> = T & { readonly [brand]: B }
 
 export type PlanId = Branded<string, 'PlanId'>
 
