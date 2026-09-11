@@ -1,10 +1,12 @@
 import { foldUpdates } from '_/adapters/pocketbase/fold-updates'
 import type { Todo } from '_/core/domain/todo'
-import type { TodoFilter } from '_/core/ports/todos'
-import { Result } from '_/lib/result'
-import { ActionEvent } from '_/types'
+import type { TodoFilter, Unsubscribe } from '_/core/ports/todos'
+import type { Result } from '_/lib/result'
+import type { ActionEvent } from '_/types'
 import { useEffect, useEffectEvent, useState } from 'react'
 import { useContainer } from './container'
+
+const noop = () => {}
 
 type TodosState =
 	| { readonly status: 'loading' }
@@ -36,15 +38,15 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 	}, [])
 
 	useEffect(() => {
-		const unsubscribes: Array<() => void> = []
+		const unsubscribes: Unsubscribe[] = []
 		let cancelled = false
-		const subscribe = async (open: Promise<Result<() => void>>) => {
+		const subscribe = async (open: Promise<Result<Unsubscribe>>) => {
 			const result = await open
 			if (!result.success) {
 				return
 			}
 			if (cancelled) {
-				result.value()
+				void result.value().catch(noop)
 				return
 			}
 			unsubscribes.push(result.value)
@@ -65,12 +67,13 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 
 		subscribe(todos.subscribeToList(project, update, JSON.parse(key) as TodoFilter))
 
+		// A React cleanup cannot be async, so teardown failures are swallowed
+		// here rather than surfacing as unhandled rejections.
 		return () => {
 			cancelled = true
 			for (const close of unsubscribes) {
-				close()
+				void close().catch(noop)
 			}
-			setState({ status: 'loading' })
 		}
 	}, [project, key, todos])
 

@@ -1,7 +1,7 @@
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId, todoId as toTodoId } from '_/core/domain/todo'
-import type { TodoFilter, TodosPort } from '_/core/ports/todos'
+import type { TodoFilter, TodosPort, Unsubscribe } from '_/core/ports/todos'
 import type { ActionEvent } from '_/types'
 import { err, ok, type Result } from '_/lib/result'
 import { tryCatch } from '_/lib/try-catch'
@@ -59,7 +59,7 @@ export const createTodosAdapter = (): TodosPort => {
 
 			return error ? err(new Error(`Failed to list todos: ${error.message}`, { cause: error })) : ok(data.map(toTodo))
 		},
-		subscribeToList: async (project, update, filter = {}): Promise<Result<() => void>> => {
+		subscribeToList: async (project, update, filter = {}): Promise<Result<Unsubscribe>> => {
 			try {
 				const { expr, params } = filterFor<TodoColumns>()([
 					{ field: 'project.slug', comparator: 'eq', value: project },
@@ -79,7 +79,7 @@ export const createTodosAdapter = (): TodosPort => {
 						sort: 'position',
 					},
 				)
-				return ok(() => void unsubscribe())
+				return ok(unsubscribe)
 			} catch (error) {
 				return err(new Error(`Failed to subscribe to list: ${message(error)}`))
 			}
