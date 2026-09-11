@@ -1,7 +1,7 @@
 # journ
 
-A project journal a code agent can write to: plans, todos, work logs and docs,
-scoped per project, reachable from any client.
+A project journal a code agent can write to: tickets, plans, todos, work logs
+and docs, scoped per project, reachable from any client.
 
 One Go core (`packages/journ-core`) holds the domain and use cases. PocketBase
 (`apps/base`) provides storage, auth and the admin UI, and serves the REST API.
@@ -40,8 +40,8 @@ cd apps/base && go run . seed
 ```
 
 Creates `user@test.com` / `pass@test` and fills the journal with two projects
-mid-flight: plans with real progress, todos in several states, and work logs
-carrying actual decisions. It refuses to run against a database that already
+mid-flight: a ticket each, plans with real progress, todos in several states,
+and work logs carrying actual decisions. It refuses to run against a database that already
 has projects (`--force` overrides).
 
 The seed drives the use cases rather than writing records, so it exercises the
@@ -52,7 +52,12 @@ same validation and permission checks as any client.
 A **project** has **members** (owner, editor, viewer) and always keeps at
 least one owner. Under it sit **plans** (stated intent), **todos** (the
 steps), **logs** (what was built, how, and where it stands) and **docs**
-(durable knowledge). Search spans all four.
+(durable knowledge).
+
+A **ticket** is a unit of work large enough to carry its own plans, todos,
+logs and docs: those four each hold an optional ticket, so the same record
+either hangs off a ticket or sits loose under the project. Deleting a ticket
+detaches its contents rather than destroying them. Search spans all five.
 
 Permissions are checked in the service layer, so every client gets the same
 rules; PocketBase collection rules enforce the same tenancy for direct REST
