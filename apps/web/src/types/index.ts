@@ -21,3 +21,5 @@ interface RecordModel extends BaseModel {
 type Primitive = null | undefined | string | number | boolean | symbol | bigint
 
 export type { ANY, DateType, HTMLString, IsoDateString, Primitive, RecordIdString, RecordModel }
+
+export type ActionEvent = 'delete' | 'update' | 'create'

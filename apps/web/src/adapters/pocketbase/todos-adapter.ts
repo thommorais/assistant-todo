@@ -2,6 +2,7 @@ import { projectId as toProjectId, userId as toUserId } from '_/core/domain/proj
 import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId, todoId as toTodoId } from '_/core/domain/todo'
 import type { TodoFilter, TodosPort } from '_/core/ports/todos'
+import type { ActionEvent } from '_/types'
 import { err, ok, type Result } from '_/lib/result'
 import { tryCatch } from '_/lib/try-catch'
 import { Collections, type JournTodosResponse } from '_/pocketbase-types'
@@ -33,8 +34,11 @@ const toTodo = (record: TodoRecord): Todo => ({
 	updatedAt: new Date(record.updated),
 })
 
+const message = (error: unknown): string => (error instanceof Error ? error.message : 'Unknown error')
+
 export const createTodosAdapter = (): TodosPort => {
 	const client = getPocketBaseClient()
+	const collection = client.collection(Collections.JournTodos)
 
 	return {
 		list: async (project, filter = {}): Promise<Result<readonly Todo[]>> => {
@@ -47,13 +51,38 @@ export const createTodosAdapter = (): TodosPort => {
 			])
 
 			const { data, error } = await tryCatch(
-				paginate<TodoRecord>(client.collection(Collections.JournTodos), filter, {
+				paginate<TodoRecord>(collection, filter, {
 					filter: client.filter(expr, params),
 					sort: 'position',
 				}),
 			)
 
 			return error ? err(new Error(`Failed to list todos: ${error.message}`, { cause: error })) : ok(data.map(toTodo))
+		},
+		subscribeToList: async (project, update, filter = {}): Promise<Result<() => void>> => {
+			try {
+				const { expr, params } = filterFor<TodoColumns>()([
+					{ field: 'project.slug', comparator: 'eq', value: project },
+					{ field: 'status', comparator: 'anyOf', value: filter.status },
+					{ field: 'priority', comparator: 'eq', value: filter.priority },
+					{ field: 'tags', comparator: 'containsAll', value: filter.tags },
+					{ field: 'title', comparator: 'contains', value: filter.search },
+				])
+
+				const unsubscribe = await collection.subscribe<TodoRecord>(
+					'*',
+					e => {
+						update(toTodo(e.record), e.action as ActionEvent)
+					},
+					{
+						filter: client.filter(expr, params),
+						sort: 'position',
+					},
+				)
+				return ok(() => void unsubscribe())
+			} catch (error) {
+				return err(new Error(`Failed to subscribe to list: ${message(error)}`))
+			}
 		},
 	}
 }

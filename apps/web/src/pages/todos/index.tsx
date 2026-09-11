@@ -12,13 +12,9 @@ const statusLabels: Record<TodoStatus, string> = {
 	cancelled: 'Cancelled',
 }
 
-
-
-
-
 const Todos = () => {
 	const { slug } = useParams({ from: '/_authenticated/$slug/todos' })
-	const state = useTodos(slug, { status: ['pending', 'in_progress', 'blocked'] })
+	const state = useTodos(slug)
 
 	if (state.status === 'loading') {
 		return (
