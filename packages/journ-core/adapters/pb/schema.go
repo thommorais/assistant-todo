@@ -20,12 +20,14 @@ const (
 	// record's project. ?= because a project has many membership rows and
 	// only one has to belong to the caller.
 	memberOfProject = "project.journ_members_via_project.user ?= @request.auth.id"
-	// writerOfProject and ownerOfProject check the role on the same row as
-	// the user, so the conditions cannot be satisfied by two different
-	// members. The alias is what keeps it one join.
-	writerOfProject = "@collection.journ_members:mine.project = project && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role != 'viewer'"
+	// An aliased @collection join is rejected on create, where the record has
+	// no id yet, so writes traverse the same back-relation as reads. The role
+	// clause is a second ?= over that traversal: with one membership row per
+	// user per project (enforced by idx_journ_members_unique) it can only
+	// match the caller's own row.
+	writerOfProject = "project.journ_members_via_project.user ?= @request.auth.id && project.journ_members_via_project.role ?!= 'viewer'"
 	// ownerOfProject restricts to the administrative role.
-	ownerOfProject = "@collection.journ_members:mine.project = project && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role = 'owner'"
+	ownerOfProject = "project.journ_members_via_project.user ?= @request.auth.id && project.journ_members_via_project.role ?= 'owner'"
 )
 
 func strPtr(s string) *string { return &s }
@@ -242,7 +244,7 @@ func applyRules(app core.App) error {
 	// it. Creating one is open to any authenticated user, who becomes its
 	// first owner through the membership row written alongside.
 	memberOfThis := "journ_members_via_project.user ?= @request.auth.id"
-	ownerOfThis := "@collection.journ_members:mine.project = id && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role = 'owner'"
+	ownerOfThis := "journ_members_via_project.user ?= @request.auth.id && journ_members_via_project.role ?= 'owner'"
 	projects.ListRule = strPtr(memberOfThis)
 	projects.ViewRule = strPtr(memberOfThis)
 	projects.CreateRule = strPtr("@request.auth.id != ''")
