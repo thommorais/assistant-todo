@@ -28,6 +28,8 @@
 		"./dropdown": "./src/dropdown.tsx",
 		"./avatar": "./src/avatar.tsx",
 		"./tooltip": "./src/tooltip.tsx",
+		"./popover": "./src/popover.tsx",
+		"./sheet": "./src/sheet.tsx",
 		"./select": "./src/select.tsx",
 		"./combobox": "./src/combobox.tsx",
 		"./command": "./src/command.tsx",
