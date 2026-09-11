@@ -14,21 +14,18 @@ type TodosState =
 	| { readonly status: 'ready'; readonly todos: readonly Todo[] }
 	| { readonly status: 'failed'; readonly message: string }
 
-let unsubscribes: Unsubscribe[] = []
-
-const subscribe = async (open: Promise<Result<Unsubscribe>>, cancelled: boolean) => {
+const subscribe = async (open: Promise<Result<Unsubscribe>>, signal: AbortSignal, opened: Unsubscribe[]) => {
 	const result = await open
 	if (!result.success) {
 		return
 	}
-	if (cancelled) {
+	if (signal.aborted) {
 		void result.value().catch(noop)
 		return
 	}
-	unsubscribes.push(result.value)
-}
 
-let cancelled = false
+	opened.push(result.value)
+}
 
 export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 	const { todos } = useContainer()
@@ -65,17 +62,21 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 
 	useEffect(() => {
 		load()
-	}, [])
+	}, [project, key])
 
 	useEffect(() => {
-		subscribe(todos.subscribeToList(project, update, JSON.parse(key) as TodoFilter), cancelled)
+		const controller = new AbortController()
+		const opened: Unsubscribe[] = []
+
+		void subscribe(todos.subscribeToList(project, update, JSON.parse(key) as TodoFilter), controller.signal, opened).catch(
+			noop,
+		)
 
 		return () => {
-			cancelled = true
-			for (const close of unsubscribes) {
+			controller.abort()
+			for (const close of opened) {
 				void close().catch(noop)
 			}
-			unsubscribes = []
 		}
 	}, [project, key, todos])
 
