@@ -79,8 +79,7 @@ func trustProxyIPHeader(app core.App) error {
 	return app.Save(settings)
 }
 
-// apis.Static answers any unmatched path with index.html, so without this an
-// /api typo returns 200 HTML instead of a JSON 404.
+// apis.Static would answer an unmatched /api path with 200 index.html.
 func spa(fsys fs.FS) func(*core.RequestEvent) error {
 	static := apis.Static(fsys, true)
 
