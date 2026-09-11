@@ -35,6 +35,9 @@ func main() {
 		if err := e.Next(); err != nil {
 			return err
 		}
+		if err := trustProxyIPHeader(e.App); err != nil {
+			return err
+		}
 		return folio.Migrate(e.App)
 	})
 
@@ -63,6 +66,17 @@ func main() {
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Railway's edge IP varies per request, which breaks realtime subscriptions.
+func trustProxyIPHeader(app core.App) error {
+	settings := app.Settings()
+	if len(settings.TrustedProxy.Headers) > 0 {
+		return nil
+	}
+	settings.TrustedProxy.Headers = []string{"X-Forwarded-For"}
+	settings.TrustedProxy.UseLeftmostIP = true
+	return app.Save(settings)
 }
 
 // apis.Static answers any unmatched path with index.html, so without this an
