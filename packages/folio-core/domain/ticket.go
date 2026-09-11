@@ -55,3 +55,11 @@ type TicketFilter struct {
 	Limit    int
 	Offset   int
 }
+
+type TicketBrief struct {
+	Ticket Ticket
+	Plans  []Plan
+	Todos  []Todo
+	Logs   []LogEntry
+	Docs   []Doc
+}

@@ -74,6 +74,14 @@ type TicketUseCase interface {
 	UpdateTicket(ctx context.Context, actor Actor, id domain.TicketID, in UpdateTicketInput) (domain.Ticket, error)
 	SetTicketStatus(ctx context.Context, actor Actor, id domain.TicketID, status domain.TicketStatus) (domain.Ticket, error)
 	DeleteTicket(ctx context.Context, actor Actor, id domain.TicketID) error
+
+	GetTicketBrief(ctx context.Context, actor Actor, id domain.TicketID, in BriefOptions) (domain.TicketBrief, error)
+	GetTicketBriefBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string, in BriefOptions) (domain.TicketBrief, error)
+}
+
+// BriefOptions bounds the brief. Zero RecentLogs means DefaultRecentLogs.
+type BriefOptions struct {
+	RecentLogs int
 }
 
 type CreateTicketInput struct {
