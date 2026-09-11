@@ -1,11 +1,21 @@
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { cn } from '@thom/libs/cn'
-import { Popover, PopoverButton, PopoverPanel } from '@thom/ui/popover'
-import { PRIORITIES, TODO_STATUSES, type Priority, type TodoStatus } from '_/core/domain/todo'
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuPortal,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from '@thom/ui/dropdown-menu'
 import { useTickets } from '_/app/use-tickets'
-import { useParams } from '@tanstack/react-router'
-import { useState } from 'react'
+import { PRIORITIES, TODO_STATUSES, type Priority, type TodoStatus } from '_/core/domain/todo'
 import type { TodosSearch } from '_/routes/_authenticated/$slug/todos'
+import { useState } from 'react'
 import { TODO_STATUS_LABELS } from './status-labels'
 import { CONTEXT_TAGS, KIND_TAGS } from './tag-vocabulary'
 
@@ -28,65 +38,41 @@ const ClearIcon = ({ className }: { readonly className?: string }) => (
 	</svg>
 )
 
-const panelClasses = cn(
-	'isolate w-max overflow-y-auto p-1',
-	'border-border bg-popover text-popover-foreground border',
-	'shadow-md focus:outline-hidden',
+const FilterMenuItem = ({ label, children }: { readonly label: string; readonly children: React.ReactNode }) => (
+	<DropdownMenuGroup>
+		<DropdownMenuSub>
+			<DropdownMenuSubTrigger>
+				<span>{label}</span>
+			</DropdownMenuSubTrigger>
+			<DropdownMenuPortal>
+				<DropdownMenuSubContent sideOffset={14} alignOffset={-4} className='p-0'>
+					{children}
+				</DropdownMenuSubContent>
+			</DropdownMenuPortal>
+		</DropdownMenuSub>
+	</DropdownMenuGroup>
 )
 
-type CheckItemProps = {
-	readonly label: string
-	readonly checked: boolean
-	readonly onToggle: () => void
-}
-
-const CheckItem = ({ label, checked, onToggle }: CheckItemProps) => (
-	<button
-		type='button'
-		onClick={onToggle}
-		className='data-focus:bg-accent hover:bg-accent flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left text-sm'
-	>
-		<span>{label}</span>
-		{checked && (
-			<svg viewBox='0 0 16 16' fill='none' className='size-3.5 shrink-0' aria-hidden>
-				<path d='M3.5 8.5l3 3 6-7' stroke='currentColor' strokeWidth='1.75' strokeLinecap='round' />
-			</svg>
-		)}
-	</button>
-)
-
-// The submenu is a plain hover/focus-driven panel rather than a nested
-// Popover: Headless UI closes an inner Popover when the outer one owns focus,
-// which would shut the panel on every checkbox click.
-const Submenu = ({
+const FilterCheckboxItem = ({
 	label,
-	open,
-	onOpen,
-	children,
+	checked,
+	onCheckedChange,
 }: {
 	readonly label: string
-	readonly open: boolean
-	readonly onOpen: () => void
-	readonly children: React.ReactNode
+	readonly checked: boolean
+	readonly onCheckedChange: () => void
 }) => (
-	<div className='relative' onMouseEnter={onOpen} onFocus={onOpen}>
-		<button
-			type='button'
-			className={cn(
-				'hover:bg-accent flex w-full items-center justify-between gap-6 px-3 py-1.5 text-left text-sm',
-				open && 'bg-accent',
-			)}
-		>
-			<span>{label}</span>
-			<svg viewBox='0 0 16 16' fill='none' className='size-3.5 shrink-0' aria-hidden>
-				<path d='M6 3.5l4 4.5-4 4.5' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' />
-			</svg>
-		</button>
-
-		{open && (
-			<div className={cn(panelClasses, 'absolute top-0 left-full ml-1 max-h-[320px] min-w-[180px]')}>{children}</div>
-		)}
-	</div>
+	<DropdownMenuCheckboxItem
+		checked={checked}
+		onCheckedChange={onCheckedChange}
+		// Selecting closes the menu by default, which would end a multi-select
+		// after the first choice.
+		onSelect={event => {
+			event.preventDefault()
+		}}
+	>
+		{label}
+	</DropdownMenuCheckboxItem>
 )
 
 const Chip = ({ label, onRemove }: { readonly label: string; readonly onRemove: () => void }) => (
@@ -107,6 +93,12 @@ const toggle = <T,>(values: readonly T[] | undefined, value: T): readonly T[] | 
 	return next.length > 0 ? next : undefined
 }
 
+type ActiveFilter = {
+	readonly key: string
+	readonly label: string
+	readonly clear: Partial<TodosSearch>
+}
+
 const TodoFilters = () => {
 	const { slug } = useParams({ from: '/_authenticated/$slug/todos' })
 	const search = useSearch({ from: '/_authenticated/$slug/todos' })
@@ -114,7 +106,6 @@ const TodoFilters = () => {
 	const tickets = useTickets(slug)
 
 	const [term, setTerm] = useState(search.q ?? '')
-	const [submenu, setSubmenu] = useState<string | undefined>(undefined)
 
 	const setFilter = (patch: Partial<TodosSearch>) => {
 		void navigate({ to: '.', search: (prev: TodosSearch) => ({ ...prev, ...patch }) })
@@ -123,20 +114,28 @@ const TodoFilters = () => {
 	const ticketTitle = (id: string): string =>
 		tickets.status === 'ready' ? (tickets.tickets.find(entry => entry.id === id)?.title ?? id) : id
 
-	const active = [
-		search.ticket && { key: 'ticket', label: ticketTitle(search.ticket), clear: { ticket: undefined } },
-		search.statuses && {
+	const chips: ActiveFilter[] = []
+
+	if (search.ticket !== undefined) {
+		chips.push({ key: 'ticket', label: ticketTitle(search.ticket), clear: { ticket: undefined } })
+	}
+	if (search.statuses !== undefined) {
+		chips.push({
 			key: 'statuses',
 			label: search.statuses.map(status => TODO_STATUS_LABELS[status]).join(', '),
 			clear: { statuses: undefined },
-		},
-		search.priority && { key: 'priority', label: search.priority, clear: { priority: undefined } },
-		search.tags && { key: 'tags', label: search.tags.join(', '), clear: { tags: undefined } },
-	].filter(entry => entry !== undefined && entry !== '')
+		})
+	}
+	if (search.priority !== undefined) {
+		chips.push({ key: 'priority', label: search.priority, clear: { priority: undefined } })
+	}
+	if (search.tags !== undefined) {
+		chips.push({ key: 'tags', label: search.tags.join(', '), clear: { tags: undefined } })
+	}
 
 	return (
-		<div className='flex flex-wrap items-center gap-2'>
-			<Popover className='relative'>
+		<DropdownMenu>
+			<div className='flex flex-wrap items-center gap-2'>
 				<form
 					className='relative'
 					onSubmit={event => {
@@ -158,123 +157,98 @@ const TodoFilters = () => {
 						}}
 						placeholder='Search todos...'
 						autoComplete='off'
+						autoCapitalize='none'
+						autoCorrect='off'
 						spellCheck={false}
-						className='border-border bg-transparent h-9 w-full border pr-9 pl-9 text-sm sm:w-[320px] focus:outline-hidden'
+						className='border-border h-9 w-full border bg-transparent pr-9 pl-9 text-sm focus:outline-hidden sm:w-[320px]'
 					/>
 
-					<PopoverButton
-						className={cn(
-							'absolute top-2.5 right-3 opacity-50 transition-opacity duration-300 hover:opacity-100',
-							active.length > 0 && 'opacity-100',
-						)}
-					>
-						<FilterIcon />
-					</PopoverButton>
+					<DropdownMenuTrigger asChild>
+						<button
+							type='button'
+							className={cn(
+								'absolute top-2.5 right-3 z-10 opacity-50 transition-opacity duration-300 hover:opacity-100',
+								chips.length > 0 && 'opacity-100',
+							)}
+						>
+							<FilterIcon />
+						</button>
+					</DropdownMenuTrigger>
 				</form>
 
-				<PopoverPanel
-					anchor={{ to: 'bottom end', gap: 4 }}
-					className={cn(panelClasses, 'min-w-[180px]')}
-					onMouseLeave={() => {
-						setSubmenu(undefined)
-					}}
-				>
-					<Submenu
-						label='Status'
-						open={submenu === 'status'}
-						onOpen={() => {
-							setSubmenu('status')
+				{chips.map(chip => (
+					<Chip
+						key={chip.key}
+						label={chip.label}
+						onRemove={() => {
+							setFilter(chip.clear)
 						}}
-					>
-						{TODO_STATUSES.map(status => (
-							<CheckItem
-								key={status}
-								label={TODO_STATUS_LABELS[status]}
-								checked={search.statuses?.includes(status) ?? false}
-								onToggle={() => {
-									setFilter({ statuses: toggle<TodoStatus>(search.statuses, status) })
-								}}
-							/>
-						))}
-					</Submenu>
+					/>
+				))}
+			</div>
 
-					<Submenu
-						label='Priority'
-						open={submenu === 'priority'}
-						onOpen={() => {
-							setSubmenu('priority')
-						}}
-					>
-						{PRIORITIES.map(priority => (
-							<CheckItem
-								key={priority}
-								label={priority}
-								checked={search.priority === priority}
-								onToggle={() => {
-									setFilter({ priority: search.priority === priority ? undefined : (priority as Priority) })
-								}}
-							/>
-						))}
-					</Submenu>
+			<DropdownMenuContent className='w-[220px]' align='end' sideOffset={19} alignOffset={-11} side='bottom'>
+				<FilterMenuItem label='Status'>
+					{TODO_STATUSES.map(status => (
+						<FilterCheckboxItem
+							key={status}
+							label={TODO_STATUS_LABELS[status]}
+							checked={search.statuses?.includes(status) ?? false}
+							onCheckedChange={() => {
+								setFilter({ statuses: toggle<TodoStatus>(search.statuses, status) })
+							}}
+						/>
+					))}
+				</FilterMenuItem>
 
-					<Submenu
-						label='Ticket'
-						open={submenu === 'ticket'}
-						onOpen={() => {
-							setSubmenu('ticket')
-						}}
-					>
-						<div className='max-h-[320px] overflow-y-auto'>
-							{tickets.status === 'ready' && tickets.tickets.length === 0 && (
-								<p className='text-dim px-3 py-1.5 text-sm'>No tickets</p>
-							)}
-							{tickets.status === 'ready' &&
-								tickets.tickets.map(ticket => (
-									<CheckItem
-										key={ticket.id}
-										label={ticket.title}
-										checked={search.ticket === ticket.id}
-										onToggle={() => {
-											setFilter({ ticket: search.ticket === ticket.id ? undefined : ticket.id })
-										}}
-									/>
-								))}
-						</div>
-					</Submenu>
+				<FilterMenuItem label='Priority'>
+					{PRIORITIES.map(priority => (
+						<FilterCheckboxItem
+							key={priority}
+							label={priority}
+							checked={search.priority === priority}
+							onCheckedChange={() => {
+								setFilter({ priority: search.priority === priority ? undefined : (priority as Priority) })
+							}}
+						/>
+					))}
+				</FilterMenuItem>
 
-					<Submenu
-						label='Tags'
-						open={submenu === 'tags'}
-						onOpen={() => {
-							setSubmenu('tags')
-						}}
-					>
-						<div className='max-h-[320px] overflow-y-auto'>
-							{[...CONTEXT_TAGS, ...KIND_TAGS].map(tag => (
-								<CheckItem
-									key={tag}
-									label={tag}
-									checked={search.tags?.includes(tag) ?? false}
-									onToggle={() => {
-										setFilter({ tags: toggle(search.tags, tag) })
+				<FilterMenuItem label='Ticket'>
+					<div className='max-h-[300px] overflow-y-auto'>
+						{tickets.status === 'ready' && tickets.tickets.length === 0 && (
+							<DropdownMenuItem disabled>No tickets found</DropdownMenuItem>
+						)}
+						{tickets.status === 'ready' &&
+							tickets.tickets.map(ticket => (
+								<FilterCheckboxItem
+									key={ticket.id}
+									label={ticket.title}
+									checked={search.ticket === ticket.id}
+									onCheckedChange={() => {
+										setFilter({ ticket: search.ticket === ticket.id ? undefined : ticket.id })
 									}}
 								/>
 							))}
-						</div>
-					</Submenu>
-				</PopoverPanel>
-			</Popover>
+					</div>
+				</FilterMenuItem>
 
-			{active.map(entry => (
-				<Chip
-					key={entry.key}
-					label={entry.label}
-					onRemove={() => {
-						setFilter(entry.clear)
-					}}
-				/>
-			))}
-		</div>
+				<FilterMenuItem label='Tags'>
+					<div className='max-h-[300px] overflow-y-auto'>
+						{[...CONTEXT_TAGS, ...KIND_TAGS].map(tag => (
+							<FilterCheckboxItem
+								key={tag}
+								label={tag}
+								checked={search.tags?.includes(tag) ?? false}
+								onCheckedChange={() => {
+									setFilter({ tags: toggle(search.tags, tag) })
+								}}
+							/>
+						))}
+					</div>
+				</FilterMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	)
 }
 
