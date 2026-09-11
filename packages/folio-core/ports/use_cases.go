@@ -6,10 +6,6 @@ import (
 	"folio/folio-core/domain"
 )
 
-// The use case ports are the API of the hexagon: every driving adapter (REST,
-// MCP, CLI, web) calls these and nothing deeper. Each takes an Actor so the
-// service can authorise the call itself rather than trusting the transport.
-
 type ProjectUseCase interface {
 	ListProjects(ctx context.Context, actor Actor, includeArchived bool) ([]domain.Project, error)
 	GetProject(ctx context.Context, actor Actor, ref string) (domain.Project, error)
@@ -28,8 +24,6 @@ type CreateProjectInput struct {
 	Descr string
 }
 
-// UpdateProjectInput uses pointers so an omitted field means "leave as is",
-// which a PATCH adapter can express without reading the record first.
 type UpdateProjectInput struct {
 	Name     *string
 	Descr    *string
@@ -44,9 +38,6 @@ type PlanUseCase interface {
 	DeletePlan(ctx context.Context, actor Actor, id domain.PlanID) error
 }
 
-// CreatePlanInput carries the plan and, optionally, its first todos: an agent
-// drafting a plan knows the steps at the same moment, and one call keeps the
-// plan and its steps from diverging.
 type CreatePlanInput struct {
 	ProjectID domain.ProjectID
 	TicketID  domain.TicketID
@@ -68,7 +59,6 @@ type UpdatePlanInput struct {
 type TicketUseCase interface {
 	ListTickets(ctx context.Context, actor Actor, project domain.ProjectID, f domain.TicketFilter) ([]domain.Ticket, error)
 	GetTicket(ctx context.Context, actor Actor, id domain.TicketID) (domain.Ticket, error)
-	// GetTicketBySlug addresses a ticket the way a CLI or a URL names one.
 	GetTicketBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string) (domain.Ticket, error)
 	CreateTicket(ctx context.Context, actor Actor, in CreateTicketInput) (domain.Ticket, error)
 	UpdateTicket(ctx context.Context, actor Actor, id domain.TicketID, in UpdateTicketInput) (domain.Ticket, error)
@@ -79,7 +69,6 @@ type TicketUseCase interface {
 	GetTicketBriefBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string, in BriefOptions) (domain.TicketBrief, error)
 }
 
-// BriefOptions bounds the brief. Zero RecentLogs means DefaultRecentLogs.
 type BriefOptions struct {
 	RecentLogs int
 }
@@ -111,8 +100,6 @@ type TodoUseCase interface {
 	ListTodos(ctx context.Context, actor Actor, project domain.ProjectID, f domain.TodoFilter) ([]domain.Todo, error)
 	GetTodo(ctx context.Context, actor Actor, id domain.TodoID) (domain.Todo, error)
 	CreateTodo(ctx context.Context, actor Actor, in CreateTodoInput) (domain.Todo, error)
-	// CreateTodos writes a batch, reporting per-item failures without
-	// aborting the rest, so one bad item does not lose the good ones.
 	CreateTodos(ctx context.Context, actor Actor, project domain.ProjectID, in []CreateTodoInput) (BatchResult[domain.Todo], error)
 	UpdateTodo(ctx context.Context, actor Actor, id domain.TodoID, in UpdateTodoInput) (domain.Todo, error)
 	SetTodoStatus(ctx context.Context, actor Actor, id domain.TodoID, status domain.TodoStatus) (domain.Todo, error)
@@ -163,9 +150,6 @@ type LogUseCase interface {
 	GetLog(ctx context.Context, actor Actor, id domain.LogID) (domain.LogEntry, error)
 	WriteLog(ctx context.Context, actor Actor, in WriteLogInput) (domain.LogEntry, error)
 	UpdateLog(ctx context.Context, actor Actor, id domain.LogID, in UpdateLogInput) (domain.LogEntry, error)
-	// AppendToLog adds a section to an existing entry's body, which is how
-	// an agent records progress on work it already wrote up without having
-	// to read, edit and resend the whole body.
 	AppendToLog(ctx context.Context, actor Actor, id domain.LogID, section string) (domain.LogEntry, error)
 	DeleteLog(ctx context.Context, actor Actor, id domain.LogID) error
 }
