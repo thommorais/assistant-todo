@@ -3,6 +3,7 @@ import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId, todoId as toTodoId } from '_/core/domain/todo'
 import type { TodoFilter, TodosPort } from '_/core/ports/todos'
 import { err, ok, type Result } from '_/lib/result'
+import { tryCatch } from '_/lib/try-catch'
 import { Collections, type JournTodosResponse } from '_/pocketbase-types'
 import { getPocketBaseClient } from './client'
 import { filterFor } from './filter-builder'
@@ -45,16 +46,14 @@ export const createTodosAdapter = (): TodosPort => {
 				{ field: 'title', comparator: 'contains', value: filter.search },
 			])
 
-			try {
-				const rows = await paginate<TodoRecord>(client.collection(Collections.JournTodos), filter, {
+			const { data, error } = await tryCatch(
+				paginate<TodoRecord>(client.collection(Collections.JournTodos), filter, {
 					filter: client.filter(expr, params),
 					sort: 'position',
-				})
+				}),
+			)
 
-				return ok(rows.map(toTodo))
-			} catch (error) {
-				return err(new Error(`Failed to list todos: ${error instanceof Error ? error.message : 'Unknown error'}`))
-			}
+			return error ? err(new Error(`Failed to list todos: ${error.message}`, { cause: error })) : ok(data.map(toTodo))
 		},
 	}
 }

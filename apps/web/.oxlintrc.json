@@ -3,6 +3,13 @@
 	"extends": [
 		"../../.oxlintrc.json"
 	],
+	"ignorePatterns": [
+		"**/routeTree.gen.ts",
+		"**/pocketbase-types.ts",
+		"**/*.gen.ts",
+		"**/.intlayer/**",
+		"**/public/**"
+	],
 	"rules": {
 		"unicorn/filename-case": "off",
 		"import/no-default-export": "off"

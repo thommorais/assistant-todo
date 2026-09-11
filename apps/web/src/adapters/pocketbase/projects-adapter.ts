@@ -1,66 +1,85 @@
 import type { Member, Project, Role } from '_/core/domain/project'
-import { projectId, userId } from '_/core/domain/project'
-import type { ProjectsPort } from '_/core/ports/projects'
-import { getPocketBaseClient, journUrl } from './client'
+import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
+import type { ProjectFilter, ProjectsPort } from '_/core/ports/projects'
+import { err, ok, type Result } from '_/lib/result'
+import { tryCatch } from '_/lib/try-catch'
+import {
+	Collections,
+	type JournMembersResponse,
+	type JournProjectsResponse,
+	type UsersResponse,
+} from '_/pocketbase-types'
+import { getPocketBaseClient } from './client'
+import { filterFor } from './filter-builder'
+import { paginate } from './paginate'
 
-type MemberView = {
-	user_id: string
-	email?: string
-	name?: string
-	role: string
-}
+type MemberRecord = JournMembersResponse<{ user?: UsersResponse }>
 
-type ProjectView = {
-	id: string
+type ProjectRecord = JournProjectsResponse<{ journ_members_via_project?: MemberRecord[] }>
+
+type ProjectColumns = {
 	slug: string
 	name: string
-	descr?: string
+	descr: string
 	archived: boolean
-	members: MemberView[]
-	created_at: string
-	updated_at: string
+	created: Date
+	updated: Date
 }
 
-const toMember = (view: MemberView): Member => ({
-	userId: userId(view.user_id),
-	role: view.role as Role,
-	email: view.email ?? '',
-	name: view.name ?? '',
+const MEMBER_EXPAND = 'journ_members_via_project.user'
+
+const toMember = (record: MemberRecord): Member => ({
+	userId: toUserId(record.user),
+	role: record.role as Role,
+	email: record.expand?.user?.email ?? '',
+	name: record.expand?.user?.name ?? '',
 })
 
-const toProject = (view: ProjectView): Project => ({
-	id: projectId(view.id),
-	slug: view.slug,
-	name: view.name,
-	descr: view.descr ?? '',
-	archived: view.archived,
-	members: view.members.map(toMember),
-	createdAt: new Date(view.created_at),
-	updatedAt: new Date(view.updated_at),
+const toProject = (record: ProjectRecord): Project => ({
+	id: toProjectId(record.id),
+	slug: record.slug,
+	name: record.name,
+	descr: record.descr ?? '',
+	archived: record.archived ?? false,
+	members: (record.expand?.journ_members_via_project ?? []).map(toMember),
+	createdAt: new Date(record.created),
+	updatedAt: new Date(record.updated),
 })
-
-const request = async <T>(path: string): Promise<T> => {
-	const pb = getPocketBaseClient()
-
-	const response = await fetch(journUrl(path), {
-		headers: { Authorization: pb.authStore.token },
-	})
-
-	if (!response.ok) {
-		throw new Error(`${response.status} ${response.statusText}`)
-	}
-
-	return response.json() as Promise<T>
-}
 
 export const createProjectsAdapter = (): ProjectsPort => {
+	const client = getPocketBaseClient()
+	const projects = () => client.collection(Collections.JournProjects)
+
 	return {
-		list: async options => {
-			const query = options?.includeArchived ? '?archived=true' : ''
-			const body = await request<{ projects: ProjectView[] }>(`/projects${query}`)
-			return body.projects.map(toProject)
+		list: async (filter: ProjectFilter = {}): Promise<Result<readonly Project[]>> => {
+			const { expr, params } = filterFor<ProjectColumns>()([
+				{ field: 'archived', comparator: 'eq', value: filter.includeArchived ? undefined : false },
+				{ field: 'name', comparator: 'contains', value: filter.search },
+			])
+
+			const { data, error } = await tryCatch(
+				paginate<ProjectRecord>(projects(), filter, {
+					filter: client.filter(expr, params),
+					expand: MEMBER_EXPAND,
+					sort: 'name',
+				}),
+			)
+
+			return error
+				? err(new Error(`Failed to list projects: ${error.message}`, { cause: error }))
+				: ok(data.map(toProject))
 		},
 
-		get: async ref => toProject(await request<ProjectView>(`/projects/${ref}`)),
+		get: async (ref: string): Promise<Result<Project>> => {
+			const { expr, params } = filterFor<ProjectColumns>()([{ field: 'slug', comparator: 'eq', value: ref }])
+
+			const { data, error } = await tryCatch(
+				projects().getFirstListItem<ProjectRecord>(client.filter(expr, params), { expand: MEMBER_EXPAND }),
+			)
+
+			return error
+				? err(new Error(`Failed to load project ${ref}: ${error.message}`, { cause: error }))
+				: ok(toProject(data))
+		},
 	}
 }

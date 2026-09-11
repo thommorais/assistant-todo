@@ -1,3 +1,4 @@
+import type { Result } from '_/lib/result'
 import type { ProjectId } from '../domain/project'
 
 export const SEARCH_KINDS = ['log', 'doc', 'todo', 'plan'] as const
@@ -22,5 +23,5 @@ export type SearchQuery = {
 }
 
 export type SearchPort = {
-	readonly search: (query: SearchQuery) => Promise<readonly SearchHit[]>
+	readonly search: (query: SearchQuery) => Promise<Result<readonly SearchHit[]>>
 }

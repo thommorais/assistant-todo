@@ -24,7 +24,7 @@ export const createContainer = (): Container => {
 	return {
 		auth: createAuthAdapter(),
 		projects,
-		search: createSearchAdapter(projects),
+		search: createSearchAdapter(),
 		theme: createThemeAdapter(),
 		todos: createTodosAdapter(),
 	}

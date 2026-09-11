@@ -56,7 +56,9 @@ export function failure<E extends ErrorResponse>(error: E | unknown): Failure<E>
 	if (error instanceof Error) {
 		const originalError = error as ANYTHING
 		const statusCode = originalError?.response?.status || originalError?.status || 500
-		const defaultMessage = HTTP_STATUS_MESSAGES[statusCode] || error.message
+		// The thrown message wins: falling back to the status text first turned
+		// every non-HTTP error into "Internal Server Error".
+		const defaultMessage = error.message || HTTP_STATUS_MESSAGES[statusCode] || 'Unknown Error'
 
 		return {
 			data: null,

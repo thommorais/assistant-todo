@@ -12,11 +12,7 @@ type Listable<T> = {
 
 // PocketBase pages by number, the ports by offset, so a non-multiple offset
 // would land mid-page. Exact pages hit the API; the rest fetch and slice.
-export const paginate = async <T>(
-	collection: Listable<T>,
-	page: PageRequest,
-	options: ListOptions,
-): Promise<T[]> => {
+export const paginate = async <T>(collection: Listable<T>, page: PageRequest, options: ListOptions): Promise<T[]> => {
 	const { limit, offset = 0 } = page
 
 	if (limit === undefined) {

@@ -20,14 +20,10 @@ export const useSearch = (term: string): SearchState => {
 		let cancelled = false
 		setState(previous => ({ hits: previous.hits, isFetching: true }))
 
-		search
-			.search({ text: term })
-			.then(hits => {
-				if (!cancelled) setState({ hits, isFetching: false })
-			})
-			.catch(() => {
-				if (!cancelled) setState({ hits: [], isFetching: false })
-			})
+		void search.search({ text: term }).then(result => {
+			if (cancelled) return
+			setState({ hits: result.success ? result.value : [], isFetching: false })
+		})
 
 		return () => {
 			cancelled = true

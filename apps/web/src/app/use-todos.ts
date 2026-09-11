@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
 import type { Todo } from '_/core/domain/todo'
 import type { TodoFilter } from '_/core/ports/todos'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { useContainer } from './container'
 
 type TodosState =
@@ -14,7 +14,7 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 
 	const key = JSON.stringify(filter ?? {})
 
-	const load = useCallback(async () => {
+	const load = useEffectEvent(async () => {
 		setState({ status: 'loading' })
 		const result = await todos.list(project, JSON.parse(key) as TodoFilter)
 
@@ -26,11 +26,11 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 		} else {
 			setState({ status: 'ready', todos: result.value })
 		}
-	}, [todos, project, key])
+	})
 
 	useEffect(() => {
-		void load()
-	}, [load])
+		load()
+	}, [])
 
 	return state
 }
