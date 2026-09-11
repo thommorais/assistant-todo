@@ -107,8 +107,8 @@ export type JournDocsRecord<Ttags = unknown> = {
 	id: string
 	project: RecordIdString
 	slug: string
-	ticket?: RecordIdString
 	tags?: null | Ttags
+	ticket?: RecordIdString
 	title: string
 	updated: IsoAutoDateString
 }
@@ -118,12 +118,12 @@ export type JournLogsRecord<Tmeta = unknown, Ttags = unknown> = {
 	branch?: string
 	created: IsoAutoDateString
 	created_by?: RecordIdString
+	external_ref?: string
 	id: string
 	meta?: null | Tmeta
 	plan?: RecordIdString
 	pr?: string
 	project: RecordIdString
-	external_ref?: string
 	tags?: null | Ttags
 	ticket?: RecordIdString
 	title: string
@@ -176,6 +176,37 @@ export type JournProjectsRecord = {
 	updated: IsoAutoDateString
 }
 
+export const JournTicketsStatusOptions = {
+	"open": "open",
+	"in_progress": "in_progress",
+	"blocked": "blocked",
+	"closed": "closed",
+	"cancelled": "cancelled",
+} as const
+export type JournTicketsStatusOptions = typeof JournTicketsStatusOptions[keyof typeof JournTicketsStatusOptions]
+
+export const JournTicketsPriorityOptions = {
+	"low": "low",
+	"medium": "medium",
+	"high": "high",
+} as const
+export type JournTicketsPriorityOptions = typeof JournTicketsPriorityOptions[keyof typeof JournTicketsPriorityOptions]
+export type JournTicketsRecord<Ttags = unknown> = {
+	assignee?: RecordIdString
+	body?: HTMLString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	external_ref?: string
+	id: string
+	priority: JournTicketsPriorityOptions
+	project: RecordIdString
+	slug: string
+	status: JournTicketsStatusOptions
+	tags?: null | Ttags
+	title: string
+	updated: IsoAutoDateString
+}
+
 export const JournTodosStatusOptions = {
 	"pending": "pending",
 	"in_progress": "in_progress",
@@ -205,37 +236,6 @@ export type JournTodosRecord<Tdepends_on = unknown, Ttags = unknown> = {
 	status: JournTodosStatusOptions
 	tags?: null | Ttags
 	ticket?: RecordIdString
-	title: string
-	updated: IsoAutoDateString
-}
-
-export const JournTicketsStatusOptions = {
-	"open": "open",
-	"in_progress": "in_progress",
-	"blocked": "blocked",
-	"closed": "closed",
-	"cancelled": "cancelled",
-} as const
-export type JournTicketsStatusOptions = typeof JournTicketsStatusOptions[keyof typeof JournTicketsStatusOptions]
-
-export const JournTicketsPriorityOptions = {
-	"low": "low",
-	"medium": "medium",
-	"high": "high",
-} as const
-export type JournTicketsPriorityOptions = typeof JournTicketsPriorityOptions[keyof typeof JournTicketsPriorityOptions]
-export type JournTicketsRecord<Ttags = unknown> = {
-	assignee?: RecordIdString
-	body?: HTMLString
-	created: IsoAutoDateString
-	created_by?: RecordIdString
-	external_ref?: string
-	id: string
-	priority: JournTicketsPriorityOptions
-	project: RecordIdString
-	slug: string
-	status: JournTicketsStatusOptions
-	tags?: null | Ttags
 	title: string
 	updated: IsoAutoDateString
 }
