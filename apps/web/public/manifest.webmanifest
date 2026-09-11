@@ -1,0 +1,65 @@
+{
+	"id": "/",
+	"name": "thom",
+	"short_name": "thom",
+	"description": "thom is an intuitive productivity and time management app.",
+	"lang": "pt",
+	"dir": "ltr",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"display_override": [
+		"window-controls-overlay",
+		"standalone",
+		"minimal-ui"
+	],
+	"background_color": "#060E0B",
+	"theme_color": "#060E0B",
+	"categories": [
+		"productivity",
+		"education",
+		"finance"
+	],
+	"icons": [
+		{
+			"src": "/icons/pwa-64x64.png",
+			"sizes": "64x64",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/pwa-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/pwa-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/maskable-icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/screenshots/wide-1280x800.png",
+			"sizes": "1280x800",
+			"type": "image/png",
+			"form_factor": "wide",
+			"label": "thom"
+		},
+		{
+			"src": "/screenshots/narrow-720x1280.png",
+			"sizes": "720x1280",
+			"type": "image/png",
+			"form_factor": "narrow",
+			"label": "thom"
+		}
+	]
+}

@@ -23,7 +23,15 @@
 		"react-dom": "catalog:",
 		"react-intlayer": "^8.9.8",
 		"tailwind-variants": "catalog:",
-		"zustand": "catalog:"
+		"zustand": "catalog:",
+		"comlink": "^4.4.2",
+		"vite-plugin-comlink": "^5.3.0",
+		"nuqs": "^2.9.2",
+		"pocketbase": "^0.27.1",
+		"@radix-ui/react-slot": "^1.2.4",
+		"zod": "^4.3.6",
+		"lucide-react": "^0.501.0",
+		"@thom/libs": "workspace:*"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.29.7",
@@ -42,6 +50,10 @@
 		"happy-dom": "^20.14.0",
 		"typescript": "catalog:",
 		"vite": "catalog:",
-		"vitest": "catalog:"
+		"vitest": "catalog:",
+		"vite-intlayer": "^8.9.8",
+		"@serwist/vite": "^9.5.12",
+		"@tailwindcss/vite": "^4.2.1",
+		"@vite-pwa/assets-generator": "^1.0.2"
 	}
 }

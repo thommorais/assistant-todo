@@ -1,0 +1,171 @@
+[
+  {
+    "key": "notifications",
+    "content": {
+      "notifications": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Notifications",
+          "pt": "Notificações"
+        }
+      },
+      "notifications_unread": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Notifications, {count} unread",
+          "pt": "Notificações, {count} não lidas"
+        }
+      },
+      "notifications_mark_all_read": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Mark all read",
+          "pt": "Marcar todas como lidas"
+        }
+      },
+      "notifications_loading": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Loading...",
+          "pt": "Carregando..."
+        }
+      },
+      "notifications_empty": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Nothing here yet.",
+          "pt": "Nada por aqui ainda."
+        }
+      },
+      "notifications_just_now": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "just now",
+          "pt": "agora"
+        }
+      },
+      "notifications_minutes_ago": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "{count}m ago",
+          "pt": "há {count}min"
+        }
+      },
+      "notifications_hours_ago": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "{count}h ago",
+          "pt": "há {count}h"
+        }
+      },
+      "notifications_days_ago": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "{count}d ago",
+          "pt": "há {count}d"
+        }
+      },
+      "notifications_push_blocked": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Notifications are blocked in this browser's settings.",
+          "pt": "As notificações estão bloqueadas nas configurações deste navegador."
+        }
+      },
+      "notifications_push_on": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "This browser receives notifications.",
+          "pt": "Este navegador recebe notificações."
+        }
+      },
+      "notifications_push_off": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Get notified on this device.",
+          "pt": "Receba notificações neste dispositivo."
+        }
+      },
+      "notifications_push_turn_on": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Turn on",
+          "pt": "Ativar"
+        }
+      },
+      "notifications_push_turn_off": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Turn off",
+          "pt": "Desativar"
+        }
+      },
+      "notifications_push_unconfigured": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Push notifications are not configured",
+          "pt": "As notificações push não estão configuradas"
+        }
+      },
+      "notifications_push_incomplete": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "The browser returned an incomplete subscription",
+          "pt": "O navegador retornou uma inscrição incompleta"
+        }
+      },
+      "app_flashcards": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "flashcards",
+          "pt": "cartões"
+        }
+      },
+      "app_finance": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "finance",
+          "pt": "finanças"
+        }
+      },
+      "app_pets": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "pets",
+          "pt": "pets"
+        }
+      },
+      "app_tdah": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "tdah",
+          "pt": "tdah"
+        }
+      },
+      "app_pomodoro": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "pomodoro",
+          "pt": "pomodoro"
+        }
+      },
+      "app_exams": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "exams",
+          "pt": "provas"
+        }
+      },
+      "app_system": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "system",
+          "pt": "sistema"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "notifications::local::src/i18n/content/notifications.content.ts",
+    "filePath": "src/i18n/content/notifications.content.ts"
+  }
+]

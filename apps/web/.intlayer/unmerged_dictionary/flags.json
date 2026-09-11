@@ -1,0 +1,143 @@
+[
+  {
+    "key": "flags",
+    "content": {
+      "flags_guessing_game": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Flags Guessing Game",
+          "pt": "Jogo de Adivinhar Bandeiras"
+        }
+      },
+      "test_geography_knowledge": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Test your geography knowledge! Guess the country by its flag.",
+          "pt": "Teste seus conhecimentos de geografia! Adivinhe o país pela bandeira."
+        }
+      },
+      "how_many_flags_play": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "How many flags do you want to play?",
+          "pt": "Quantas bandeiras você quer jogar?"
+        }
+      },
+      "which_country_flag": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Which country does this flag belong to?",
+          "pt": "De qual país é esta bandeira?"
+        }
+      },
+      "session_progress": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Session Progress",
+          "pt": "Progresso da Sessão"
+        }
+      },
+      "take_best_guess": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Take your best guess.",
+          "pt": "Faça seu melhor palpite."
+        }
+      },
+      "correct_nice_work": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Correct! Nice work.",
+          "pt": "Correto! Bom trabalho."
+        }
+      },
+      "not_quite": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Not quite. Study the details and keep going.",
+          "pt": "Não foi dessa vez. Estude os detalhes e continue tentando."
+        }
+      },
+      "round_skipped": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Round skipped. Try the next one.",
+          "pt": "Rodada pulada. Tente a próxima."
+        }
+      },
+      "skipped_flag_belongs": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Skipped. The flag belongs to",
+          "pt": "Pulado. A bandeira pertence a"
+        }
+      },
+      "skip_round": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Skip round (Esc)",
+          "pt": "Pular rodada (Esc)"
+        }
+      },
+      "next_round": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Next round",
+          "pt": "Próxima rodada"
+        }
+      },
+      "retry_image": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Retry image",
+          "pt": "Tentar novamente"
+        }
+      },
+      "flag_unavailable": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Flag unavailable",
+          "pt": "Bandeira indisponível"
+        }
+      },
+      "you_got": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "You got",
+          "pt": "Você acertou"
+        }
+      },
+      "loading_saved_progress": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Loading saved progress…",
+          "pt": "Carregando progresso salvo…"
+        }
+      },
+      "loading_game": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Loading game...",
+          "pt": "Carregando jogo..."
+        }
+      },
+      "correct_answer": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Correct Answer",
+          "pt": "Resposta Correta"
+        }
+      },
+      "session_complete": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Session Complete!",
+          "pt": "Sessão Completa!"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "flags::local::src/i18n/content/flags.content.ts",
+    "filePath": "src/i18n/content/flags.content.ts"
+  }
+]

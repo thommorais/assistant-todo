@@ -1,0 +1,53 @@
+{
+  "key": "flags",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "flags_guessing_game": "Flags Guessing Game",
+        "test_geography_knowledge": "Test your geography knowledge! Guess the country by its flag.",
+        "how_many_flags_play": "How many flags do you want to play?",
+        "which_country_flag": "Which country does this flag belong to?",
+        "session_progress": "Session Progress",
+        "take_best_guess": "Take your best guess.",
+        "correct_nice_work": "Correct! Nice work.",
+        "not_quite": "Not quite. Study the details and keep going.",
+        "round_skipped": "Round skipped. Try the next one.",
+        "skipped_flag_belongs": "Skipped. The flag belongs to",
+        "skip_round": "Skip round (Esc)",
+        "next_round": "Next round",
+        "retry_image": "Retry image",
+        "flag_unavailable": "Flag unavailable",
+        "you_got": "You got",
+        "loading_saved_progress": "Loading saved progress…",
+        "loading_game": "Loading game...",
+        "correct_answer": "Correct Answer",
+        "session_complete": "Session Complete!"
+      },
+      "pt": {
+        "flags_guessing_game": "Jogo de Adivinhar Bandeiras",
+        "test_geography_knowledge": "Teste seus conhecimentos de geografia! Adivinhe o país pela bandeira.",
+        "how_many_flags_play": "Quantas bandeiras você quer jogar?",
+        "which_country_flag": "De qual país é esta bandeira?",
+        "session_progress": "Progresso da Sessão",
+        "take_best_guess": "Faça seu melhor palpite.",
+        "correct_nice_work": "Correto! Bom trabalho.",
+        "not_quite": "Não foi dessa vez. Estude os detalhes e continue tentando.",
+        "round_skipped": "Rodada pulada. Tente a próxima.",
+        "skipped_flag_belongs": "Pulado. A bandeira pertence a",
+        "skip_round": "Pular rodada (Esc)",
+        "next_round": "Próxima rodada",
+        "retry_image": "Tentar novamente",
+        "flag_unavailable": "Bandeira indisponível",
+        "you_got": "Você acertou",
+        "loading_saved_progress": "Carregando progresso salvo…",
+        "loading_game": "Carregando jogo...",
+        "correct_answer": "Resposta Correta",
+        "session_complete": "Sessão Completa!"
+      }
+    }
+  },
+  "localIds": [
+    "flags::local::src/i18n/content/flags.content.ts"
+  ]
+}

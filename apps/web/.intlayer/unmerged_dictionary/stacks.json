@@ -1,0 +1,164 @@
+[
+  {
+    "key": "stacks",
+    "content": {
+      "stacks_game": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Ring Stack Puzzle",
+          "pt": ":)"
+        }
+      },
+      "stacks_tagline": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Move the rings until every pole holds a single color.",
+          "pt": "Mova as argolas até cada haste ter uma só cor."
+        }
+      },
+      "stacks": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Stacks",
+          "pt": "Pilhas"
+        }
+      },
+      "difficulty": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Difficulty",
+          "pt": "Dificuldade"
+        }
+      },
+      "easy": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Easy",
+          "pt": "Fácil"
+        }
+      },
+      "medium": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Medium",
+          "pt": "Médio"
+        }
+      },
+      "hard": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Hard",
+          "pt": "Difícil"
+        }
+      },
+      "level": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Level",
+          "pt": "Nível"
+        }
+      },
+      "next_level": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Next level",
+          "pt": "Próximo nível"
+        }
+      },
+      "moves": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Moves",
+          "pt": "Jogadas"
+        }
+      },
+      "reset": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Reset",
+          "pt": "Reiniciar"
+        }
+      },
+      "new_puzzle": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "New",
+          "pt": "Novo"
+        }
+      },
+      "puzzle_solved": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Puzzle solved!",
+          "pt": "Resolvido!"
+        }
+      },
+      "no_moves_left": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "No moves left",
+          "pt": "Nenhuma jogada possível"
+        }
+      },
+      "out_of_moves": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Out of moves",
+          "pt": "Sem jogadas restantes"
+        }
+      },
+      "puzzles_solved": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Puzzles solved",
+          "pt": "Resolvidos"
+        }
+      },
+      "best_moves": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Best (fewest moves)",
+          "pt": "Melhor (menos jogadas)"
+        }
+      },
+      "last_played": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Last played",
+          "pt": "Última partida"
+        }
+      },
+      "loading_game": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Loading game…",
+          "pt": "Carregando jogo…"
+        }
+      },
+      "select_stack_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Tap a pole to pick up its top rings, then tap another to drop them.",
+          "pt": "Toque numa haste para pegar as argolas do topo e em outra para soltá-las."
+        }
+      },
+      "mute_music": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Mute music",
+          "pt": "Silenciar música"
+        }
+      },
+      "unmute_music": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Unmute music",
+          "pt": "Ativar música"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "stacks::local::src/i18n/content/stacks.content.ts",
+    "filePath": "src/i18n/content/stacks.content.ts"
+  }
+]

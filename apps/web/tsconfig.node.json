@@ -1,21 +1,15 @@
 {
-	"extends": "@thom/typescript-config/base.json",
 	"compilerOptions": {
 		"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-		"target": "ES2023",
-		"lib": ["ES2023"],
-		"types": ["node"],
+		"target": "ESNext",
+		"lib": ["ESNext"],
 		"module": "ESNext",
+		"types": ["node"],
+		"skipLibCheck": true,
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
-		"verbatimModuleSyntax": true,
-		"declaration": false,
-		"declarationMap": false,
-		"noEmit": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"erasableSyntaxOnly": true,
-		"noFallthroughCasesInSwitch": true
+		"moduleDetection": "force",
+		"noEmit": true
 	},
-	"include": ["vite.config.ts", "vitest.config.ts", "intlayer.config.ts"]
+	"include": ["vite.config.ts", "intlayer.config.ts"]
 }

@@ -1,0 +1,195 @@
+:root {
+	--padding-inline: 1rem;
+	/* securo-style spacious contained content */
+	--content-max-width: 1120px;
+	--breakout-max-width: 1320px;
+
+	--shared-transition: 0.4s;
+	--line: color-mix(in lch, var(--foreground) 10%, transparent);
+	--size: 1.5rem;
+
+	--scrollbar-width: none;
+	--titlebar-height: 0px;
+
+	--cosmic-latte: #fffae5ff;
+	--safety-orange: #eb7b26ff;
+	--sunglow: #ffce62ff;
+	--bakermiller-pink: #fc95b4ff;
+	--emerald: #0bc56dff;
+
+	/* Semantic surface tokens, valued in thom's own palette. The neutrals are
+	 * warm off-whites in porcelain's hue (~100), not the cool grays they
+	 * replaced, so surfaces sit in the same family as --color-porcelain and
+	 * --cosmic-latte. Brand accents stay on the teal primary scale. Light only.
+	 * Mapped into Tailwind in tailwind.css. */
+	--background: oklch(97.5% 0.006 100);
+	--foreground: oklch(22% 0.012 100);
+	--card: oklch(99.2% 0.003 100);
+	--card-foreground: var(--foreground);
+	--popover: oklch(99.2% 0.003 100);
+	--popover-foreground: var(--foreground);
+	--primary-foreground: oklch(99.2% 0.003 100);
+	--secondary-foreground: var(--foreground);
+	--muted: oklch(95.8% 0.008 100);
+	--muted-foreground: oklch(55% 0.012 100);
+	--accent: var(--color-primary-100);
+	--accent-foreground: var(--color-primary-700);
+	--border: oklch(91% 0.008 100);
+	--input: oklch(91% 0.008 100);
+	--ring: var(--color-primary-500);
+	--sidebar: oklch(99.2% 0.003 100);
+	--sidebar-foreground: var(--foreground);
+	--sidebar-border: oklch(91% 0.008 100);
+	--sidebar-accent: oklch(95.8% 0.008 100);
+	--sidebar-accent-foreground: var(--color-primary-700);
+}
+
+html {
+	overscroll-behavior: contain;
+	scrollbar-width: var(--scrollbar-width);
+}
+
+.titlebar {
+	display: none;
+}
+
+@media (display-mode: window-controls-overlay) {
+	:root {
+		--titlebar-height: env(titlebar-area-height, 2rem);
+	}
+
+	.titlebar {
+		position: fixed;
+		z-index: 40;
+		inset-block-start: 0;
+		inset-inline: 0;
+		display: flex;
+		align-items: center;
+		height: var(--titlebar-height);
+		padding-inline-start: max(env(titlebar-area-x, 0px), 0.75rem);
+		font-size: 0.75rem;
+		letter-spacing: 0.08em;
+		color: var(--muted-foreground);
+		background: var(--sidebar);
+		border-bottom: 1px solid var(--sidebar-border);
+		app-region: drag;
+		-webkit-app-region: drag;
+	}
+
+	#root {
+		padding-block-start: var(--titlebar-height);
+	}
+
+	#root .min-h-dvh {
+		min-height: calc(100dvh - var(--titlebar-height));
+	}
+
+	#root .min-h-svh {
+		min-height: calc(100svh - var(--titlebar-height));
+	}
+
+	#root .h-dvh {
+		height: calc(100dvh - var(--titlebar-height));
+	}
+}
+
+/* The gutter is the page margin, and on a phone it is the whole budget: at
+ * 1.5rem a 390px screen spent 48px on margins before a card added its own
+ * padding inside that. 1rem is the margin iOS and Material both use, and it is
+ * the only gutter now — the app shell used to add px-4 on top of this one. */
+.content-grid {
+	--padding-inline: 1rem;
+	--breakout-size: calc((var(--breakout-max-width) - var(--content-max-width)) / 2);
+
+	grid-template-columns:
+		[full-width-start] minmax(var(--padding-inline), 1fr)
+		[breakout-start] minmax(0, var(--breakout-size))
+		[content-start] min(100% - (var(--padding-inline) * 2), var(--content-max-width))
+		[content-end]
+		minmax(0, var(--breakout-size)) [breakout-end]
+		minmax(var(--padding-inline), 1fr) [full-width-end];
+}
+
+/* Once there is room to spare, the page breathes again. */
+@media (width >= 40rem) {
+	.content-grid {
+		--padding-inline: 1.5rem;
+	}
+}
+
+.content-grid > :not(.breakout, .full-width),
+.full-width > :not(.breakout, .full-width) {
+	grid-column: content;
+}
+
+.content-grid > .breakout {
+	grid-column: breakout;
+}
+
+.content-grid > .full-width {
+	grid-column: full-width;
+	display: grid;
+	grid-template-columns: inherit;
+}
+
+.flow > * + * {
+	margin-top: var(--flow-spacing, 1em);
+}
+
+[popover],
+dialog,
+::backdrop {
+	transition:
+		display var(--shared-transition) allow-discrete,
+		overlay var(--shared-transition) allow-discrete,
+		opacity var(--shared-transition);
+	opacity: 0;
+}
+
+.first-letter::first-letter {
+	text-transform: uppercase;
+}
+
+.shell::before {
+	position: fixed;
+	top: 0;
+	z-index: -1;
+	content: '';
+	height: 100vh;
+	width: 100vw;
+	background:
+		linear-gradient(90deg, var(--line) 1px, transparent 1px var(--size)) -5vmin / var(--size) var(--size),
+		linear-gradient(var(--line) 1px, transparent 1px var(--size)) -5vmin / var(--size) var(--size);
+	mask: linear-gradient(25deg, transparent 70%, white);
+}
+
+.transform-style-3d {
+	transform-style: preserve-3d;
+}
+
+.backface-hidden {
+	backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+	transform: rotateY(180deg);
+}
+
+.main-card::before {
+	--size: 2rem;
+	--line: color-mix(in hsl, var(--color-black), transparent 70%);
+	content: '';
+	height: 100vh;
+	width: 100vw;
+	position: absolute;
+	background:
+		linear-gradient(90deg, var(--line) 1px, transparent 1px var(--size)) 50% 50% / var(--size) var(--size),
+		linear-gradient(var(--line) 1px, transparent 1px var(--size)) 50% 50% / var(--size) var(--size);
+	mask: linear-gradient(-20deg, transparent 50%, white);
+	top: 0;
+	left: 0;
+	transform-style: flat;
+	pointer-events: none;
+	z-index: -1;
+	opacity: 0.15;
+}

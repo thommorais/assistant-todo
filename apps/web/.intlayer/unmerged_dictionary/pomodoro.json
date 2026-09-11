@@ -1,0 +1,409 @@
+[
+  {
+    "key": "pomodoro",
+    "content": {
+      "pomodoro_title": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Pomodoro",
+          "pt": "Pomodoro"
+        }
+      },
+      "pomodoro_settings_title": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Settings",
+          "pt": "Configurações"
+        }
+      },
+      "pomodoro_settings_tab_pomodoro": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Pomodoro",
+          "pt": "Pomodoro"
+        }
+      },
+      "pomodoro_settings_tab_preferences": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Preferences",
+          "pt": "Preferências"
+        }
+      },
+      "pomodoro_settings_section_focus": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Focus",
+          "pt": "Foco"
+        }
+      },
+      "pomodoro_settings_session_name": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Session name",
+          "pt": "Nome da sessão"
+        }
+      },
+      "pomodoro_settings_session_name_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Shown on the timer and saved with each round",
+          "pt": "Aparece no cronômetro e é salvo com cada rodada"
+        }
+      },
+      "pomodoro_settings_focus_duration": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Focus duration",
+          "pt": "Duração do foco"
+        }
+      },
+      "pomodoro_settings_focus_duration_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "How long one focus round lasts",
+          "pt": "Quanto tempo dura uma rodada de foco"
+        }
+      },
+      "pomodoro_settings_section_breaks": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Breaks",
+          "pt": "Pausas"
+        }
+      },
+      "pomodoro_settings_short_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Short break",
+          "pt": "Pausa curta"
+        }
+      },
+      "pomodoro_settings_short_break_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Break between focus rounds",
+          "pt": "Pausa entre rodadas de foco"
+        }
+      },
+      "pomodoro_settings_long_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Long break",
+          "pt": "Pausa longa"
+        }
+      },
+      "pomodoro_settings_long_break_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Break that ends a cycle",
+          "pt": "Pausa que encerra um ciclo"
+        }
+      },
+      "pomodoro_settings_break_every": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Break every",
+          "pt": "Pausa a cada"
+        }
+      },
+      "pomodoro_settings_break_every_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Focus rounds before a short break",
+          "pt": "Rodadas de foco antes de uma pausa curta"
+        }
+      },
+      "pomodoro_settings_long_break_every": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Long break every",
+          "pt": "Pausa longa a cada"
+        }
+      },
+      "pomodoro_settings_long_break_every_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Short breaks before a long break",
+          "pt": "Pausas curtas antes de uma pausa longa"
+        }
+      },
+      "pomodoro_settings_total_rounds": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Total rounds",
+          "pt": "Total de rodadas"
+        }
+      },
+      "pomodoro_settings_total_rounds_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Rounds that make a full cycle",
+          "pt": "Rodadas que formam um ciclo"
+        }
+      },
+      "pomodoro_settings_section_sounds": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sounds",
+          "pt": "Sons"
+        }
+      },
+      "pomodoro_settings_sound_effects": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sound effects",
+          "pt": "Efeitos sonoros"
+        }
+      },
+      "pomodoro_settings_sound_effects_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Play a cue when a phase starts or ends",
+          "pt": "Tocar um aviso quando uma fase começa ou termina"
+        }
+      },
+      "pomodoro_settings_sound_on_start": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "On start",
+          "pt": "Ao iniciar"
+        }
+      },
+      "pomodoro_settings_sound_work_ends": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "When focus ends",
+          "pt": "Quando o foco termina"
+        }
+      },
+      "pomodoro_settings_sound_break_ends": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "When break ends",
+          "pt": "Quando a pausa termina"
+        }
+      },
+      "pomodoro_settings_sound_long_break_ends": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "When long break ends",
+          "pt": "Quando a pausa longa termina"
+        }
+      },
+      "pomodoro_settings_preview_sound": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Preview sound",
+          "pt": "Ouvir som"
+        }
+      },
+      "pomodoro_settings_reset_defaults": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Reset to defaults",
+          "pt": "Restaurar padrões"
+        }
+      },
+      "pomodoro_settings_decrease": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Decrease",
+          "pt": "Diminuir"
+        }
+      },
+      "pomodoro_settings_increase": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Increase",
+          "pt": "Aumentar"
+        }
+      },
+      "pomodoro_settings_section_account": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Account",
+          "pt": "Conta"
+        }
+      },
+      "pomodoro_settings_sync_with_server": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sync with server",
+          "pt": "Sincronizar com o servidor"
+        }
+      },
+      "pomodoro_settings_sync_hint": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Load the schedule saved to your account",
+          "pt": "Carregar o cronograma salvo na sua conta"
+        }
+      },
+      "pomodoro_settings_syncing": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Syncing…",
+          "pt": "Sincronizando…"
+        }
+      },
+      "pomodoro_settings_sync": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Sync now",
+          "pt": "Sincronizar agora"
+        }
+      },
+      "pomodoro_phase_work": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Focus",
+          "pt": "Foco"
+        }
+      },
+      "pomodoro_phase_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Break",
+          "pt": "Pausa"
+        }
+      },
+      "pomodoro_phase_long_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Long break",
+          "pt": "Pausa longa"
+        }
+      },
+      "pomodoro_timer_pause": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Pause",
+          "pt": "Pausar"
+        }
+      },
+      "pomodoro_timer_start": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Start",
+          "pt": "Iniciar"
+        }
+      },
+      "pomodoro_timer_reset": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Reset",
+          "pt": "Reiniciar"
+        }
+      },
+      "pomodoro_timer_skip": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Skip",
+          "pt": "Pular"
+        }
+      },
+      "pomodoro_slot_work": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Focus",
+          "pt": "Foco"
+        }
+      },
+      "pomodoro_slot_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Break",
+          "pt": "Pausa"
+        }
+      },
+      "pomodoro_slot_long_break": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Long break",
+          "pt": "Pausa longa"
+        }
+      },
+      "pomodoro_menu_open": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Open menu",
+          "pt": "Abrir menu"
+        }
+      },
+      "pomodoro_menu_sounds": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Ambient sounds",
+          "pt": "Sons ambientes"
+        }
+      },
+      "pomodoro_menu_settings": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Settings",
+          "pt": "Configurações"
+        }
+      },
+      "pomodoro_menu_restart_cycle": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Restart cycle",
+          "pt": "Reiniciar ciclo"
+        }
+      },
+      "pomodoro_sounds_title": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Ambient sounds",
+          "pt": "Sons ambientes"
+        }
+      },
+      "pomodoro_sounds_volume": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Volume",
+          "pt": "Volume"
+        }
+      },
+      "pomodoro_sounds_preview": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Preview",
+          "pt": "Ouvir"
+        }
+      },
+      "pomodoro_sounds_stop_preview": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Stop preview",
+          "pt": "Parar"
+        }
+      },
+      "pomodoro_sounds_preview_all": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Play all",
+          "pt": "Tocar todos"
+        }
+      },
+      "pomodoro_sounds_stop_all": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Stop all",
+          "pt": "Parar todos"
+        }
+      },
+      "pomodoro_version_label": {
+        "nodeType": "translation",
+        "translation": {
+          "en": "Version",
+          "pt": "Versão"
+        }
+      }
+    },
+    "location": "local",
+    "localId": "pomodoro::local::src/i18n/content/pomodoro.content.ts",
+    "filePath": "src/i18n/content/pomodoro.content.ts"
+  }
+]

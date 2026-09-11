@@ -1,0 +1,60 @@
+/* eslint-disable */
+export default {
+  "key": "stacks",
+  "content": {
+    "nodeType": "translation",
+    "translation": {
+      "en": {
+        "stacks_game": "Ring Stack Puzzle",
+        "stacks_tagline": "Move the rings until every pole holds a single color.",
+        "stacks": "Stacks",
+        "difficulty": "Difficulty",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "level": "Level",
+        "next_level": "Next level",
+        "moves": "Moves",
+        "reset": "Reset",
+        "new_puzzle": "New",
+        "puzzle_solved": "Puzzle solved!",
+        "no_moves_left": "No moves left",
+        "out_of_moves": "Out of moves",
+        "puzzles_solved": "Puzzles solved",
+        "best_moves": "Best (fewest moves)",
+        "last_played": "Last played",
+        "loading_game": "Loading game…",
+        "select_stack_hint": "Tap a pole to pick up its top rings, then tap another to drop them.",
+        "mute_music": "Mute music",
+        "unmute_music": "Unmute music"
+      },
+      "pt": {
+        "stacks_game": ":)",
+        "stacks_tagline": "Mova as argolas até cada haste ter uma só cor.",
+        "stacks": "Pilhas",
+        "difficulty": "Dificuldade",
+        "easy": "Fácil",
+        "medium": "Médio",
+        "hard": "Difícil",
+        "level": "Nível",
+        "next_level": "Próximo nível",
+        "moves": "Jogadas",
+        "reset": "Reiniciar",
+        "new_puzzle": "Novo",
+        "puzzle_solved": "Resolvido!",
+        "no_moves_left": "Nenhuma jogada possível",
+        "out_of_moves": "Sem jogadas restantes",
+        "puzzles_solved": "Resolvidos",
+        "best_moves": "Melhor (menos jogadas)",
+        "last_played": "Última partida",
+        "loading_game": "Carregando jogo…",
+        "select_stack_hint": "Toque numa haste para pegar as argolas do topo e em outra para soltá-las.",
+        "mute_music": "Silenciar música",
+        "unmute_music": "Ativar música"
+      }
+    }
+  },
+  "localIds": [
+    "stacks::local::src/i18n/content/stacks.content.ts"
+  ]
+} as const;
