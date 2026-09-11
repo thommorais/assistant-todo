@@ -31,15 +31,16 @@ func clampLimit(limit int) int {
 // LogService manages the work log: titled, searchable entries describing what
 // was built, how, and where it stands.
 type LogService struct {
-	repo  ports.LogRepository
-	guard ports.Guard
-	clock ports.Clock
-	ids   ports.IDGenerator
-	log   ports.Logger
+	repo    ports.LogRepository
+	tickets ports.TicketRepository
+	guard   ports.Guard
+	clock   ports.Clock
+	ids     ports.IDGenerator
+	log     ports.Logger
 }
 
-func NewLogService(repo ports.LogRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *LogService {
-	return &LogService{repo: repo, guard: guard, clock: clock, ids: ids, log: log}
+func NewLogService(repo ports.LogRepository, tickets ports.TicketRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *LogService {
+	return &LogService{repo: repo, tickets: tickets, guard: guard, clock: clock, ids: ids, log: log}
 }
 
 var _ ports.LogUseCase = (*LogService)(nil)
@@ -75,22 +76,27 @@ func (s *LogService) WriteLog(ctx context.Context, actor ports.Actor, in ports.W
 		return domain.LogEntry{}, err
 	}
 
+	if err := ticketScope(ctx, s.tickets, in.TicketID, in.ProjectID); err != nil {
+		return domain.LogEntry{}, err
+	}
+
 	now := s.clock.Now()
 	entry := domain.LogEntry{
-		ID:        domain.LogID(s.ids.NewID()),
-		ProjectID: in.ProjectID,
-		PlanID:    in.PlanID,
-		TodoID:    in.TodoID,
-		Title:     strings.TrimSpace(in.Title),
-		Body:      in.Body,
-		Branch:    strings.TrimSpace(in.Branch),
-		PR:        strings.TrimSpace(in.PR),
-		Ticket:    strings.TrimSpace(in.Ticket),
-		Tags:      in.Tags,
-		Meta:      in.Meta,
-		CreatedBy: actor.UserID,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          domain.LogID(s.ids.NewID()),
+		ProjectID:   in.ProjectID,
+		TicketID:    in.TicketID,
+		PlanID:      in.PlanID,
+		TodoID:      in.TodoID,
+		Title:       strings.TrimSpace(in.Title),
+		Body:        in.Body,
+		Branch:      strings.TrimSpace(in.Branch),
+		PR:          strings.TrimSpace(in.PR),
+		ExternalRef: strings.TrimSpace(in.ExternalRef),
+		Tags:        in.Tags,
+		Meta:        in.Meta,
+		CreatedBy:   actor.UserID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	if err := rules.ValidateLogEntry(entry); err != nil {
 		return domain.LogEntry{}, err
@@ -104,6 +110,12 @@ func (s *LogService) UpdateLog(ctx context.Context, actor ports.Actor, id domain
 		return domain.LogEntry{}, err
 	}
 
+	if in.TicketID != nil {
+		if err := ticketScope(ctx, s.tickets, *in.TicketID, entry.ProjectID); err != nil {
+			return domain.LogEntry{}, err
+		}
+		entry.TicketID = *in.TicketID
+	}
 	if in.PlanID != nil {
 		entry.PlanID = *in.PlanID
 	}
@@ -122,8 +134,8 @@ func (s *LogService) UpdateLog(ctx context.Context, actor ports.Actor, id domain
 	if in.PR != nil {
 		entry.PR = strings.TrimSpace(*in.PR)
 	}
-	if in.Ticket != nil {
-		entry.Ticket = strings.TrimSpace(*in.Ticket)
+	if in.ExternalRef != nil {
+		entry.ExternalRef = strings.TrimSpace(*in.ExternalRef)
 	}
 	if in.Tags != nil {
 		entry.Tags = *in.Tags

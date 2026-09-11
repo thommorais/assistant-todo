@@ -16,14 +16,15 @@ func (h *Handler) listLogs(e *core.RequestEvent) error {
 		return fail(e, err)
 	}
 	filter := domain.LogFilter{
-		PlanID: domain.PlanID(e.Request.URL.Query().Get("plan_id")),
-		TodoID: domain.TodoID(e.Request.URL.Query().Get("todo_id")),
-		Branch: e.Request.URL.Query().Get("branch"),
-		Ticket: e.Request.URL.Query().Get("ticket"),
-		Tags:   csv(e, "tags"),
-		Search: e.Request.URL.Query().Get("q"),
-		Limit:  queryInt(e, "limit"),
-		Offset: queryInt(e, "offset"),
+		PlanID:      domain.PlanID(e.Request.URL.Query().Get("plan_id")),
+		TodoID:      domain.TodoID(e.Request.URL.Query().Get("todo_id")),
+		TicketID:    domain.TicketID(e.Request.URL.Query().Get("ticket_id")),
+		Branch:      e.Request.URL.Query().Get("branch"),
+		ExternalRef: e.Request.URL.Query().Get("external_ref"),
+		Tags:        csv(e, "tags"),
+		Search:      e.Request.URL.Query().Get("q"),
+		Limit:       queryInt(e, "limit"),
+		Offset:      queryInt(e, "offset"),
 	}
 	if since, ok := queryTime(e, "since"); ok {
 		filter.Since = since
@@ -67,15 +68,16 @@ func (h *Handler) getLog(e *core.RequestEvent) error {
 }
 
 type logBody struct {
-	PlanID *string         `json:"plan_id"`
-	TodoID *string         `json:"todo_id"`
-	Title  *string         `json:"title"`
-	Body   *string         `json:"body"`
-	Branch *string         `json:"branch"`
-	PR     *string         `json:"pr"`
-	Ticket *string         `json:"ticket"`
-	Tags   *[]string       `json:"tags"`
-	Meta   *map[string]any `json:"meta"`
+	TicketID    *string         `json:"ticket_id"`
+	PlanID      *string         `json:"plan_id"`
+	TodoID      *string         `json:"todo_id"`
+	Title       *string         `json:"title"`
+	Body        *string         `json:"body"`
+	Branch      *string         `json:"branch"`
+	PR          *string         `json:"pr"`
+	ExternalRef *string         `json:"external_ref"`
+	Tags        *[]string       `json:"tags"`
+	Meta        *map[string]any `json:"meta"`
 }
 
 func (h *Handler) writeLog(e *core.RequestEvent) error {
@@ -89,6 +91,9 @@ func (h *Handler) writeLog(e *core.RequestEvent) error {
 	}
 
 	in := ports.WriteLogInput{ProjectID: project}
+	if body.TicketID != nil {
+		in.TicketID = domain.TicketID(*body.TicketID)
+	}
 	if body.PlanID != nil {
 		in.PlanID = domain.PlanID(*body.PlanID)
 	}
@@ -107,8 +112,8 @@ func (h *Handler) writeLog(e *core.RequestEvent) error {
 	if body.PR != nil {
 		in.PR = *body.PR
 	}
-	if body.Ticket != nil {
-		in.Ticket = *body.Ticket
+	if body.ExternalRef != nil {
+		in.ExternalRef = *body.ExternalRef
 	}
 	if body.Tags != nil {
 		in.Tags = *body.Tags
@@ -131,7 +136,11 @@ func (h *Handler) updateLog(e *core.RequestEvent) error {
 	}
 	in := ports.UpdateLogInput{
 		Title: body.Title, Body: body.Body, Branch: body.Branch,
-		PR: body.PR, Ticket: body.Ticket, Tags: body.Tags, Meta: body.Meta,
+		PR: body.PR, ExternalRef: body.ExternalRef, Tags: body.Tags, Meta: body.Meta,
+	}
+	if body.TicketID != nil {
+		id := domain.TicketID(*body.TicketID)
+		in.TicketID = &id
 	}
 	if body.PlanID != nil {
 		id := domain.PlanID(*body.PlanID)
@@ -180,10 +189,11 @@ func (h *Handler) listDocs(e *core.RequestEvent) error {
 		return fail(e, err)
 	}
 	docs, err := h.docs.ListDocs(e.Request.Context(), actorOf(e), project, domain.DocFilter{
-		Tags:   csv(e, "tags"),
-		Search: e.Request.URL.Query().Get("q"),
-		Limit:  queryInt(e, "limit"),
-		Offset: queryInt(e, "offset"),
+		TicketID: domain.TicketID(e.Request.URL.Query().Get("ticket_id")),
+		Tags:     csv(e, "tags"),
+		Search:   e.Request.URL.Query().Get("q"),
+		Limit:    queryInt(e, "limit"),
+		Offset:   queryInt(e, "offset"),
 	})
 	if err != nil {
 		return fail(e, err)
@@ -216,10 +226,11 @@ func (h *Handler) getDocBySlug(e *core.RequestEvent) error {
 }
 
 type docBody struct {
-	Slug  *string   `json:"slug"`
-	Title *string   `json:"title"`
-	Body  *string   `json:"body"`
-	Tags  *[]string `json:"tags"`
+	TicketID *string   `json:"ticket_id"`
+	Slug     *string   `json:"slug"`
+	Title    *string   `json:"title"`
+	Body     *string   `json:"body"`
+	Tags     *[]string `json:"tags"`
 }
 
 func (h *Handler) createDoc(e *core.RequestEvent) error {
@@ -233,6 +244,9 @@ func (h *Handler) createDoc(e *core.RequestEvent) error {
 	}
 
 	in := ports.CreateDocInput{ProjectID: project}
+	if body.TicketID != nil {
+		in.TicketID = domain.TicketID(*body.TicketID)
+	}
 	if body.Slug != nil {
 		in.Slug = *body.Slug
 	}
@@ -258,9 +272,13 @@ func (h *Handler) updateDoc(e *core.RequestEvent) error {
 	if err := e.BindBody(&body); err != nil {
 		return e.BadRequestError("invalid request body", err)
 	}
-	doc, err := h.docs.UpdateDoc(e.Request.Context(), actorOf(e), domain.DocID(e.Request.PathValue("doc")), ports.UpdateDocInput{
-		Slug: body.Slug, Title: body.Title, Body: body.Body, Tags: body.Tags,
-	})
+	in := ports.UpdateDocInput{Slug: body.Slug, Title: body.Title, Body: body.Body, Tags: body.Tags}
+	if body.TicketID != nil {
+		id := domain.TicketID(*body.TicketID)
+		in.TicketID = &id
+	}
+
+	doc, err := h.docs.UpdateDoc(e.Request.Context(), actorOf(e), domain.DocID(e.Request.PathValue("doc")), in)
 	if err != nil {
 		return fail(e, err)
 	}

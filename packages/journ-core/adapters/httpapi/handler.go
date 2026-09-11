@@ -17,6 +17,7 @@ import (
 type Handler struct {
 	projects ports.ProjectUseCase
 	plans    ports.PlanUseCase
+	tickets  ports.TicketUseCase
 	todos    ports.TodoUseCase
 	logs     ports.LogUseCase
 	docs     ports.DocUseCase
@@ -26,6 +27,7 @@ type Handler struct {
 type Deps struct {
 	Projects ports.ProjectUseCase
 	Plans    ports.PlanUseCase
+	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
 	Logs     ports.LogUseCase
 	Docs     ports.DocUseCase
@@ -34,7 +36,7 @@ type Deps struct {
 
 func New(d Deps) *Handler {
 	return &Handler{
-		projects: d.Projects, plans: d.Plans, todos: d.Todos,
+		projects: d.Projects, plans: d.Plans, tickets: d.Tickets, todos: d.Todos,
 		logs: d.Logs, docs: d.Docs, search: d.Search,
 	}
 }
@@ -65,6 +67,15 @@ func (h *Handler) Mount(e *core.ServeEvent) {
 	g.GET("/plans/{plan}", h.getPlan)
 	g.PATCH("/plans/{plan}", h.updatePlan)
 	g.DELETE("/plans/{plan}", h.deletePlan)
+
+	g.GET("/projects/{project}/tickets", h.listTickets)
+	g.POST("/projects/{project}/tickets", h.createTicket)
+	// The slug route is registered before the ID route so a project-scoped
+	// slug lookup is not shadowed by it.
+	g.GET("/projects/{project}/tickets/{slug}", h.getTicketBySlug)
+	g.GET("/tickets/{ticket}", h.getTicket)
+	g.PATCH("/tickets/{ticket}", h.updateTicket)
+	g.DELETE("/tickets/{ticket}", h.deleteTicket)
 
 	g.GET("/projects/{project}/todos", h.listTodos)
 	g.POST("/projects/{project}/todos", h.createTodos)

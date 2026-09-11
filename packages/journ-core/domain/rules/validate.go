@@ -140,7 +140,46 @@ func ValidateLogEntry(e domain.LogEntry) error {
 	if err := optional("pr", e.PR, RefMaxLen); err != nil {
 		return err
 	}
-	return optional("ticket", e.Ticket, RefMaxLen)
+	return optional("external_ref", e.ExternalRef, RefMaxLen)
+}
+
+var ticketStatuses = map[domain.TicketStatus]bool{
+	domain.TicketOpen: true, domain.TicketInProgress: true, domain.TicketBlocked: true,
+	domain.TicketClosed: true, domain.TicketCancelled: true,
+}
+
+// ValidateTicket checks a ticket. The body is optional: a ticket may be filed
+// as a title and filled in once someone looks at it.
+func ValidateTicket(t domain.Ticket) error {
+	if t.ProjectID == "" {
+		return domain.Invalid("project", "is required")
+	}
+	if err := ValidateSlug("slug", t.Slug); err != nil {
+		return err
+	}
+	if err := required("title", t.Title, TitleMaxLen); err != nil {
+		return err
+	}
+	if err := optional("body", t.Body, BodyMaxLen); err != nil {
+		return err
+	}
+	if !ticketStatuses[t.Status] {
+		return domain.Invalid("status", "must be one of open, in_progress, blocked, closed, cancelled")
+	}
+	if !priorities[t.Priority] {
+		return domain.Invalid("priority", "must be one of low, medium, high")
+	}
+	return optional("external_ref", t.ExternalRef, RefMaxLen)
+}
+
+// TicketBelongsTo rejects attaching a child to a ticket in another project.
+// Without it a caller could smuggle a todo across a tenancy boundary by
+// naming a ticket the guard never checked.
+func TicketBelongsTo(t domain.Ticket, project domain.ProjectID) error {
+	if t.ProjectID != project {
+		return domain.Invalid("ticket", "belongs to a different project")
+	}
+	return nil
 }
 
 func ValidateDoc(d domain.Doc) error {

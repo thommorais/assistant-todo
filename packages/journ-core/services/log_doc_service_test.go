@@ -16,6 +16,7 @@ type knowledgeFixture struct {
 	clock     *fakeClock
 	logs      *fakeLogs
 	docs      *fakeDocs
+	tickets   *fakeTickets
 	logSvc    *services.LogService
 	docSvc    *services.DocService
 	searchSvc *services.SearchService
@@ -37,12 +38,13 @@ func newKnowledgeFixture(t *testing.T) *knowledgeFixture {
 
 	logs := newFakeLogs()
 	docs := newFakeDocs()
+	tickets := newFakeTickets()
 	search := &fakeSearch{}
 
 	return &knowledgeFixture{
-		clock: clock, logs: logs, docs: docs, project: "p001",
-		logSvc:    services.NewLogService(logs, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
-		docSvc:    services.NewDocService(docs, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
+		clock: clock, logs: logs, docs: docs, tickets: tickets, project: "p001",
+		logSvc:    services.NewLogService(logs, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
+		docSvc:    services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
 		searchSvc: services.NewSearchService(search, guard),
 		owner:     ports.Actor{UserID: "u-owner"},
 		viewer:    ports.Actor{UserID: "u-viewer"},
@@ -157,13 +159,13 @@ func TestWriteLogRecordsAuthorAndClock(t *testing.T) {
 	f := newKnowledgeFixture(t)
 
 	got, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
-		ProjectID: f.project,
-		Title:     "Restored GA4 pageview tracking",
-		Body:      "The config call was deleted in #4484, so nothing fired a hit.",
-		Branch:    "release/r378-ga-pageview-fix",
-		PR:        "4873",
-		Ticket:    "XWWP-4420",
-		Tags:      []string{"analytics", "decision"},
+		ProjectID:   f.project,
+		Title:       "Restored GA4 pageview tracking",
+		Body:        "The config call was deleted in #4484, so nothing fired a hit.",
+		Branch:      "release/r378-ga-pageview-fix",
+		PR:          "4873",
+		ExternalRef: "XWWP-4420",
+		Tags:        []string{"analytics", "decision"},
 	})
 	if err != nil {
 		t.Fatalf("write: %v", err)
@@ -174,7 +176,7 @@ func TestWriteLogRecordsAuthorAndClock(t *testing.T) {
 	if !got.CreatedAt.Equal(testNow) || !got.UpdatedAt.Equal(testNow) {
 		t.Fatalf("dates must come from the injected clock, got %v / %v", got.CreatedAt, got.UpdatedAt)
 	}
-	if got.Branch != "release/r378-ga-pageview-fix" || got.PR != "4873" || got.Ticket != "XWWP-4420" {
+	if got.Branch != "release/r378-ga-pageview-fix" || got.PR != "4873" || got.ExternalRef != "XWWP-4420" {
 		t.Fatalf("work refs not stored: %+v", got)
 	}
 }

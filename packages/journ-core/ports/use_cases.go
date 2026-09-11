@@ -49,6 +49,7 @@ type PlanUseCase interface {
 // plan and its steps from diverging.
 type CreatePlanInput struct {
 	ProjectID domain.ProjectID
+	TicketID  domain.TicketID
 	Title     string
 	Goal      string
 	Status    domain.PlanStatus
@@ -57,10 +58,45 @@ type CreatePlanInput struct {
 }
 
 type UpdatePlanInput struct {
-	Title  *string
-	Goal   *string
-	Status *domain.PlanStatus
-	Tags   *[]string
+	TicketID *domain.TicketID
+	Title    *string
+	Goal     *string
+	Status   *domain.PlanStatus
+	Tags     *[]string
+}
+
+type TicketUseCase interface {
+	ListTickets(ctx context.Context, actor Actor, project domain.ProjectID, f domain.TicketFilter) ([]domain.Ticket, error)
+	GetTicket(ctx context.Context, actor Actor, id domain.TicketID) (domain.Ticket, error)
+	// GetTicketBySlug addresses a ticket the way a CLI or a URL names one.
+	GetTicketBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string) (domain.Ticket, error)
+	CreateTicket(ctx context.Context, actor Actor, in CreateTicketInput) (domain.Ticket, error)
+	UpdateTicket(ctx context.Context, actor Actor, id domain.TicketID, in UpdateTicketInput) (domain.Ticket, error)
+	SetTicketStatus(ctx context.Context, actor Actor, id domain.TicketID, status domain.TicketStatus) (domain.Ticket, error)
+	DeleteTicket(ctx context.Context, actor Actor, id domain.TicketID) error
+}
+
+type CreateTicketInput struct {
+	ProjectID   domain.ProjectID
+	Slug        string
+	Title       string
+	Body        string
+	Status      domain.TicketStatus
+	Priority    domain.Priority
+	Assignee    domain.UserID
+	Tags        []string
+	ExternalRef string
+}
+
+type UpdateTicketInput struct {
+	Slug        *string
+	Title       *string
+	Body        *string
+	Status      *domain.TicketStatus
+	Priority    *domain.Priority
+	Assignee    *domain.UserID
+	Tags        *[]string
+	ExternalRef *string
 }
 
 type TodoUseCase interface {
@@ -77,6 +113,7 @@ type TodoUseCase interface {
 
 type CreateTodoInput struct {
 	ProjectID domain.ProjectID
+	TicketID  domain.TicketID
 	PlanID    domain.PlanID
 	Title     string
 	Details   string
@@ -88,6 +125,7 @@ type CreateTodoInput struct {
 }
 
 type UpdateTodoInput struct {
+	TicketID  *domain.TicketID
 	PlanID    *domain.PlanID
 	Title     *string
 	Details   *string
@@ -125,28 +163,30 @@ type LogUseCase interface {
 }
 
 type WriteLogInput struct {
-	ProjectID domain.ProjectID
-	PlanID    domain.PlanID
-	TodoID    domain.TodoID
-	Title     string
-	Body      string
-	Branch    string
-	PR        string
-	Ticket    string
-	Tags      []string
-	Meta      map[string]any
+	ProjectID   domain.ProjectID
+	TicketID    domain.TicketID
+	PlanID      domain.PlanID
+	TodoID      domain.TodoID
+	Title       string
+	Body        string
+	Branch      string
+	PR          string
+	ExternalRef string
+	Tags        []string
+	Meta        map[string]any
 }
 
 type UpdateLogInput struct {
-	PlanID *domain.PlanID
-	TodoID *domain.TodoID
-	Title  *string
-	Body   *string
-	Branch *string
-	PR     *string
-	Ticket *string
-	Tags   *[]string
-	Meta   *map[string]any
+	TicketID    *domain.TicketID
+	PlanID      *domain.PlanID
+	TodoID      *domain.TodoID
+	Title       *string
+	Body        *string
+	Branch      *string
+	PR          *string
+	ExternalRef *string
+	Tags        *[]string
+	Meta        *map[string]any
 }
 
 type DocUseCase interface {
@@ -160,6 +200,7 @@ type DocUseCase interface {
 
 type CreateDocInput struct {
 	ProjectID domain.ProjectID
+	TicketID  domain.TicketID
 	Slug      string
 	Title     string
 	Body      string
@@ -167,10 +208,11 @@ type CreateDocInput struct {
 }
 
 type UpdateDocInput struct {
-	Slug  *string
-	Title *string
-	Body  *string
-	Tags  *[]string
+	TicketID *domain.TicketID
+	Slug     *string
+	Title    *string
+	Body     *string
+	Tags     *[]string
 }
 
 type SearchUseCase interface {

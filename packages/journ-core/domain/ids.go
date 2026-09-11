@@ -6,6 +6,7 @@ package domain
 type (
 	ProjectID string
 	PlanID    string
+	TicketID  string
 	TodoID    string
 	LogID     string
 	DocID     string

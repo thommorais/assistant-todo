@@ -25,20 +25,21 @@ var _ ports.LogRepository = (*LogRepository)(nil)
 
 func toLogEntry(rec *core.Record) domain.LogEntry {
 	return domain.LogEntry{
-		ID:        domain.LogID(rec.Id),
-		ProjectID: domain.ProjectID(rec.GetString("project")),
-		PlanID:    domain.PlanID(rec.GetString("plan")),
-		TodoID:    domain.TodoID(rec.GetString("todo")),
-		Title:     rec.GetString("title"),
-		Body:      rec.GetString("body"),
-		Branch:    rec.GetString("branch"),
-		PR:        rec.GetString("pr"),
-		Ticket:    rec.GetString("ticket"),
-		Meta:      jsonMap(rec, "meta"),
-		Tags:      strSlice(rec, "tags"),
-		CreatedBy: domain.UserID(rec.GetString("created_by")),
-		CreatedAt: rec.GetDateTime("created").Time(),
-		UpdatedAt: rec.GetDateTime("updated").Time(),
+		ID:          domain.LogID(rec.Id),
+		ProjectID:   domain.ProjectID(rec.GetString("project")),
+		PlanID:      domain.PlanID(rec.GetString("plan")),
+		TodoID:      domain.TodoID(rec.GetString("todo")),
+		Title:       rec.GetString("title"),
+		Body:        rec.GetString("body"),
+		Branch:      rec.GetString("branch"),
+		PR:          rec.GetString("pr"),
+		TicketID:    domain.TicketID(rec.GetString("ticket")),
+		ExternalRef: rec.GetString("external_ref"),
+		Meta:        jsonMap(rec, "meta"),
+		Tags:        strSlice(rec, "tags"),
+		CreatedBy:   domain.UserID(rec.GetString("created_by")),
+		CreatedAt:   rec.GetDateTime("created").Time(),
+		UpdatedAt:   rec.GetDateTime("updated").Time(),
 	}
 }
 
@@ -60,9 +61,13 @@ func (r *LogRepository) List(ctx context.Context, project domain.ProjectID, f do
 		filter = append(filter, "branch = {:branch}")
 		params["branch"] = f.Branch
 	}
-	if f.Ticket != "" {
+	if f.TicketID != "" {
 		filter = append(filter, "ticket = {:ticket}")
-		params["ticket"] = f.Ticket
+		params["ticket"] = string(f.TicketID)
+	}
+	if f.ExternalRef != "" {
+		filter = append(filter, "external_ref = {:external_ref}")
+		params["external_ref"] = f.ExternalRef
 	}
 	if q := strings.TrimSpace(f.Search); q != "" {
 		filter = append(filter, "(title ~ {:search} || body ~ {:search})")
@@ -142,7 +147,8 @@ func applyLogEntry(rec *core.Record, e domain.LogEntry) {
 	rec.Set("body", e.Body)
 	rec.Set("branch", e.Branch)
 	rec.Set("pr", e.PR)
-	rec.Set("ticket", e.Ticket)
+	rec.Set("ticket", string(e.TicketID))
+	rec.Set("external_ref", e.ExternalRef)
 	setJSON(rec, "meta", e.Meta)
 	setJSON(rec, "tags", e.Tags)
 	if e.CreatedBy != "" {

@@ -10,6 +10,7 @@ const (
 	ColProjects = "journ_projects"
 	ColMembers  = "journ_members"
 	ColPlans    = "journ_plans"
+	ColTickets  = "journ_tickets"
 	ColTodos    = "journ_todos"
 	ColLogs     = "journ_logs"
 	ColDocs     = "journ_docs"

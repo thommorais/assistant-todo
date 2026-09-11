@@ -10,8 +10,9 @@ import (
 )
 
 type PlanService struct {
-	repo  ports.PlanRepository
-	todos ports.TodoRepository
+	repo    ports.PlanRepository
+	todos   ports.TodoRepository
+	tickets ports.TicketRepository
 	// todoUC creates the todos nested in a CreatePlan call, so their defaults
 	// and validation stay in one place.
 	todoUC ports.TodoUseCase
@@ -21,8 +22,8 @@ type PlanService struct {
 	log    ports.Logger
 }
 
-func NewPlanService(repo ports.PlanRepository, todos ports.TodoRepository, todoUC ports.TodoUseCase, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *PlanService {
-	return &PlanService{repo: repo, todos: todos, todoUC: todoUC, guard: guard, clock: clock, ids: ids, log: log}
+func NewPlanService(repo ports.PlanRepository, todos ports.TodoRepository, tickets ports.TicketRepository, todoUC ports.TodoUseCase, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *PlanService {
+	return &PlanService{repo: repo, todos: todos, tickets: tickets, todoUC: todoUC, guard: guard, clock: clock, ids: ids, log: log}
 }
 
 var _ ports.PlanUseCase = (*PlanService)(nil)
@@ -74,10 +75,15 @@ func (s *PlanService) CreatePlan(ctx context.Context, actor ports.Actor, in port
 		return domain.Plan{}, err
 	}
 
+	if err := ticketScope(ctx, s.tickets, in.TicketID, in.ProjectID); err != nil {
+		return domain.Plan{}, err
+	}
+
 	now := s.clock.Now()
 	plan := domain.Plan{
 		ID:        domain.PlanID(s.ids.NewID()),
 		ProjectID: in.ProjectID,
+		TicketID:  in.TicketID,
 		Title:     strings.TrimSpace(in.Title),
 		Goal:      in.Goal,
 		Status:    defaultPlanStatus(in.Status),
@@ -99,6 +105,9 @@ func (s *PlanService) CreatePlan(ctx context.Context, actor ports.Actor, in port
 		for i, t := range in.Todos {
 			t.ProjectID = created.ProjectID
 			t.PlanID = created.ID
+			// A plan's todos inherit its ticket, so a ticket's progress
+			// counts work planned under it.
+			t.TicketID = created.TicketID
 			nested[i] = t
 		}
 		batch, err := s.todoUC.CreateTodos(ctx, actor, created.ProjectID, nested)
@@ -125,6 +134,12 @@ func (s *PlanService) UpdatePlan(ctx context.Context, actor ports.Actor, id doma
 		return domain.Plan{}, err
 	}
 
+	if in.TicketID != nil {
+		if err := ticketScope(ctx, s.tickets, *in.TicketID, plan.ProjectID); err != nil {
+			return domain.Plan{}, err
+		}
+		plan.TicketID = *in.TicketID
+	}
 	if in.Title != nil {
 		plan.Title = strings.TrimSpace(*in.Title)
 	}

@@ -9,6 +9,7 @@ import (
 type seedSpec struct {
 	project ports.CreateProjectInput
 	plans   []ports.CreatePlanInput
+	tickets []ports.CreateTicketInput
 	logs    []ports.WriteLogInput
 	docs    []ports.CreateDocInput
 	// done advances the first todos of plan i to the given statuses, so the
@@ -26,6 +27,19 @@ func seedProjects() []seedSpec {
 				Slug:  "journ",
 				Name:  "journ",
 				Descr: "Project journal an agent writes to: plans, todos, work logs and docs.",
+			},
+			tickets: []ports.CreateTicketInput{
+				{
+					Slug:        "search-ranking-ignores-recency",
+					Title:       "Search ranking ignores recency",
+					Status:      domain.TicketInProgress,
+					Priority:    domain.PriorityHigh,
+					Tags:        []string{"search", "bug"},
+					ExternalRef: "JOURN-31",
+					Body: `Hits come back ordered by created date across kinds, so an
+old doc that matches once outranks a log entry written this morning that
+matches three times. Needs a score that combines match count with age.`,
+				},
 			},
 			plans: []ports.CreatePlanInput{
 				{
@@ -58,10 +72,10 @@ func seedProjects() []seedSpec {
 			},
 			logs: []ports.WriteLogInput{
 				{
-					Title:  "Chose SQLite FTS5 over a separate search service",
-					Branch: "feat/search",
-					Ticket: "JOURN-12",
-					Tags:   []string{"decision", "architecture", "search"},
+					Title:       "Chose SQLite FTS5 over a separate search service",
+					Branch:      "feat/search",
+					ExternalRef: "JOURN-12",
+					Tags:        []string{"decision", "architecture", "search"},
 					Body: `## Context
 
 Search has to span logs, docs, todos and plans, scoped to one project, and
@@ -203,6 +217,20 @@ collection rules enforce the same tenancy for anything hitting
 				Name:  "Welligence Web",
 				Descr: "Upstream asset valuation platform. Rails shell plus a TanStack Router SPA.",
 			},
+			tickets: []ports.CreateTicketInput{
+				{
+					Slug:        "consent-banner-blocks-first-pageview",
+					Title:       "Consent banner blocks the first pageview",
+					Status:      domain.TicketOpen,
+					Priority:    domain.PriorityMedium,
+					Tags:        []string{"analytics"},
+					ExternalRef: "XWWP-4501",
+					Body: `The banner mounts before the analytics bootstrap, so the
+landing pageview is dropped for anyone who has not already consented. Every
+later navigation is counted, which is why the drop only shows in session
+starts.`,
+				},
+			},
 			plans: []ports.CreatePlanInput{
 				{
 					Title:  "Make Exploration and Portfolio v2 responsive",
@@ -223,11 +251,11 @@ collection rules enforce the same tenancy for anything hitting
 			},
 			logs: []ports.WriteLogInput{
 				{
-					Title:  "GA4 pageview tracking restored on prod",
-					Branch: "release/r378-ga-pageview-fix",
-					PR:     "4873",
-					Ticket: "XWWP-4420",
-					Tags:   []string{"analytics", "bugfix"},
+					Title:       "GA4 pageview tracking restored on prod",
+					Branch:      "release/r378-ga-pageview-fix",
+					PR:          "4873",
+					ExternalRef: "XWWP-4420",
+					Tags:        []string{"analytics", "bugfix"},
 					Body: `## Problem
 
 Prod stopped counting GA4 pageviews around June 8.

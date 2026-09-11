@@ -60,6 +60,22 @@ func CanTransitionTodo(from, to domain.TodoStatus) error {
 	return nil
 }
 
+// CanTransitionTicket reports whether a status change is legal. As with a
+// todo, cancellation is the one end state that cannot be undone; closing is
+// reversible because work reopens.
+func CanTransitionTicket(from, to domain.TicketStatus) error {
+	if !ticketStatuses[to] {
+		return domain.Invalid("status", "must be one of open, in_progress, blocked, closed, cancelled")
+	}
+	if from == to {
+		return nil
+	}
+	if from == domain.TicketCancelled {
+		return domain.Invalid("status", "a cancelled ticket cannot be reopened; create a new one instead")
+	}
+	return nil
+}
+
 // NextPosition returns the position for a todo appended to the given set.
 func NextPosition(todos []domain.Todo) int {
 	max := 0

@@ -23,6 +23,11 @@ func Register(app core.App) error {
 	if err := ensureMembers(app); err != nil {
 		return fmt.Errorf("members: %w", err)
 	}
+	// Tickets come before plans, todos, logs and docs: each of those carries
+	// a relation to this collection, so it has to exist first.
+	if err := ensureTickets(app); err != nil {
+		return fmt.Errorf("tickets: %w", err)
+	}
 	if err := ensurePlans(app); err != nil {
 		return fmt.Errorf("plans: %w", err)
 	}
@@ -35,8 +40,55 @@ func Register(app core.App) error {
 	if err := ensureDocs(app); err != nil {
 		return fmt.Errorf("docs: %w", err)
 	}
+	// Existing databases predate tickets: their collections were created by
+	// an earlier Register and ensureX leaves them alone, so the new fields
+	// are added in a separate pass.
+	if err := alterForTickets(app); err != nil {
+		return fmt.Errorf("alter: %w", err)
+	}
 	if err := applyRules(app); err != nil {
 		return fmt.Errorf("rules: %w", err)
+	}
+	return nil
+}
+
+// alterForTickets brings a pre-ticket database up to date: it adds the ticket
+// relation to every child collection and renames the log's free-text ticket
+// key to external_ref. Both steps are no-ops once applied, so Register stays
+// safe to call on every boot.
+func alterForTickets(app core.App) error {
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range []string{ColPlans, ColTodos, ColLogs, ColDocs} {
+		c, err := app.FindCollectionByNameOrId(name)
+		if err != nil {
+			return err
+		}
+		changed := false
+
+		// The log's "ticket" column held a free-text tracker key before the
+		// ticket entity existed. It is renamed rather than replaced: keeping
+		// the field's id makes PocketBase rename the underlying column, so
+		// the values survive. Dropping and re-adding would silently empty it.
+		if text, isText := c.Fields.GetByName("ticket").(*core.TextField); isText {
+			text.Name = "external_ref"
+			changed = true
+		}
+
+		// Only once "ticket" is free can the relation take the name.
+		if c.Fields.GetByName("ticket") == nil {
+			c.Fields.Add(ticketField(tickets))
+			changed = true
+		}
+
+		if changed {
+			if err := app.Save(c); err != nil {
+				return fmt.Errorf("%s: %w", name, err)
+			}
+		}
 	}
 	return nil
 }

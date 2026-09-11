@@ -14,6 +14,7 @@ type workFixture struct {
 	projects *fakeProjects
 	plans    *fakePlans
 	todos    *fakeTodos
+	tickets  *fakeTickets
 	planSvc  *services.PlanService
 	todoSvc  *services.TodoService
 	owner    ports.Actor
@@ -36,14 +37,15 @@ func newWorkFixture(t *testing.T) *workFixture {
 
 	plans := newFakePlans()
 	todos := newFakeTodos()
+	tickets := newFakeTickets()
 	guard := services.NewProjectGuard(projects)
 	clock := &fakeClock{now: testNow}
 
-	todoSvc := services.NewTodoService(todos, plans, guard, clock, &seqIDs{prefix: "t"}, nopLogger{})
-	planSvc := services.NewPlanService(plans, todos, todoSvc, guard, clock, &seqIDs{prefix: "pl"}, nopLogger{})
+	todoSvc := services.NewTodoService(todos, plans, tickets, guard, clock, &seqIDs{prefix: "t"}, nopLogger{})
+	planSvc := services.NewPlanService(plans, todos, tickets, todoSvc, guard, clock, &seqIDs{prefix: "pl"}, nopLogger{})
 
 	return &workFixture{
-		projects: projects, plans: plans, todos: todos,
+		projects: projects, plans: plans, todos: todos, tickets: tickets,
 		planSvc: planSvc, todoSvc: todoSvc, project: "p001",
 		owner:   ports.Actor{UserID: "u-owner"},
 		viewer:  ports.Actor{UserID: "u-viewer"},

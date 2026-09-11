@@ -97,9 +97,15 @@ func ensurePlans(app core.App) error {
 		return err
 	}
 
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
 	c := core.NewBaseCollection(ColPlans)
 	c.Fields.Add(
 		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		ticketField(tickets),
 		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
 		&core.TextField{Name: "goal", Max: 2000},
 		&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"draft", "active", "done", "abandoned"}},
@@ -110,6 +116,50 @@ func ensurePlans(app core.App) error {
 	c.AddIndex("idx_journ_plans_project", false, "project", "")
 
 	return app.Save(c)
+}
+
+func ensureTickets(app core.App) error {
+	if _, ok := find(app, ColTickets); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColTickets)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.TextField{Name: "slug", Required: true, Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`},
+		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
+		&core.EditorField{Name: "body", MaxSize: 500000},
+		&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"open", "in_progress", "blocked", "closed", "cancelled"}},
+		&core.SelectField{Name: "priority", Required: true, MaxSelect: 1, Values: []string{"low", "medium", "high"}},
+		// The assignee is not cascade-deleted: losing the account should not
+		// take the ticket with it.
+		&core.RelationField{Name: "assignee", CollectionId: users.Id, CascadeDelete: false, MaxSelect: 1},
+		&core.JSONField{Name: "tags", MaxSize: 4000},
+		&core.TextField{Name: "external_ref", Max: 200},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	// Slugs address a ticket within its project, so uniqueness is per project.
+	c.AddIndex("idx_journ_tickets_slug", true, "project, slug", "")
+	c.AddIndex("idx_journ_tickets_status", false, "project, status", "")
+	c.AddIndex("idx_journ_tickets_assignee", false, "assignee", "")
+
+	return app.Save(c)
+}
+
+// ticketField is the nullable back-reference every child collection carries.
+// Deleting a ticket detaches its children rather than destroying them, so the
+// relation must not cascade.
+func ticketField(tickets *core.Collection) *core.RelationField {
+	return &core.RelationField{Name: "ticket", CollectionId: tickets.Id, CascadeDelete: false, MaxSelect: 1}
 }
 
 func ensureTodos(app core.App) error {
@@ -129,9 +179,15 @@ func ensureTodos(app core.App) error {
 		return err
 	}
 
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
 	c := core.NewBaseCollection(ColTodos)
 	c.Fields.Add(
 		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		ticketField(tickets),
 		// Deleting a plan detaches its todos rather than destroying them, so
 		// this relation must not cascade.
 		&core.RelationField{Name: "plan", CollectionId: plans.Id, CascadeDelete: false, MaxSelect: 1},
@@ -174,16 +230,22 @@ func ensureLogs(app core.App) error {
 		return err
 	}
 
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
 	c := core.NewBaseCollection(ColLogs)
 	c.Fields.Add(
 		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		ticketField(tickets),
 		&core.RelationField{Name: "plan", CollectionId: plans.Id, CascadeDelete: false, MaxSelect: 1},
 		&core.RelationField{Name: "todo", CollectionId: todos.Id, CascadeDelete: false, MaxSelect: 1},
 		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
 		&core.EditorField{Name: "body", MaxSize: 500000},
 		&core.TextField{Name: "branch", Max: 200},
 		&core.TextField{Name: "pr", Max: 200},
-		&core.TextField{Name: "ticket", Max: 200},
+		&core.TextField{Name: "external_ref", Max: 200},
 		&core.JSONField{Name: "meta", MaxSize: 100000},
 		&core.JSONField{Name: "tags", MaxSize: 4000},
 		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
@@ -194,6 +256,7 @@ func ensureLogs(app core.App) error {
 	c.AddIndex("idx_journ_logs_todo", false, "todo", "")
 	c.AddIndex("idx_journ_logs_branch", false, "branch", "")
 	c.AddIndex("idx_journ_logs_ticket", false, "ticket", "")
+	c.AddIndex("idx_journ_logs_external_ref", false, "external_ref", "")
 
 	return app.Save(c)
 }
@@ -211,9 +274,15 @@ func ensureDocs(app core.App) error {
 		return err
 	}
 
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
 	c := core.NewBaseCollection(ColDocs)
 	c.Fields.Add(
 		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		ticketField(tickets),
 		&core.TextField{Name: "slug", Required: true, Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`},
 		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
 		&core.EditorField{Name: "body", MaxSize: 500000},
@@ -271,7 +340,7 @@ func applyRules(app core.App) error {
 		return err
 	}
 
-	for _, name := range []string{ColPlans, ColTodos, ColDocs, ColLogs} {
+	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColLogs} {
 		c, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			return err

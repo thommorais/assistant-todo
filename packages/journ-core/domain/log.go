@@ -16,17 +16,22 @@ type LogEntry struct {
 	// documents.
 	PlanID PlanID
 	TodoID TodoID
-	Title  string
+	// TicketID is optional: an empty value means the entry sits directly
+	// under the project rather than under one of its tickets.
+	TicketID TicketID
+	Title    string
 	// Body is markdown: the problem, the approach, the decisions, whatever
 	// the next person needs. Length is deliberately generous.
 	Body string
-	// Branch, PR and Ticket anchor the entry to the work as it happened. An
-	// agent knows its branch from git, so these cost nothing to fill and make
-	// the entry findable from a code reference later.
-	Branch string
-	PR     string
-	Ticket string
-	Tags   []string
+	// Branch, PR and ExternalRef anchor the entry to the work as it happened.
+	// An agent knows its branch from git, so these cost nothing to fill and
+	// make the entry findable from a code reference later. ExternalRef names
+	// the work in another tracker and is distinct from TicketID, which points
+	// at a journ ticket.
+	Branch      string
+	PR          string
+	ExternalRef string
+	Tags        []string
 	// Meta is arbitrary structured context an adapter wants to preserve.
 	Meta      map[string]any
 	CreatedBy UserID
@@ -39,11 +44,12 @@ type LogEntry struct {
 
 // LogFilter narrows a log query. Zero values mean "no restriction".
 type LogFilter struct {
-	PlanID PlanID
-	TodoID TodoID
-	Branch string
-	Ticket string
-	Tags   []string
+	PlanID      PlanID
+	TodoID      TodoID
+	TicketID    TicketID
+	Branch      string
+	ExternalRef string
+	Tags        []string
 	// Search matches the title and the body.
 	Search string
 	Since  *time.Time

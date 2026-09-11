@@ -11,16 +11,17 @@ import (
 )
 
 type TodoService struct {
-	repo  ports.TodoRepository
-	plans ports.PlanRepository
-	guard ports.Guard
-	clock ports.Clock
-	ids   ports.IDGenerator
-	log   ports.Logger
+	repo    ports.TodoRepository
+	plans   ports.PlanRepository
+	tickets ports.TicketRepository
+	guard   ports.Guard
+	clock   ports.Clock
+	ids     ports.IDGenerator
+	log     ports.Logger
 }
 
-func NewTodoService(repo ports.TodoRepository, plans ports.PlanRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TodoService {
-	return &TodoService{repo: repo, plans: plans, guard: guard, clock: clock, ids: ids, log: log}
+func NewTodoService(repo ports.TodoRepository, plans ports.PlanRepository, tickets ports.TicketRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TodoService {
+	return &TodoService{repo: repo, plans: plans, tickets: tickets, guard: guard, clock: clock, ids: ids, log: log}
 }
 
 var _ ports.TodoUseCase = (*TodoService)(nil)
@@ -84,6 +85,9 @@ func (s *TodoService) create(ctx context.Context, actor ports.Actor, in ports.Cr
 	if err := s.checkPlan(ctx, in.ProjectID, in.PlanID); err != nil {
 		return domain.Todo{}, err
 	}
+	if err := ticketScope(ctx, s.tickets, in.TicketID, in.ProjectID); err != nil {
+		return domain.Todo{}, err
+	}
 	due, err := parseDue(in.DueDate)
 	if err != nil {
 		return domain.Todo{}, err
@@ -100,6 +104,7 @@ func (s *TodoService) create(ctx context.Context, actor ports.Actor, in ports.Cr
 	todo := domain.Todo{
 		ID:        domain.TodoID(s.ids.NewID()),
 		ProjectID: in.ProjectID,
+		TicketID:  in.TicketID,
 		PlanID:    in.PlanID,
 		Title:     strings.TrimSpace(in.Title),
 		Details:   in.Details,
@@ -173,6 +178,12 @@ func (s *TodoService) UpdateTodo(ctx context.Context, actor ports.Actor, id doma
 		return domain.Todo{}, err
 	}
 
+	if in.TicketID != nil {
+		if err := ticketScope(ctx, s.tickets, *in.TicketID, todo.ProjectID); err != nil {
+			return domain.Todo{}, err
+		}
+		todo.TicketID = *in.TicketID
+	}
 	if in.PlanID != nil {
 		if err := s.checkPlan(ctx, todo.ProjectID, *in.PlanID); err != nil {
 			return domain.Todo{}, err

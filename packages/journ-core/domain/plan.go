@@ -21,6 +21,9 @@ func (s PlanStatus) IsTerminal() bool {
 type Plan struct {
 	ID        PlanID
 	ProjectID ProjectID
+	// TicketID is optional: an empty value means the plan sits directly under
+	// the project rather than under one of its tickets.
+	TicketID  TicketID
 	Title     string
 	Goal      string
 	Status    PlanStatus

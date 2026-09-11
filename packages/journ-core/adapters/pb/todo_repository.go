@@ -25,6 +25,7 @@ func toTodo(rec *core.Record) domain.Todo {
 	return domain.Todo{
 		ID:        domain.TodoID(rec.Id),
 		ProjectID: domain.ProjectID(rec.GetString("project")),
+		TicketID:  domain.TicketID(rec.GetString("ticket")),
 		PlanID:    domain.PlanID(rec.GetString("plan")),
 		Title:     rec.GetString("title"),
 		Details:   rec.GetString("details"),
@@ -44,6 +45,9 @@ func (r *TodoRepository) List(ctx context.Context, project domain.ProjectID, f d
 	exprs := []dbx.Expression{dbx.HashExp{"project": string(project)}}
 	if f.PlanID != "" {
 		exprs = append(exprs, dbx.HashExp{"plan": string(f.PlanID)})
+	}
+	if f.TicketID != "" {
+		exprs = append(exprs, dbx.HashExp{"ticket": string(f.TicketID)})
 	}
 	if len(f.Status) > 0 {
 		values := make([]any, 0, len(f.Status))
@@ -107,6 +111,20 @@ func (r *TodoRepository) ListByPlan(ctx context.Context, plan domain.PlanID) ([]
 	return out, nil
 }
 
+// ListByTicket returns every todo filed under a ticket, including those that
+// also sit under one of its plans.
+func (r *TodoRepository) ListByTicket(ctx context.Context, ticket domain.TicketID) ([]domain.Todo, error) {
+	records, err := r.app.FindAllRecords(ColTodos, dbx.HashExp{"ticket": string(ticket)})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := make([]domain.Todo, 0, len(records))
+	for _, rec := range records {
+		out = append(out, toTodo(rec))
+	}
+	return out, nil
+}
+
 func (r *TodoRepository) GetByID(ctx context.Context, id domain.TodoID) (domain.Todo, error) {
 	rec, err := r.app.FindRecordById(ColTodos, string(id))
 	if err != nil {
@@ -144,6 +162,7 @@ func (r *TodoRepository) Update(ctx context.Context, t domain.Todo) (domain.Todo
 func applyTodo(rec *core.Record, t domain.Todo) {
 	rec.Set("project", string(t.ProjectID))
 	rec.Set("plan", string(t.PlanID))
+	rec.Set("ticket", string(t.TicketID))
 	rec.Set("title", t.Title)
 	rec.Set("details", t.Details)
 	rec.Set("status", string(t.Status))

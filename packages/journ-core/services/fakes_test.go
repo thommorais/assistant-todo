@@ -201,6 +201,17 @@ func (r *fakePlans) List(_ context.Context, project domain.ProjectID, statuses [
 	return out, nil
 }
 
+func (r *fakePlans) ListByTicket(_ context.Context, ticket domain.TicketID) ([]domain.Plan, error) {
+	out := []domain.Plan{}
+	for _, p := range r.items {
+		if p.TicketID == ticket {
+			out = append(out, p)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
 func (r *fakePlans) GetByID(_ context.Context, id domain.PlanID) (domain.Plan, error) {
 	p, ok := r.items[id]
 	if !ok {
@@ -256,6 +267,9 @@ func (r *fakeTodos) List(_ context.Context, project domain.ProjectID, f domain.T
 		if f.PlanID != "" && t.PlanID != f.PlanID {
 			continue
 		}
+		if f.TicketID != "" && t.TicketID != f.TicketID {
+			continue
+		}
 		if len(allow) > 0 && !allow[t.Status] {
 			continue
 		}
@@ -275,6 +289,17 @@ func (r *fakeTodos) ListByPlan(_ context.Context, plan domain.PlanID) ([]domain.
 	out := []domain.Todo{}
 	for _, t := range r.items {
 		if t.PlanID == plan {
+			out = append(out, t)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTodos) ListByTicket(_ context.Context, ticket domain.TicketID) ([]domain.Todo, error) {
+	out := []domain.Todo{}
+	for _, t := range r.items {
+		if t.TicketID == ticket {
 			out = append(out, t)
 		}
 	}
@@ -343,7 +368,10 @@ func (r *fakeLogs) List(_ context.Context, project domain.ProjectID, f domain.Lo
 		if f.Branch != "" && e.Branch != f.Branch {
 			continue
 		}
-		if f.Ticket != "" && e.Ticket != f.Ticket {
+		if f.ExternalRef != "" && e.ExternalRef != f.ExternalRef {
+			continue
+		}
+		if f.TicketID != "" && e.TicketID != f.TicketID {
 			continue
 		}
 		if f.Search != "" {
@@ -403,6 +431,9 @@ func newFakeDocs() *fakeDocs { return &fakeDocs{items: map[domain.DocID]domain.D
 func (r *fakeDocs) List(_ context.Context, project domain.ProjectID, f domain.DocFilter) ([]domain.Doc, error) {
 	out := []domain.Doc{}
 	for _, d := range r.items {
+		if f.TicketID != "" && d.TicketID != f.TicketID {
+			continue
+		}
 		if d.ProjectID != project {
 			continue
 		}
@@ -467,6 +498,85 @@ func (r *fakeSearch) Search(_ context.Context, project domain.ProjectID, q domai
 	return out, nil
 }
 
+type fakeTickets struct {
+	items map[domain.TicketID]domain.Ticket
+}
+
+func newFakeTickets() *fakeTickets {
+	return &fakeTickets{items: map[domain.TicketID]domain.Ticket{}}
+}
+
+func (r *fakeTickets) List(_ context.Context, project domain.ProjectID, f domain.TicketFilter) ([]domain.Ticket, error) {
+	out := []domain.Ticket{}
+	for _, t := range r.items {
+		if t.ProjectID != project {
+			continue
+		}
+		if len(f.Status) > 0 {
+			match := false
+			for _, want := range f.Status {
+				if t.Status == want {
+					match = true
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+		if f.Priority != "" && t.Priority != f.Priority {
+			continue
+		}
+		if f.Assignee != "" && t.Assignee != f.Assignee {
+			continue
+		}
+		if f.Search != "" && !strings.Contains(strings.ToLower(t.Title+" "+t.Body), strings.ToLower(f.Search)) {
+			continue
+		}
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTickets) GetByID(_ context.Context, id domain.TicketID) (domain.Ticket, error) {
+	t, ok := r.items[id]
+	if !ok {
+		return domain.Ticket{}, domain.ErrNotFound
+	}
+	return t, nil
+}
+
+func (r *fakeTickets) GetBySlug(_ context.Context, project domain.ProjectID, slug string) (domain.Ticket, error) {
+	for _, t := range r.items {
+		if t.ProjectID == project && t.Slug == slug {
+			return t, nil
+		}
+	}
+	return domain.Ticket{}, domain.ErrNotFound
+}
+
+func (r *fakeTickets) Create(_ context.Context, t domain.Ticket) (domain.Ticket, error) {
+	r.items[t.ID] = t
+	return t, nil
+}
+
+func (r *fakeTickets) Update(_ context.Context, t domain.Ticket) (domain.Ticket, error) {
+	if _, ok := r.items[t.ID]; !ok {
+		return domain.Ticket{}, domain.ErrNotFound
+	}
+	r.items[t.ID] = t
+	return t, nil
+}
+
+func (r *fakeTickets) Delete(_ context.Context, id domain.TicketID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
 // compile-time checks that the doubles satisfy the ports they stand in for.
 var (
 	_ ports.ProjectRepository = (*fakeProjects)(nil)
@@ -474,6 +584,7 @@ var (
 	_ ports.TodoRepository    = (*fakeTodos)(nil)
 	_ ports.LogRepository     = (*fakeLogs)(nil)
 	_ ports.DocRepository     = (*fakeDocs)(nil)
+	_ ports.TicketRepository  = (*fakeTickets)(nil)
 	_ ports.SearchRepository  = (*fakeSearch)(nil)
 	_ ports.Clock             = (*fakeClock)(nil)
 	_ ports.IDGenerator       = (*seqIDs)(nil)

@@ -54,6 +54,7 @@ type progressView struct {
 type planView struct {
 	ID        string       `json:"id"`
 	ProjectID string       `json:"project_id"`
+	TicketID  string       `json:"ticket_id,omitempty"`
 	Title     string       `json:"title"`
 	Goal      string       `json:"goal,omitempty"`
 	Status    string       `json:"status"`
@@ -66,7 +67,7 @@ type planView struct {
 
 func toPlanView(p domain.Plan) planView {
 	return planView{
-		ID: string(p.ID), ProjectID: string(p.ProjectID), Title: p.Title, Goal: p.Goal,
+		ID: string(p.ID), ProjectID: string(p.ProjectID), TicketID: string(p.TicketID), Title: p.Title, Goal: p.Goal,
 		Status: string(p.Status), Tags: orEmpty(p.Tags),
 		Progress:  progressView{Total: p.Progress.Total, Done: p.Progress.Done, Percent: p.Progress.Percent()},
 		CreatedBy: string(p.CreatedBy),
@@ -74,9 +75,39 @@ func toPlanView(p domain.Plan) planView {
 	}
 }
 
+type ticketView struct {
+	ID          string       `json:"id"`
+	ProjectID   string       `json:"project_id"`
+	Slug        string       `json:"slug"`
+	Title       string       `json:"title"`
+	Body        string       `json:"body"`
+	Status      string       `json:"status"`
+	Priority    string       `json:"priority"`
+	Assignee    string       `json:"assignee,omitempty"`
+	Tags        []string     `json:"tags"`
+	ExternalRef string       `json:"external_ref,omitempty"`
+	Progress    progressView `json:"progress"`
+	CreatedBy   string       `json:"created_by,omitempty"`
+	CreatedAt   string       `json:"created_at"`
+	UpdatedAt   string       `json:"updated_at"`
+}
+
+func toTicketView(t domain.Ticket) ticketView {
+	return ticketView{
+		ID: string(t.ID), ProjectID: string(t.ProjectID), Slug: t.Slug,
+		Title: t.Title, Body: t.Body, Status: string(t.Status),
+		Priority: string(t.Priority), Assignee: string(t.Assignee),
+		Tags: orEmpty(t.Tags), ExternalRef: t.ExternalRef,
+		Progress:  progressView{Total: t.Progress.Total, Done: t.Progress.Done, Percent: t.Progress.Percent()},
+		CreatedBy: string(t.CreatedBy),
+		CreatedAt: rfc3339(t.CreatedAt), UpdatedAt: rfc3339(t.UpdatedAt),
+	}
+}
+
 type todoView struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`
+	TicketID  string   `json:"ticket_id,omitempty"`
 	PlanID    string   `json:"plan_id,omitempty"`
 	Title     string   `json:"title"`
 	Details   string   `json:"details,omitempty"`
@@ -99,7 +130,7 @@ func toTodoView(t domain.Todo) todoView {
 		deps = append(deps, string(d))
 	}
 	v := todoView{
-		ID: string(t.ID), ProjectID: string(t.ProjectID), PlanID: string(t.PlanID),
+		ID: string(t.ID), ProjectID: string(t.ProjectID), TicketID: string(t.TicketID), PlanID: string(t.PlanID),
 		Title: t.Title, Details: t.Details, Status: string(t.Status), Priority: string(t.Priority),
 		Tags: orEmpty(t.Tags), Position: t.Position, DependsOn: deps, Blocked: t.Blocked,
 		CreatedBy: string(t.CreatedBy),
@@ -112,27 +143,28 @@ func toTodoView(t domain.Todo) todoView {
 }
 
 type logView struct {
-	ID        string         `json:"id"`
-	ProjectID string         `json:"project_id"`
-	PlanID    string         `json:"plan_id,omitempty"`
-	TodoID    string         `json:"todo_id,omitempty"`
-	Title     string         `json:"title"`
-	Body      string         `json:"body"`
-	Branch    string         `json:"branch,omitempty"`
-	PR        string         `json:"pr,omitempty"`
-	Ticket    string         `json:"ticket,omitempty"`
-	Meta      map[string]any `json:"meta,omitempty"`
-	Tags      []string       `json:"tags"`
-	CreatedBy string         `json:"created_by,omitempty"`
-	CreatedAt string         `json:"created_at"`
-	UpdatedAt string         `json:"updated_at"`
+	ID          string         `json:"id"`
+	ProjectID   string         `json:"project_id"`
+	TicketID    string         `json:"ticket_id,omitempty"`
+	PlanID      string         `json:"plan_id,omitempty"`
+	TodoID      string         `json:"todo_id,omitempty"`
+	Title       string         `json:"title"`
+	Body        string         `json:"body"`
+	Branch      string         `json:"branch,omitempty"`
+	PR          string         `json:"pr,omitempty"`
+	ExternalRef string         `json:"external_ref,omitempty"`
+	Meta        map[string]any `json:"meta,omitempty"`
+	Tags        []string       `json:"tags"`
+	CreatedBy   string         `json:"created_by,omitempty"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
 }
 
 func toLogView(e domain.LogEntry) logView {
 	return logView{
-		ID: string(e.ID), ProjectID: string(e.ProjectID), PlanID: string(e.PlanID),
-		TodoID: string(e.TodoID), Title: e.Title, Body: e.Body,
-		Branch: e.Branch, PR: e.PR, Ticket: e.Ticket,
+		ID: string(e.ID), ProjectID: string(e.ProjectID), TicketID: string(e.TicketID),
+		PlanID: string(e.PlanID), TodoID: string(e.TodoID), Title: e.Title, Body: e.Body,
+		Branch: e.Branch, PR: e.PR, ExternalRef: e.ExternalRef,
 		Meta: e.Meta, Tags: orEmpty(e.Tags), CreatedBy: string(e.CreatedBy),
 		CreatedAt: rfc3339(e.CreatedAt), UpdatedAt: rfc3339(e.UpdatedAt),
 	}
@@ -141,6 +173,7 @@ func toLogView(e domain.LogEntry) logView {
 type docView struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`
+	TicketID  string   `json:"ticket_id,omitempty"`
 	Slug      string   `json:"slug"`
 	Title     string   `json:"title"`
 	Body      string   `json:"body"`
@@ -152,7 +185,7 @@ type docView struct {
 
 func toDocView(d domain.Doc) docView {
 	return docView{
-		ID: string(d.ID), ProjectID: string(d.ProjectID), Slug: d.Slug, Title: d.Title,
+		ID: string(d.ID), ProjectID: string(d.ProjectID), TicketID: string(d.TicketID), Slug: d.Slug, Title: d.Title,
 		Body: d.Body, Tags: orEmpty(d.Tags), CreatedBy: string(d.CreatedBy),
 		CreatedAt: rfc3339(d.CreatedAt), UpdatedAt: rfc3339(d.UpdatedAt),
 	}

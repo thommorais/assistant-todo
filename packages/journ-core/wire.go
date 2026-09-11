@@ -19,6 +19,7 @@ import (
 type App struct {
 	Projects ports.ProjectUseCase
 	Plans    ports.PlanUseCase
+	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
 	Logs     ports.LogUseCase
 	Docs     ports.DocUseCase
@@ -33,20 +34,22 @@ func New(app pbcore.App, logger *slog.Logger) *App {
 
 	projectRepo := pb.NewProjectRepository(app)
 	planRepo := pb.NewPlanRepository(app)
+	ticketRepo := pb.NewTicketRepository(app)
 	todoRepo := pb.NewTodoRepository(app)
 	logRepo := pb.NewLogRepository(app)
 	docRepo := pb.NewDocRepository(app)
 	searchRepo := pb.NewSearchRepository(app)
 
 	guard := services.NewProjectGuard(projectRepo)
-	todos := services.NewTodoService(todoRepo, planRepo, guard, clock, ids, log)
+	todos := services.NewTodoService(todoRepo, planRepo, ticketRepo, guard, clock, ids, log)
 
 	return &App{
 		Projects: services.NewProjectService(projectRepo, guard, clock, ids, log),
-		Plans:    services.NewPlanService(planRepo, todoRepo, todos, guard, clock, ids, log),
+		Plans:    services.NewPlanService(planRepo, todoRepo, ticketRepo, todos, guard, clock, ids, log),
+		Tickets:  services.NewTicketService(ticketRepo, todoRepo, planRepo, logRepo, docRepo, guard, clock, ids, log),
 		Todos:    todos,
-		Logs:     services.NewLogService(logRepo, guard, clock, ids, log),
-		Docs:     services.NewDocService(docRepo, guard, clock, ids, log),
+		Logs:     services.NewLogService(logRepo, ticketRepo, guard, clock, ids, log),
+		Docs:     services.NewDocService(docRepo, ticketRepo, guard, clock, ids, log),
 		Search:   services.NewSearchService(searchRepo, guard),
 	}
 }

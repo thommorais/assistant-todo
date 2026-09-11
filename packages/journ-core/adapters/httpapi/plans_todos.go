@@ -39,6 +39,7 @@ func (h *Handler) getPlan(e *core.RequestEvent) error {
 }
 
 type todoBody struct {
+	TicketID  *string   `json:"ticket_id"`
 	PlanID    *string   `json:"plan_id"`
 	Title     *string   `json:"title"`
 	Details   *string   `json:"details"`
@@ -54,6 +55,9 @@ type todoBody struct {
 // simply take the service's defaults.
 func (b todoBody) toCreateInput() ports.CreateTodoInput {
 	in := ports.CreateTodoInput{DueDate: b.DueDate}
+	if b.TicketID != nil {
+		in.TicketID = domain.TicketID(*b.TicketID)
+	}
 	if b.PlanID != nil {
 		in.PlanID = domain.PlanID(*b.PlanID)
 	}
@@ -85,6 +89,10 @@ func (b todoBody) toUpdateInput() ports.UpdateTodoInput {
 		Title: b.Title, Details: b.Details, Tags: b.Tags,
 		Position: b.Position, DueDate: b.DueDate,
 	}
+	if b.TicketID != nil {
+		id := domain.TicketID(*b.TicketID)
+		in.TicketID = &id
+	}
 	if b.PlanID != nil {
 		id := domain.PlanID(*b.PlanID)
 		in.PlanID = &id
@@ -113,11 +121,12 @@ func toTodoIDs(raw []string) []domain.TodoID {
 }
 
 type createPlanBody struct {
-	Title  string     `json:"title"`
-	Goal   string     `json:"goal"`
-	Status string     `json:"status"`
-	Tags   []string   `json:"tags"`
-	Todos  []todoBody `json:"todos"`
+	TicketID string     `json:"ticket_id"`
+	Title    string     `json:"title"`
+	Goal     string     `json:"goal"`
+	Status   string     `json:"status"`
+	Tags     []string   `json:"tags"`
+	Todos    []todoBody `json:"todos"`
 }
 
 // createPlan accepts the plan and its first todos together: an agent drafting
@@ -138,7 +147,8 @@ func (h *Handler) createPlan(e *core.RequestEvent) error {
 	}
 
 	plan, err := h.plans.CreatePlan(e.Request.Context(), actorOf(e), ports.CreatePlanInput{
-		ProjectID: project, Title: body.Title, Goal: body.Goal,
+		ProjectID: project, TicketID: domain.TicketID(body.TicketID),
+		Title: body.Title, Goal: body.Goal,
 		Status: domain.PlanStatus(body.Status), Tags: body.Tags, Todos: todos,
 	})
 	if err != nil {
@@ -148,10 +158,11 @@ func (h *Handler) createPlan(e *core.RequestEvent) error {
 }
 
 type updatePlanBody struct {
-	Title  *string   `json:"title"`
-	Goal   *string   `json:"goal"`
-	Status *string   `json:"status"`
-	Tags   *[]string `json:"tags"`
+	TicketID *string   `json:"ticket_id"`
+	Title    *string   `json:"title"`
+	Goal     *string   `json:"goal"`
+	Status   *string   `json:"status"`
+	Tags     *[]string `json:"tags"`
 }
 
 func (h *Handler) updatePlan(e *core.RequestEvent) error {
@@ -160,6 +171,10 @@ func (h *Handler) updatePlan(e *core.RequestEvent) error {
 		return e.BadRequestError("invalid request body", err)
 	}
 	in := ports.UpdatePlanInput{Title: body.Title, Goal: body.Goal, Tags: body.Tags}
+	if body.TicketID != nil {
+		id := domain.TicketID(*body.TicketID)
+		in.TicketID = &id
+	}
 	if body.Status != nil {
 		s := domain.PlanStatus(*body.Status)
 		in.Status = &s
@@ -186,6 +201,7 @@ func (h *Handler) listTodos(e *core.RequestEvent) error {
 	}
 	filter := domain.TodoFilter{
 		PlanID:   domain.PlanID(e.Request.URL.Query().Get("plan_id")),
+		TicketID: domain.TicketID(e.Request.URL.Query().Get("ticket_id")),
 		Priority: domain.Priority(e.Request.URL.Query().Get("priority")),
 		Tags:     csv(e, "tags"),
 		Search:   e.Request.URL.Query().Get("q"),

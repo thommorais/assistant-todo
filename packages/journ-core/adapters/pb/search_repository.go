@@ -68,6 +68,14 @@ func (r *SearchRepository) Search(ctx context.Context, project domain.ProjectID,
 		hits = append(hits, found...)
 	}
 
+	if all || want[domain.SearchKindTicket] {
+		found, err := r.searchTickets(project, q)
+		if err != nil {
+			return nil, err
+		}
+		hits = append(hits, found...)
+	}
+
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].CreatedAt.After(hits[j].CreatedAt) })
 	return applyPaging(hits, q.Offset, q.Limit), nil
 }
@@ -171,6 +179,27 @@ func (r *SearchRepository) searchPlans(project domain.ProjectID, q domain.Search
 			ProjectID: project,
 			Title:     rec.GetString("title"),
 			Snippet:   rules.Snippet(rec.GetString("goal"), snippetLen),
+			Tags:      strSlice(rec, "tags"),
+			CreatedAt: rec.GetDateTime("created").Time(),
+		})
+	}
+	return out, nil
+}
+
+func (r *SearchRepository) searchTickets(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+	filter, params := textFilter(project, q, "title", "body")
+	records, err := r.app.FindRecordsByFilter(ColTickets, filter, "-created", q.Limit, 0, params)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := make([]domain.SearchHit, 0, len(records))
+	for _, rec := range records {
+		out = append(out, domain.SearchHit{
+			Kind:      domain.SearchKindTicket,
+			ID:        rec.Id,
+			ProjectID: project,
+			Title:     rec.GetString("title"),
+			Snippet:   rules.Snippet(rec.GetString("body"), snippetLen),
 			Tags:      strSlice(rec, "tags"),
 			CreatedAt: rec.GetDateTime("created").Time(),
 		})

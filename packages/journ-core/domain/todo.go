@@ -29,7 +29,10 @@ type Todo struct {
 	ID        TodoID
 	ProjectID ProjectID
 	// PlanID is optional: a todo can stand alone, outside any plan.
-	PlanID   PlanID
+	PlanID PlanID
+	// TicketID is optional: an empty value means the todo sits directly under
+	// the project rather than under one of its tickets.
+	TicketID TicketID
 	Title    string
 	Details  string
 	Status   TodoStatus
@@ -52,6 +55,7 @@ type Todo struct {
 // TodoFilter narrows a todo listing. Zero values mean "no restriction".
 type TodoFilter struct {
 	PlanID   PlanID
+	TicketID TicketID
 	Status   []TodoStatus
 	Priority Priority
 	Tags     []string

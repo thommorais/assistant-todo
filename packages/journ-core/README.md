@@ -1,6 +1,7 @@
 # journ-core
 
-The journ domain: projects, plans, todos, logs and docs for a code agent to
+The journ domain: projects, tickets, plans, todos, logs and docs for a code
+agent to
 write to and search. Hexagonal, so the same use cases back every client.
 
 ```
@@ -26,8 +27,15 @@ destroying them.
 
 A **log entry** documents a piece of work: what was built, how, where it
 stands and why it was done that way. Titled, searchable, editable, and
-anchored to a branch, PR or ticket. A **doc** is durable knowledge meant to be
-kept current. **Search** spans logs, docs, todos and plans.
+anchored to a branch, PR or external tracker key. A **doc** is durable
+knowledge meant to be kept current.
+
+A **ticket** is a unit of work carrying its own plans, todos, logs and docs.
+Each of those four holds an optional ticket, so a record either hangs off a
+ticket or sits directly under the project; a ticket in another project is
+refused, so the reference cannot cross a tenancy boundary. A ticket's
+progress counts its todos, and deleting one detaches its contents. **Search**
+spans logs, docs, todos, plans and tickets.
 
 ## Adding a client
 

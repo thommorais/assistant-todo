@@ -41,6 +41,7 @@ func main() {
 		httpapi.New(httpapi.Deps{
 			Projects: useCases.Projects,
 			Plans:    useCases.Plans,
+			Tickets:  useCases.Tickets,
 			Todos:    useCases.Todos,
 			Logs:     useCases.Logs,
 			Docs:     useCases.Docs,

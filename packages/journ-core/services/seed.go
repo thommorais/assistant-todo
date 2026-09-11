@@ -16,6 +16,7 @@ import (
 type SeedUseCases struct {
 	Projects ports.ProjectUseCase
 	Plans    ports.PlanUseCase
+	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
 	Logs     ports.LogUseCase
 	Docs     ports.DocUseCase
@@ -24,6 +25,7 @@ type SeedUseCases struct {
 // SeedReport counts what a seed run wrote.
 type SeedReport struct {
 	Projects int
+	Tickets  int
 	Plans    int
 	Todos    int
 	Logs     int
@@ -31,8 +33,8 @@ type SeedReport struct {
 }
 
 func (r SeedReport) String() string {
-	return fmt.Sprintf("%d projects, %d plans, %d todos, %d logs, %d docs",
-		r.Projects, r.Plans, r.Todos, r.Logs, r.Docs)
+	return fmt.Sprintf("%d projects, %d tickets, %d plans, %d todos, %d logs, %d docs",
+		r.Projects, r.Tickets, r.Plans, r.Todos, r.Logs, r.Docs)
 }
 
 // Seed writes the demo dataset as the given actor, who becomes the owner of
@@ -51,11 +53,30 @@ func Seed(ctx context.Context, uc SeedUseCases, actor ports.Actor) (SeedReport, 
 		}
 		report.Projects++
 
+		// Tickets come first: the plans below hang off the first one, so the
+		// demo shows work organised under a ticket rather than only loose
+		// under the project.
+		ticketIDs := make([]domain.TicketID, 0, len(spec.tickets))
+		for _, ticket := range spec.tickets {
+			ticket.ProjectID = project.ID
+			created, err := uc.Tickets.CreateTicket(ctx, actor, ticket)
+			if err != nil {
+				return report, fmt.Errorf("ticket %q: %w", ticket.Title, err)
+			}
+			report.Tickets++
+			ticketIDs = append(ticketIDs, created.ID)
+		}
+
 		// Plans are created with their todos in one call, the same way an
 		// agent drafting a plan would.
 		planIDs := make([]domain.PlanID, 0, len(spec.plans))
-		for _, plan := range spec.plans {
+		for i, plan := range spec.plans {
 			plan.ProjectID = project.ID
+			// Only the first plan is filed under the ticket, so the dataset
+			// covers both a ticket with work under it and work that has none.
+			if i == 0 && len(ticketIDs) > 0 {
+				plan.TicketID = ticketIDs[0]
+			}
 			created, err := uc.Plans.CreatePlan(ctx, actor, plan)
 			if err != nil {
 				return report, fmt.Errorf("plan %q: %w", plan.Title, err)
