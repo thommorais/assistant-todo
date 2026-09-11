@@ -1,29 +1,89 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { FolderKanban, Search, Settings } from 'lucide-react'
+import { FolderKanban, Menu, Search } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@thom/libs/cn'
+import { Sheet, SheetContent } from '@thom/ui/sheet'
 import { useSearchStore } from '_/app/search-store'
 import { OpenSearchButton } from './search/open-search-button'
 import { SearchModal } from './search/search-modal'
 import { UserMenu } from './user-menu'
 
 type NavItem = {
-	readonly to?: '/'
+	readonly to: '/'
 	readonly label: string
 	readonly Icon: typeof FolderKanban
-	readonly opensSearch?: boolean
 }
 
-const items: readonly NavItem[] = [
-	{ to: '/', label: 'Projects', Icon: FolderKanban },
-	{ label: 'Search', Icon: Search, opensSearch: true },
-	{ label: 'Settings', Icon: Settings },
-]
+const items: readonly NavItem[] = [{ to: '/', label: 'Projects', Icon: FolderKanban }]
+
+const NavLinks = ({ onSelect }: { readonly onSelect?: () => void }) => {
+	const { location } = useRouterState()
+
+	return (
+		<nav className='flex flex-col gap-1'>
+			{items.map(({ to, label, Icon }) => {
+				const isActive = location.pathname === to
+
+				return (
+					<Link
+						key={label}
+						to={to}
+						onClick={onSelect}
+						className={cn(
+							'text-dim hover:text-foreground flex h-10 items-center gap-3 px-3 text-sm font-medium',
+							isActive && 'border-border bg-accent/60 text-foreground border',
+						)}
+					>
+						<Icon size={20} />
+						<span>{label}</span>
+					</Link>
+				)
+			})}
+		</nav>
+	)
+}
+
+const MobileMenu = () => {
+	const [isOpen, setOpen] = useState(false)
+	const setSearchOpen = useSearchStore(state => state.setOpen)
+
+	return (
+		<Sheet open={isOpen} onOpenChange={setOpen}>
+			<button
+				type='button'
+				aria-label='Open menu'
+				onClick={() => setOpen(true)}
+				className='border-border flex size-8 items-center justify-center border md:hidden'
+			>
+				<Menu size={16} />
+			</button>
+
+			<SheetContent side='left' title='Menu' className='p-4'>
+				<Link to='/' onClick={() => setOpen(false)} className='mb-8 block font-serif text-base'>
+					folio
+				</Link>
+
+				<NavLinks onSelect={() => setOpen(false)} />
+
+				<button
+					type='button'
+					onClick={() => {
+						setOpen(false)
+						setSearchOpen(true)
+					}}
+					className='text-dim hover:text-foreground mt-1 flex h-10 w-full items-center gap-3 px-3 text-sm font-medium'
+				>
+					<Search size={20} />
+					<span>Search</span>
+				</button>
+			</SheetContent>
+		</Sheet>
+	)
+}
 
 const Sidebar = () => {
 	const [isExpanded, setExpanded] = useState(false)
 	const { location } = useRouterState()
-	const setSearchOpen = useSearchStore(state => state.setOpen)
 
 	return (
 		<aside
@@ -41,15 +101,16 @@ const Sidebar = () => {
 				)}
 			>
 				<Link to='/' className='absolute left-[22px] font-serif text-base'>
-					j
+					f
 				</Link>
 			</div>
 
 			<nav className='mt-4 flex w-full flex-1 flex-col gap-2 pt-[70px]'>
-				{items.map(({ to, label, Icon, opensSearch }) => {
-					const isActive = to !== undefined && location.pathname === to
-					const body = (
-						<>
+				{items.map(({ to, label, Icon }) => {
+					const isActive = location.pathname === to
+
+					return (
+						<Link key={label} to={to} className='group relative block'>
 							<div
 								className={cn(
 									'mx-[15px] h-[40px] border border-transparent transition-all duration-200',
@@ -74,34 +135,6 @@ const Sidebar = () => {
 									</span>
 								</div>
 							)}
-						</>
-					)
-
-					if (opensSearch) {
-						return (
-							<button
-								key={label}
-								type='button'
-								aria-label={label}
-								onClick={() => setSearchOpen(true)}
-								className='group relative block cursor-pointer'
-							>
-								{body}
-							</button>
-						)
-					}
-
-					if (to === undefined) {
-						return (
-							<div key={label} aria-disabled='true' className='group relative block opacity-40'>
-								{body}
-							</div>
-						)
-					}
-
-					return (
-						<Link key={label} to={to} className='group relative block'>
-							{body}
 						</Link>
 					)
 				})}
@@ -111,7 +144,8 @@ const Sidebar = () => {
 }
 
 const Header = () => (
-	<header className='border-border group flex h-[70px] items-center justify-between border-b px-6'>
+	<header className='border-border group flex h-[70px] items-center justify-between border-b px-4 md:px-6'>
+		<MobileMenu />
 		<OpenSearchButton />
 
 		<div className='ml-auto flex items-center space-x-2'>
@@ -124,9 +158,9 @@ export const AppShell = ({ children }: { children: React.ReactNode }) => (
 	<div className='bg-background relative flex min-h-dvh w-full'>
 		<Sidebar />
 
-		<div className='flex flex-1 flex-col md:ml-[70px]'>
+		<div className='flex min-w-0 flex-1 flex-col md:ml-[70px]'>
 			<Header />
-			<main className='flex-1 px-6 py-8'>{children}</main>
+			<main className='min-w-0 flex-1 px-4 py-8 md:px-6'>{children}</main>
 		</div>
 
 		<SearchModal />

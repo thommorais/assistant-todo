@@ -28,13 +28,15 @@ const Row = ({ todo, onOpen }: { readonly todo: Todo; readonly onOpen: (id: stri
 
 			{todo.status === 'blocked' && <Badge color='destructive'>Blocked</Badge>}
 
-			{todo.tags.map(tag => (
-				<Badge key={tag} color='muted'>
-					{tag}
-				</Badge>
-			))}
+			<span className='hidden shrink-0 items-center gap-3 sm:flex'>
+				{todo.tags.map(tag => (
+					<Badge key={tag} color='muted'>
+						{tag}
+					</Badge>
+				))}
+			</span>
 
-			<span className='text-dimmer w-20 shrink-0 text-right text-xs'>{todo.priority}</span>
+			<span className='text-dimmer hidden w-20 shrink-0 text-right text-xs sm:block'>{todo.priority}</span>
 			<span className='text-dim w-24 shrink-0 text-right text-xs'>{TODO_STATUS_LABELS[todo.status]}</span>
 		</button>
 	</li>

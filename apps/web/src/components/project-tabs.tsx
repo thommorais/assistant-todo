@@ -14,7 +14,7 @@ export const ProjectTabs = ({ slug }: { slug: string }) => {
 	const { location } = useRouterState()
 
 	return (
-		<nav className='border-border flex gap-6 border-b'>
+		<nav className='border-border scrollbar-hide flex gap-6 overflow-x-auto border-b'>
 			{tabs.map(({ to, label, exact }) => {
 				const href = to.replace('$slug', slug)
 				const isActive = exact ? location.pathname === href : location.pathname.startsWith(href)
@@ -25,7 +25,7 @@ export const ProjectTabs = ({ slug }: { slug: string }) => {
 						to={to}
 						params={{ slug }}
 						className={cn(
-							'-mb-px border-b-2 pb-2 text-sm transition-colors',
+							'-mb-px shrink-0 border-b-2 pb-2 text-sm transition-colors',
 							isActive ? 'border-foreground text-foreground' : 'text-dim hover:text-foreground border-transparent',
 						)}
 					>
