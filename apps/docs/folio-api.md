@@ -59,7 +59,9 @@ project.
 | GET | `/projects/{project}/tickets?status=open,in_progress` | member |
 | POST | `/projects/{project}/tickets` | editor |
 | GET | `/projects/{project}/tickets/{slug}` | member |
+| GET | `/projects/{project}/tickets/{slug}/brief` | member |
 | GET | `/tickets/{ticket}` | member |
+| GET | `/tickets/{ticket}/brief` | member |
 | PATCH | `/tickets/{ticket}` | editor |
 | DELETE | `/tickets/{ticket}` | editor |
 
@@ -83,6 +85,15 @@ curl -X POST localhost:8090/api/folio/projects/search-rewrite/tickets \
 
 curl -X PATCH localhost:8090/api/folio/tickets/$ID -H "Authorization: $TOKEN" \
   -d '{"status":"in_progress"}'
+```
+
+`brief` returns the ticket with everything filed under it in one response:
+`ticket`, `plans`, `todos`, `logs`, `docs`. Todos come back open first, so the
+next step is the first row. Logs are capped at the 10 most recent; `recent_logs`
+overrides that. Empty collections are `[]`, never `null`.
+
+```bash
+curl localhost:8090/api/folio/tickets/$ID/brief?recent_logs=3 -H "Authorization: $TOKEN"
 ```
 
 Filing a child under a ticket in another project is rejected, so a ticket

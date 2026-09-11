@@ -57,6 +57,28 @@ func (h *Handler) getTicketBySlug(e *core.RequestEvent) error {
 	return e.JSON(http.StatusOK, toTicketView(ticket))
 }
 
+func (h *Handler) getTicketBrief(e *core.RequestEvent) error {
+	in := ports.BriefOptions{RecentLogs: queryInt(e, "recent_logs")}
+	brief, err := h.tickets.GetTicketBrief(e.Request.Context(), actorOf(e), domain.TicketID(e.Request.PathValue("ticket")), in)
+	if err != nil {
+		return fail(e, err)
+	}
+	return e.JSON(http.StatusOK, toTicketBriefView(brief))
+}
+
+func (h *Handler) getTicketBriefBySlug(e *core.RequestEvent) error {
+	project, err := h.resolveProject(e)
+	if err != nil {
+		return fail(e, err)
+	}
+	in := ports.BriefOptions{RecentLogs: queryInt(e, "recent_logs")}
+	brief, err := h.tickets.GetTicketBriefBySlug(e.Request.Context(), actorOf(e), project, e.Request.PathValue("slug"), in)
+	if err != nil {
+		return fail(e, err)
+	}
+	return e.JSON(http.StatusOK, toTicketBriefView(brief))
+}
+
 type ticketBody struct {
 	Slug        *string   `json:"slug"`
 	Title       *string   `json:"title"`

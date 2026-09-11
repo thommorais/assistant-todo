@@ -73,7 +73,9 @@ func (h *Handler) Mount(e *core.ServeEvent) {
 	// The slug route is registered before the ID route so a project-scoped
 	// slug lookup is not shadowed by it.
 	g.GET("/projects/{project}/tickets/{slug}", h.getTicketBySlug)
+	g.GET("/projects/{project}/tickets/{slug}/brief", h.getTicketBriefBySlug)
 	g.GET("/tickets/{ticket}", h.getTicket)
+	g.GET("/tickets/{ticket}/brief", h.getTicketBrief)
 	g.PATCH("/tickets/{ticket}", h.updateTicket)
 	g.DELETE("/tickets/{ticket}", h.deleteTicket)
 

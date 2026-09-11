@@ -231,3 +231,34 @@ func orEmpty(s []string) []string {
 	}
 	return s
 }
+
+type ticketBriefView struct {
+	Ticket ticketView `json:"ticket"`
+	Plans  []planView `json:"plans"`
+	Todos  []todoView `json:"todos"`
+	Logs   []logView  `json:"logs"`
+	Docs   []docView  `json:"docs"`
+}
+
+func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
+	out := ticketBriefView{
+		Ticket: toTicketView(b.Ticket),
+		Plans:  make([]planView, 0, len(b.Plans)),
+		Todos:  make([]todoView, 0, len(b.Todos)),
+		Logs:   make([]logView, 0, len(b.Logs)),
+		Docs:   make([]docView, 0, len(b.Docs)),
+	}
+	for _, p := range b.Plans {
+		out.Plans = append(out.Plans, toPlanView(p))
+	}
+	for _, t := range b.Todos {
+		out.Todos = append(out.Todos, toTodoView(t))
+	}
+	for _, e := range b.Logs {
+		out.Logs = append(out.Logs, toLogView(e))
+	}
+	for _, d := range b.Docs {
+		out.Docs = append(out.Docs, toDocView(d))
+	}
+	return out
+}
