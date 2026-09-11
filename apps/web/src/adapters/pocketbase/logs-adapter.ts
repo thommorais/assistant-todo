@@ -1,3 +1,4 @@
+import { sortExpr } from './sort'
 import type { LogEntry } from '_/core/domain/log'
 import { logId as toLogId } from '_/core/domain/log'
 import { planId as toPlanId } from '_/core/domain/plan'
@@ -79,7 +80,7 @@ export const createLogsAdapter = (): LogsPort => {
 			const { data, error } = await tryCatch(
 				paginate<LogRecord>(collection, filter, {
 					filter: client.filter(expr, params),
-					sort: '-created',
+					sort: sortExpr(filter.sort, '-created'),
 				}),
 			)
 

@@ -1,9 +1,11 @@
+import type { Sort, TodoSortField } from './sort'
 import type { Result } from '_/lib/result'
 import type { Unsubscribe } from './subscription'
 import type { ActionEvent } from '_/types'
 import type { Priority, Todo, TodoStatus } from '../domain/todo'
 
 export type TodoFilter = {
+	readonly sort?: Sort<TodoSortField>
 	readonly ticketId?: string
 	readonly status?: readonly TodoStatus[]
 	readonly priority?: Priority

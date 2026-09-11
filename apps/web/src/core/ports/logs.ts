@@ -1,9 +1,11 @@
+import type { Sort, LogSortField } from './sort'
 import type { Result } from '_/lib/result'
 import type { ActionEvent } from '_/types'
 import type { LogEntry } from '../domain/log'
 import type { Unsubscribe } from './subscription'
 
 export type LogFilter = {
+	readonly sort?: Sort<LogSortField>
 	readonly ticketId?: string
 	readonly branch?: string
 	readonly externalRef?: string

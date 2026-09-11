@@ -1,3 +1,4 @@
+import { sortExpr } from './sort'
 import type { Plan, PlanStatus } from '_/core/domain/plan'
 import { planId as toPlanId } from '_/core/domain/plan'
 import { ticketId as toTicketId } from '_/core/domain/ticket'
@@ -17,6 +18,7 @@ type PlanRecord = JournPlansResponse<string[]>
 
 type PlanColumns = {
 	'project.slug': string
+	id: string
 	ticket: string
 	title: string
 	goal: string
@@ -63,13 +65,24 @@ export const createPlansAdapter = (): PlansPort => {
 			return error ? err(new Error(`Failed to count plans: ${error.message}`, { cause: error })) : ok(data)
 		},
 
+		get: async (project, id): Promise<Result<Plan>> => {
+			const { expr, params } = filterFor<PlanColumns>()([
+				{ field: 'project.slug', comparator: 'eq', value: project },
+				{ field: 'id', comparator: 'eq', value: id },
+			])
+
+			const { data, error } = await tryCatch(collection.getFirstListItem<PlanRecord>(client.filter(expr, params)))
+
+			return error ? err(new Error(`Failed to load plan ${id}: ${error.message}`, { cause: error })) : ok(toPlan(data))
+		},
+
 		list: async (project, filter = {}): Promise<Result<readonly Plan[]>> => {
 			const { expr, params } = columns(project, filter)
 
 			const { data, error } = await tryCatch(
 				paginate<PlanRecord>(collection, filter, {
 					filter: client.filter(expr, params),
-					sort: '-created',
+					sort: sortExpr(filter.sort, '-created'),
 				}),
 			)
 

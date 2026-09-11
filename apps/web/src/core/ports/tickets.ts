@@ -1,3 +1,4 @@
+import type { Sort, TicketSortField } from './sort'
 import type { Result } from '_/lib/result'
 import type { ActionEvent } from '_/types'
 import type { Priority } from '../domain/todo'
@@ -5,6 +6,7 @@ import type { Ticket, TicketStatus } from '../domain/ticket'
 import type { Unsubscribe } from './subscription'
 
 export type TicketFilter = {
+	readonly sort?: Sort<TicketSortField>
 	readonly status?: readonly TicketStatus[]
 	readonly priority?: Priority
 	readonly tags?: readonly string[]

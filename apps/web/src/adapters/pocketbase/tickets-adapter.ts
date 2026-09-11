@@ -1,3 +1,4 @@
+import { sortExpr } from './sort'
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import type { Ticket, TicketStatus } from '_/core/domain/ticket'
 import { ticketId as toTicketId } from '_/core/domain/ticket'
@@ -73,7 +74,7 @@ export const createTicketsAdapter = (): TicketsPort => {
 			const { data, error } = await tryCatch(
 				paginate<TicketRecord>(collection(), filter, {
 					filter: client.filter(expr, params),
-					sort: '-created',
+					sort: sortExpr(filter.sort, '-created'),
 				}),
 			)
 

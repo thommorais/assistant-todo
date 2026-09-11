@@ -1,3 +1,4 @@
+import { sortExpr } from './sort'
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
 import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId } from '_/core/domain/plan'
@@ -23,7 +24,7 @@ type TodoColumns = {
 	// The stored column is "ticket"; the filter names it ticketId to match
 	// the domain, so the two cannot simply be intersected.
 	ticket: string
-} & Omit<TodoFilter, 'ticketId'>
+} & Omit<TodoFilter, 'ticketId' | 'sort'>
 
 const toTodo = (record: TodoRecord): Todo => ({
 	id: toTodoId(record.id),
@@ -85,7 +86,7 @@ export const createTodosAdapter = (): TodosPort => {
 			const { data, error } = await tryCatch(
 				paginate<TodoRecord>(collection, filter, {
 					filter: client.filter(expr, params),
-					sort: 'position',
+					sort: sortExpr(filter.sort, 'position'),
 				}),
 			)
 
@@ -102,7 +103,7 @@ export const createTodosAdapter = (): TodosPort => {
 					},
 					{
 						filter: client.filter(expr, params),
-						sort: 'position',
+						sort: sortExpr(filter.sort, 'position'),
 					},
 				)
 				return ok(unsubscribe)

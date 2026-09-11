@@ -1,3 +1,4 @@
+import { sortExpr } from './sort'
 import type { Doc } from '_/core/domain/doc'
 import { docId as toDocId } from '_/core/domain/doc'
 import { ticketId as toTicketId } from '_/core/domain/ticket'
@@ -68,7 +69,7 @@ export const createDocsAdapter = (): DocsPort => {
 			const { data, error } = await tryCatch(
 				paginate<DocRecord>(collection, filter, {
 					filter: client.filter(expr, params),
-					sort: 'slug',
+					sort: sortExpr(filter.sort, 'slug'),
 				}),
 			)
 
