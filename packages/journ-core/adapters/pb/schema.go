@@ -8,14 +8,24 @@ import (
 // on the project, because a member carries a role. That also lets every other
 // collection express its access rule as a single subquery against members,
 // so ownership is checked the same way everywhere.
+//
+// Rules traverse the back-relation from the record's project to its
+// membership rows (journ_members_via_project). An earlier version joined
+// @collection.journ_members with two separate conditions, which let one row
+// satisfy the project match and a different row satisfy the user match, and
+// made journ_members' own rule reference journ_members. Both read as empty
+// rather than as an error, so every direct collection listing returned [].
 const (
 	// memberOfProject matches when the requesting user holds any role on the
-	// record's project.
-	memberOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id"
-	// writerOfProject additionally requires a writing role.
-	writerOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id && @collection.journ_members.role != 'viewer'"
+	// record's project. ?= because a project has many membership rows and
+	// only one has to belong to the caller.
+	memberOfProject = "project.journ_members_via_project.user ?= @request.auth.id"
+	// writerOfProject and ownerOfProject check the role on the same row as
+	// the user, so the conditions cannot be satisfied by two different
+	// members. The alias is what keeps it one join.
+	writerOfProject = "@collection.journ_members:mine.project = project && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role != 'viewer'"
 	// ownerOfProject restricts to the administrative role.
-	ownerOfProject = "@collection.journ_members.project = project && @collection.journ_members.user = @request.auth.id && @collection.journ_members.role = 'owner'"
+	ownerOfProject = "@collection.journ_members:mine.project = project && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role = 'owner'"
 )
 
 func strPtr(s string) *string { return &s }
@@ -231,8 +241,8 @@ func applyRules(app core.App) error {
 	// A project is visible to its members; only owners may change or remove
 	// it. Creating one is open to any authenticated user, who becomes its
 	// first owner through the membership row written alongside.
-	memberOfThis := "@collection.journ_members.project = id && @collection.journ_members.user = @request.auth.id"
-	ownerOfThis := memberOfThis + " && @collection.journ_members.role = 'owner'"
+	memberOfThis := "journ_members_via_project.user ?= @request.auth.id"
+	ownerOfThis := "@collection.journ_members:mine.project = id && @collection.journ_members:mine.user = @request.auth.id && @collection.journ_members:mine.role = 'owner'"
 	projects.ListRule = strPtr(memberOfThis)
 	projects.ViewRule = strPtr(memberOfThis)
 	projects.CreateRule = strPtr("@request.auth.id != ''")
@@ -246,10 +256,12 @@ func applyRules(app core.App) error {
 	if err != nil {
 		return err
 	}
-	// Members see the roster of projects they belong to; only owners change
-	// it, and the last-owner rule is enforced by the API above this.
-	members.ListRule = strPtr(memberOfProject)
-	members.ViewRule = strPtr(memberOfProject)
+	// A membership row already names its user, so reads need no join. Listing
+	// the rest of a project's roster goes through the journ API, which checks
+	// membership in the service layer.
+	ownRow := "user = @request.auth.id"
+	members.ListRule = strPtr(ownRow)
+	members.ViewRule = strPtr(ownRow)
 	members.CreateRule = strPtr(ownerOfProject)
 	members.UpdateRule = strPtr(ownerOfProject)
 	members.DeleteRule = strPtr(ownerOfProject)
