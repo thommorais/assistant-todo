@@ -1,0 +1,84 @@
+import type { Plan, PlanStatus } from '_/core/domain/plan'
+import { planId as toPlanId } from '_/core/domain/plan'
+import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
+import type { PlanFilter, PlansPort } from '_/core/ports/plans'
+import type { Unsubscribe } from '_/core/ports/subscription'
+import { err, ok, type Result } from '_/lib/result'
+import { tryCatch } from '_/lib/try-catch'
+import { Collections, type JournPlansResponse } from '_/pocketbase-types'
+import type { ActionEvent } from '_/types'
+import { getPocketBaseClient } from './client'
+import { filterFor } from './filter-builder'
+import { paginate } from './paginate'
+
+type PlanRecord = JournPlansResponse<string[]>
+
+type PlanColumns = {
+	'project.slug': string
+	title: string
+	goal: string
+	status: PlanStatus
+	tags: string
+	created: Date
+	updated: Date
+}
+
+const message = (error: unknown): string => (error instanceof Error ? error.message : 'Unknown error')
+
+const toPlan = (record: PlanRecord): Plan => ({
+	id: toPlanId(record.id),
+	projectId: toProjectId(record.project),
+	title: record.title,
+	goal: record.goal ?? '',
+	status: record.status as PlanStatus,
+	tags: record.tags ?? [],
+	createdBy: record.created_by ? toUserId(record.created_by) : undefined,
+	createdAt: new Date(record.created),
+	updatedAt: new Date(record.updated),
+})
+
+const columns = (project: string, filter: PlanFilter) =>
+	filterFor<PlanColumns>()([
+		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'status', comparator: 'anyOf', value: filter.status },
+		{ field: 'tags', comparator: 'containsAll', value: filter.tags },
+		{ field: 'title', comparator: 'contains', value: filter.search },
+	])
+
+export const createPlansAdapter = (): PlansPort => {
+	const client = getPocketBaseClient()
+	const collection = client.collection(Collections.JournPlans)
+
+	return {
+		list: async (project, filter = {}): Promise<Result<readonly Plan[]>> => {
+			const { expr, params } = columns(project, filter)
+
+			const { data, error } = await tryCatch(
+				paginate<PlanRecord>(collection, filter, {
+					filter: client.filter(expr, params),
+					sort: '-created',
+				}),
+			)
+
+			return error ? err(new Error(`Failed to list plans: ${error.message}`, { cause: error })) : ok(data.map(toPlan))
+		},
+
+		subscribeToList: async (project, update, filter = {}): Promise<Result<Unsubscribe>> => {
+			const { expr, params } = columns(project, filter)
+
+			try {
+				const unsubscribe = await collection.subscribe<PlanRecord>(
+					'*',
+					event => {
+						update(toPlan(event.record), event.action as ActionEvent)
+					},
+					{ filter: client.filter(expr, params) },
+				)
+
+				return ok(unsubscribe)
+			} catch (error) {
+				return err(new Error(`Failed to subscribe to plans: ${message(error)}`))
+			}
+		},
+	}
+}

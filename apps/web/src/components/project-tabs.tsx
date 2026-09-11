@@ -3,6 +3,7 @@ import { cn } from '@thom/libs/cn'
 
 const tabs = [
 	{ to: '/$slug', label: 'Overview', exact: true },
+	{ to: '/$slug/plans', label: 'Plans', exact: false },
 	{ to: '/$slug/todos', label: 'Todos', exact: false },
 	{ to: '/$slug/logs', label: 'Logs', exact: false },
 	{ to: '/$slug/docs', label: 'Docs', exact: false },

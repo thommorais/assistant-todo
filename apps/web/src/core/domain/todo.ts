@@ -1,3 +1,4 @@
+import type { PlanId } from './plan'
 import type { ProjectId, UserId } from './project'
 
 declare const brand: unique symbol
@@ -5,10 +6,8 @@ declare const brand: unique symbol
 type Branded<T, B extends string> = T & { readonly [brand]: B }
 
 export type TodoId = Branded<string, 'TodoId'>
-export type PlanId = Branded<string, 'PlanId'>
 
 export const todoId = (value: string): TodoId => value as TodoId
-export const planId = (value: string): PlanId => value as PlanId
 
 export const TODO_STATUSES = ['pending', 'in_progress', 'done', 'blocked', 'cancelled'] as const
 

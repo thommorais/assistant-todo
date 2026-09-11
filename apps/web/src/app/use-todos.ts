@@ -1,6 +1,7 @@
 import { foldUpdates } from '_/adapters/pocketbase/fold-updates'
 import type { Todo } from '_/core/domain/todo'
-import type { TodoFilter, Unsubscribe } from '_/core/ports/todos'
+import type { Unsubscribe } from '_/core/ports/subscription'
+import type { TodoFilter } from '_/core/ports/todos'
 import type { Result } from '_/lib/result'
 import type { ActionEvent } from '_/types'
 import { useEffect, useEffectEvent, useState } from 'react'
@@ -12,6 +13,22 @@ type TodosState =
 	| { readonly status: 'loading' }
 	| { readonly status: 'ready'; readonly todos: readonly Todo[] }
 	| { readonly status: 'failed'; readonly message: string }
+
+let unsubscribes: Unsubscribe[] = []
+
+const subscribe = async (open: Promise<Result<Unsubscribe>>, cancelled: boolean) => {
+	const result = await open
+	if (!result.success) {
+		return
+	}
+	if (cancelled) {
+		void result.value().catch(noop)
+		return
+	}
+	unsubscribes.push(result.value)
+}
+
+let cancelled = false
 
 export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 	const { todos } = useContainer()
@@ -33,47 +50,32 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 		}
 	})
 
+	const update = useEffectEvent((todo: Todo, action: ActionEvent) => {
+		setState(curr => {
+			if (curr.status === 'ready') {
+				const todos = foldUpdates<Todo>(curr.todos, todo, action)
+				return {
+					...curr,
+					todos,
+				}
+			}
+			return curr
+		})
+	})
+
 	useEffect(() => {
 		load()
 	}, [])
 
 	useEffect(() => {
-		const unsubscribes: Unsubscribe[] = []
-		let cancelled = false
-		const subscribe = async (open: Promise<Result<Unsubscribe>>) => {
-			const result = await open
-			if (!result.success) {
-				return
-			}
-			if (cancelled) {
-				void result.value().catch(noop)
-				return
-			}
-			unsubscribes.push(result.value)
-		}
+		subscribe(todos.subscribeToList(project, update, JSON.parse(key) as TodoFilter), cancelled)
 
-		const update = (todo: Todo, action: ActionEvent) => {
-			setState(curr => {
-				if (curr.status === 'ready') {
-					const todos = foldUpdates<Todo>(curr.todos, todo, action)
-					return {
-						...curr,
-						todos,
-					}
-				}
-				return curr
-			})
-		}
-
-		subscribe(todos.subscribeToList(project, update, JSON.parse(key) as TodoFilter))
-
-		// A React cleanup cannot be async, so teardown failures are swallowed
-		// here rather than surfacing as unhandled rejections.
 		return () => {
 			cancelled = true
 			for (const close of unsubscribes) {
 				void close().catch(noop)
 			}
+			unsubscribes = []
 		}
 	}, [project, key, todos])
 
