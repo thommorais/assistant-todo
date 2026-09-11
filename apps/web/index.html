@@ -4,7 +4,26 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>web</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&display=swap"
+			rel="stylesheet"
+		/>
+		<title>journ</title>
+		<script>
+			// Inline and before first paint: React mounting the theme later would
+			// flash the light palette on a dark-theme reload.
+			;(() => {
+				try {
+					const stored = localStorage.getItem('journ.theme')
+					const theme = stored === 'light' || stored === 'dark' ? stored : 'system'
+					const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+					document.documentElement.classList.toggle('dark', dark)
+					document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+				} catch {}
+			})()
+		</script>
 	</head>
 	<body>
 		<div id="root"></div>

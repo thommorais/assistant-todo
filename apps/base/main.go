@@ -25,7 +25,7 @@ func main() {
 		Automigrate: isGoRun,
 	})
 
-	// app.RootCmd.AddCommand(newSeedCommand(app))
+	app.RootCmd.AddCommand(newSeedCommand(app))
 
 	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
 		if err := e.Next(); err != nil {
