@@ -4,6 +4,7 @@
 package main
 
 import (
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/router"
 
 	folio "folio/folio-core"
 	"folio/folio-core/adapters/httpapi"
@@ -52,7 +54,7 @@ func main() {
 		// so /api and /_ win, and with indexFallback so a deep link like
 		// /folio/todos reaches the client router instead of 404ing.
 		if dir := publicDir(); dir != "" {
-			e.Router.GET("/{path...}", apis.Static(os.DirFS(dir), true))
+			e.Router.GET("/{path...}", spa(os.DirFS(dir)))
 		}
 
 		return e.Next()
@@ -60,6 +62,22 @@ func main() {
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// apis.Static answers any unmatched path with index.html, so without this an
+// /api typo returns 200 HTML instead of a JSON 404.
+func spa(fsys fs.FS) func(*core.RequestEvent) error {
+	static := apis.Static(fsys, true)
+
+	return func(e *core.RequestEvent) error {
+		path := "/" + strings.TrimPrefix(e.Request.URL.Path, "/")
+		for _, prefix := range []string{"/api/", "/_/"} {
+			if strings.HasPrefix(path, prefix) {
+				return router.NewNotFoundError("Missing or invalid route.", nil)
+			}
+		}
+		return static(e)
 	}
 }
 
