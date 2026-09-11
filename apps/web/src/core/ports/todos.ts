@@ -16,6 +16,10 @@ export type TodoFilter = {
 export type TodosPort = {
 	readonly count: (project: string, filter?: TodoFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: TodoFilter) => Promise<Result<ReadonlyArray<Todo>>>
+	// A todo carries no slug, so it is addressed by id the way the API
+	// addresses one. The project is still bound, so an id from another project
+	// cannot be reached by editing the URL.
+	readonly get: (project: string, id: string) => Promise<Result<Todo>>
 	readonly subscribeToList: (
 		project: string,
 		update: (todo: Todo, action: ActionEvent) => void,

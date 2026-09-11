@@ -18,6 +18,7 @@ type TodoRecord = JournTodosResponse<string[], string[]>
 
 type TodoColumns = {
 	'project.slug': string
+	id: string
 	title: string
 	// The stored column is "ticket"; the filter names it ticketId to match
 	// the domain, so the two cannot simply be intersected.
@@ -65,6 +66,17 @@ export const createTodosAdapter = (): TodosPort => {
 			const { data, error } = await tryCatch(countRows(collection, { filter: client.filter(expr, params) }))
 
 			return error ? err(new Error(`Failed to count todos: ${error.message}`, { cause: error })) : ok(data)
+		},
+
+		get: async (project, id): Promise<Result<Todo>> => {
+			const { expr, params } = filterFor<TodoColumns>()([
+				{ field: 'project.slug', comparator: 'eq', value: project },
+				{ field: 'id', comparator: 'eq', value: id },
+			])
+
+			const { data, error } = await tryCatch(collection.getFirstListItem<TodoRecord>(client.filter(expr, params)))
+
+			return error ? err(new Error(`Failed to load todo ${id}: ${error.message}`, { cause: error })) : ok(toTodo(data))
 		},
 
 		list: async (project, filter = {}): Promise<Result<readonly Todo[]>> => {
