@@ -110,3 +110,30 @@ func (c *Client) UpdateTicket(id string, in TicketInput) (Ticket, error) {
 func (c *Client) DeleteTicket(id string) error {
 	return c.do(http.MethodDelete, "/api/folio/tickets/"+id, nil, nil)
 }
+
+type TicketBrief struct {
+	Ticket Ticket     `json:"ticket"`
+	Plans  []Plan     `json:"plans"`
+	Todos  []Todo     `json:"todos"`
+	Logs   []LogEntry `json:"logs"`
+	Docs   []Doc      `json:"docs"`
+}
+
+func (c *Client) GetTicketBrief(id string, recentLogs int) (TicketBrief, error) {
+	var brief TicketBrief
+	err := c.do(http.MethodGet, "/api/folio/tickets/"+id+"/brief"+recentLogsQuery(recentLogs), nil, &brief)
+	return brief, err
+}
+
+func (c *Client) GetTicketBriefBySlug(project, slug string, recentLogs int) (TicketBrief, error) {
+	var brief TicketBrief
+	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets/"+slug+"/brief"+recentLogsQuery(recentLogs), nil, &brief)
+	return brief, err
+}
+
+func recentLogsQuery(n int) string {
+	if n <= 0 {
+		return ""
+	}
+	return "?recent_logs=" + strconv.Itoa(n)
+}

@@ -22,7 +22,7 @@ func ticketCommand() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 	cmd.AddCommand(
-		ticketListCommand(), ticketGetCommand(), ticketCreateCommand(),
+		ticketListCommand(), ticketGetCommand(), ticketBriefCommand(), ticketCreateCommand(),
 		ticketUpdateCommand(), ticketDeleteCommand(),
 	)
 
@@ -103,6 +103,93 @@ func ticketGetCommand() *cobra.Command {
 			return renderTicketDetail(ticket)
 		},
 	}
+}
+
+func ticketBriefCommand() *cobra.Command {
+	var recentLogs int
+
+	cmd := &cobra.Command{
+		Use:   "brief <id-or-slug>",
+		Short: "Show a ticket with its plans, todos, logs and docs; a slug needs --project",
+		Long: `Everything filed under a ticket in one call, for opening a session on it.
+
+Todos come back open first, so the next step is the first row. Logs are the
+most recent only.
+
+  folio ticket brief mobile-nav
+  folio ticket brief $ID --recent-logs 3 --json`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			folio, err := api()
+			if err != nil {
+				return err
+			}
+
+			get := func(ref string) (client.TicketBrief, error) {
+				return folio.GetTicketBrief(ref, recentLogs)
+			}
+			if project := config.Project(flagProject); project != "" {
+				get = func(ref string) (client.TicketBrief, error) {
+					return folio.GetTicketBriefBySlug(project, ref, recentLogs)
+				}
+			}
+
+			brief, err := get(args[0])
+			if err != nil {
+				return err
+			}
+			if flagJSON {
+				return encode(brief)
+			}
+			return renderBrief(brief)
+		},
+	}
+
+	cmd.Flags().IntVar(&recentLogs, "recent-logs", 0, "how many log entries to carry")
+
+	return cmd
+}
+
+func renderBrief(b client.TicketBrief) error {
+	if err := renderTicketDetail(b.Ticket); err != nil {
+		return err
+	}
+
+	section := func(title string, rows []string) {
+		if len(rows) == 0 {
+			return
+		}
+		fmt.Printf("\n%s\n", title)
+		for _, row := range rows {
+			fmt.Println("  " + row)
+		}
+	}
+
+	plans := make([]string, 0, len(b.Plans))
+	for _, p := range b.Plans {
+		plans = append(plans, fmt.Sprintf("%s  %-8s %d/%d  %s", p.ID, p.Status, p.Progress.Done, p.Progress.Total, p.Title))
+	}
+	section("plans", plans)
+
+	todos := make([]string, 0, len(b.Todos))
+	for _, t := range b.Todos {
+		todos = append(todos, fmt.Sprintf("%s  %-12s %-6s %s", t.ID, t.Status, t.Priority, t.Title))
+	}
+	section("todos", todos)
+
+	logs := make([]string, 0, len(b.Logs))
+	for _, e := range b.Logs {
+		logs = append(logs, fmt.Sprintf("%s  %s  %s", e.ID, e.CreatedAt, e.Title))
+	}
+	section("logs", logs)
+
+	docs := make([]string, 0, len(b.Docs))
+	for _, d := range b.Docs {
+		docs = append(docs, fmt.Sprintf("%s  %-24s %s", d.ID, d.Slug, d.Title))
+	}
+	section("docs", docs)
+
+	return nil
 }
 
 func ticketCreateCommand() *cobra.Command {
