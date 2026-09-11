@@ -1,7 +1,7 @@
 import type { Member, Project, Role } from '_/core/domain/project'
 import { projectId, userId } from '_/core/domain/project'
 import type { ProjectsPort } from '_/core/ports/projects'
-import { journUrl, pb } from './client'
+import { getPocketBaseClient, journUrl } from './client'
 
 type MemberView = {
 	user_id: string
@@ -40,6 +40,8 @@ const toProject = (view: ProjectView): Project => ({
 })
 
 const request = async <T>(path: string): Promise<T> => {
+	const pb = getPocketBaseClient()
+
 	const response = await fetch(journUrl(path), {
 		headers: { Authorization: pb.authStore.token },
 	})
@@ -51,12 +53,14 @@ const request = async <T>(path: string): Promise<T> => {
 	return response.json() as Promise<T>
 }
 
-export const createProjectsAdapter = (): ProjectsPort => ({
-	list: async options => {
-		const query = options?.includeArchived ? '?archived=true' : ''
-		const body = await request<{ projects: ProjectView[] }>(`/projects${query}`)
-		return body.projects.map(toProject)
-	},
+export const createProjectsAdapter = (): ProjectsPort => {
+	return {
+		list: async options => {
+			const query = options?.includeArchived ? '?archived=true' : ''
+			const body = await request<{ projects: ProjectView[] }>(`/projects${query}`)
+			return body.projects.map(toProject)
+		},
 
-	get: async ref => toProject(await request<ProjectView>(`/projects/${ref}`)),
-})
+		get: async ref => toProject(await request<ProjectView>(`/projects/${ref}`)),
+	}
+}

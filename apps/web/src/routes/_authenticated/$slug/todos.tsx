@@ -14,13 +14,13 @@ const statusLabels: Record<TodoStatus, string> = {
 
 const Todos = () => {
 	const { slug } = useParams({ from: '/_authenticated/$slug/todos' })
-	const state = useTodos(slug)
+	const state = useTodos(slug, { status: ['pending', 'in_progress', 'blocked'] })
 
 	if (state.status === 'loading') {
 		return (
 			<div className='border-border divide-border divide-y border'>
 				{[0, 1, 2].map(key => (
-					<div key={key} className='bg-accent/40 h-[45px] animate-pulse' />
+					<div key={key} className='bg-accent/40 h-11.25 animate-pulse' />
 				))}
 			</div>
 		)
@@ -49,7 +49,7 @@ const Todos = () => {
 						{todo.title}
 					</span>
 
-					{todo.blocked && <Badge color='destructive'>Blocked</Badge>}
+					{todo.status === 'blocked' && <Badge color='destructive'>Blocked</Badge>}
 
 					{todo.tags.map(tag => (
 						<Badge key={tag} color='muted'>

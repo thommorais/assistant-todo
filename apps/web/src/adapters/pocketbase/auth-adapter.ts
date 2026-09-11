@@ -3,7 +3,7 @@ import type { CurrentUser, Session } from '_/core/domain/session'
 import { anonymous, authenticated } from '_/core/domain/session'
 import { userId } from '_/core/domain/project'
 import type { AuthError, AuthPort, Credentials, SignInResult } from '_/core/ports/auth'
-import { pb } from './client'
+import { getPocketBaseClient } from './client'
 
 type AuthRecord = {
 	id: string
@@ -13,15 +13,19 @@ type AuthRecord = {
 	collectionId?: string
 }
 
-const toCurrentUser = (record: AuthRecord): CurrentUser => ({
-	id: userId(record.id),
-	email: record.email ?? '',
-	name: record.name ?? '',
-	avatarUrl:
-		record.avatar && record.collectionId
-			? pb.files.getURL({ id: record.id, collectionId: record.collectionId }, record.avatar)
-			: undefined,
-})
+const toCurrentUser = (record: AuthRecord): CurrentUser => {
+	const pb = getPocketBaseClient()
+
+	return {
+		id: userId(record.id),
+		email: record.email ?? '',
+		name: record.name ?? '',
+		avatarUrl:
+			record.avatar && record.collectionId
+				? pb.files.getURL({ id: record.id, collectionId: record.collectionId }, record.avatar)
+				: undefined,
+	}
+}
 
 const toAuthError = (cause: unknown): AuthError => {
 	if (cause instanceof ClientResponseError) {
@@ -37,6 +41,8 @@ export const createAuthAdapter = (): AuthPort => {
 	// useSyncExternalStore compares by identity: a fresh object per read loops.
 	let snapshot: Session = anonymous
 	let snapshotKey = ''
+
+	const pb = getPocketBaseClient()
 
 	const read = (): Session => {
 		const record = pb.authStore.record

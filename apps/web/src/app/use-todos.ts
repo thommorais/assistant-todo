@@ -16,11 +16,15 @@ export const useTodos = (project: string, filter?: TodoFilter): TodosState => {
 
 	const load = useCallback(async () => {
 		setState({ status: 'loading' })
-		try {
-			const result = await todos.list(project, JSON.parse(key) as TodoFilter)
-			setState({ status: 'ready', todos: result })
-		} catch (cause) {
-			setState({ status: 'failed', message: cause instanceof Error ? cause.message : 'Could not load todos' })
+		const result = await todos.list(project, JSON.parse(key) as TodoFilter)
+
+		if (!result.success) {
+			setState({
+				status: 'failed',
+				message: result.error instanceof Error ? result.error.message : 'Could not load todos',
+			})
+		} else {
+			setState({ status: 'ready', todos: result.value })
 		}
 	}, [todos, project, key])
 

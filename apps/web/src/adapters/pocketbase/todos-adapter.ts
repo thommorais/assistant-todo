@@ -2,68 +2,59 @@ import { projectId as toProjectId, userId as toUserId } from '_/core/domain/proj
 import type { Priority, Todo, TodoStatus } from '_/core/domain/todo'
 import { planId as toPlanId, todoId as toTodoId } from '_/core/domain/todo'
 import type { TodoFilter, TodosPort } from '_/core/ports/todos'
-import { journUrl, pb } from './client'
+import { err, ok, type Result } from '_/lib/result'
+import { Collections, type JournTodosResponse } from '_/pocketbase-types'
+import { getPocketBaseClient } from './client'
+import { filterFor } from './filter-builder'
+import { paginate } from './paginate'
 
-type TodoView = {
-	id: string
-	project_id: string
-	plan_id?: string
+type TodoRecord = JournTodosResponse<string[], string[]>
+
+type TodoColumns = {
+	'project.slug': string
 	title: string
-	details?: string
-	status: string
-	priority: string
-	tags: string[]
-	position: number
-	depends_on: string[]
-	due_date?: string
-	blocked: boolean
-	created_by?: string
-	created_at: string
-	updated_at: string
-}
+} & TodoFilter
 
-const toTodo = (view: TodoView): Todo => ({
-	id: toTodoId(view.id),
-	projectId: toProjectId(view.project_id),
-	planId: view.plan_id ? toPlanId(view.plan_id) : undefined,
-	title: view.title,
-	details: view.details ?? '',
-	status: view.status as TodoStatus,
-	priority: view.priority as Priority,
-	tags: view.tags ?? [],
-	position: view.position,
-	dependsOn: (view.depends_on ?? []).map(toTodoId),
-	dueDate: view.due_date ? new Date(view.due_date) : undefined,
-	blocked: view.blocked,
-	createdBy: view.created_by ? toUserId(view.created_by) : undefined,
-	createdAt: new Date(view.created_at),
-	updatedAt: new Date(view.updated_at),
+const toTodo = (record: TodoRecord): Todo => ({
+	id: toTodoId(record.id),
+	projectId: toProjectId(record.project),
+	planId: record.plan ? toPlanId(record.plan) : undefined,
+	title: record.title,
+	details: record.details ?? '',
+	status: record.status as TodoStatus,
+	priority: record.priority as Priority,
+	tags: record.tags ?? [],
+	position: record.position ?? 0,
+	dependsOn: (record.depends_on ?? []).map(toTodoId),
+	dueDate: record.due_date ? new Date(record.due_date) : undefined,
+	createdBy: record.created_by ? toUserId(record.created_by) : undefined,
+	createdAt: new Date(record.created),
+	updatedAt: new Date(record.updated),
 })
 
-const toQuery = (filter: TodoFilter): string => {
-	const params = new URLSearchParams()
-	if (filter.status?.length) params.set('status', filter.status.join(','))
-	if (filter.priority) params.set('priority', filter.priority)
-	if (filter.tags?.length) params.set('tags', filter.tags.join(','))
-	if (filter.search) params.set('q', filter.search)
-	if (filter.limit !== undefined) params.set('limit', String(filter.limit))
-	if (filter.offset !== undefined) params.set('offset', String(filter.offset))
+export const createTodosAdapter = (): TodosPort => {
+	const client = getPocketBaseClient()
 
-	const query = params.toString()
-	return query === '' ? '' : `?${query}`
+	return {
+		list: async (project, filter = {}): Promise<Result<readonly Todo[]>> => {
+			const { expr, params } = filterFor<TodoColumns>()([
+				{ field: 'project.slug', comparator: 'eq', value: project },
+				{ field: 'status', comparator: 'anyOf', value: filter.status },
+				{ field: 'priority', comparator: 'eq', value: filter.priority },
+				{ field: 'tags', comparator: 'containsAll', value: filter.tags },
+				{ field: 'title', comparator: 'contains', value: filter.search },
+			])
+
+			try {
+				const rows = await paginate<TodoRecord>(client.collection(Collections.JournTodos), filter, {
+					filter: client.filter(expr, params),
+					sort: 'position',
+				})
+
+				return ok(rows.map(toTodo))
+			} catch (error) {
+				return err(new Error(`Failed to list todos: ${error instanceof Error ? error.message : 'Unknown error'}`))
+			}
+		},
+	}
 }
-
-export const createTodosAdapter = (): TodosPort => ({
-	list: async (project, filter = {}) => {
-		const response = await fetch(journUrl(`/projects/${project}/todos${toQuery(filter)}`), {
-			headers: { Authorization: pb.authStore.token },
-		})
-
-		if (!response.ok) {
-			throw new Error(`${response.status} ${response.statusText}`)
-		}
-
-		const body = (await response.json()) as { todos?: TodoView[] }
-		return (body.todos ?? []).map(toTodo)
-	},
-})

@@ -30,7 +30,6 @@ export type Todo = {
 	readonly position: number
 	readonly dependsOn: readonly TodoId[]
 	readonly dueDate: Date | undefined
-	readonly blocked: boolean
 	readonly createdBy: UserId | undefined
 	readonly createdAt: Date
 	readonly updatedAt: Date
