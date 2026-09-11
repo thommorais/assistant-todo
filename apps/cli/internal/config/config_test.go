@@ -90,14 +90,10 @@ func TestResolvePrecedence(t *testing.T) {
 	})
 }
 
-// A token is only valid for the host that issued it, so the cache must be
-// taken as a pair. Mixing a cached URL with an environment token sends a
-// credential to a server that never issued it, which reads as a 401 far from
-// its cause.
 func TestResolveNeverMixesACachedURLWithAnotherToken(t *testing.T) {
 	t.Setenv(EnvURL, "")
 	t.Setenv(EnvToken, "token-from-env")
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv(EnvHome, t.TempDir())
 
 	if err := Save("https://remote.example.com", "token-from-remote"); err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -119,7 +115,7 @@ func TestResolveNeverMixesACachedURLWithAnotherToken(t *testing.T) {
 func TestResolveUsesBothHalvesOfTheCacheTogether(t *testing.T) {
 	t.Setenv(EnvURL, "")
 	t.Setenv(EnvToken, "")
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv(EnvHome, t.TempDir())
 
 	if err := Save("https://remote.example.com", "token-from-remote"); err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -131,6 +127,61 @@ func TestResolveUsesBothHalvesOfTheCacheTogether(t *testing.T) {
 	}
 	if cfg.URL != "https://remote.example.com" || cfg.Token != "token-from-remote" {
 		t.Errorf("got %q / %q, want the cached pair", cfg.URL, cfg.Token)
+	}
+}
+
+func TestProject(t *testing.T) {
+	t.Run("reads the environment", func(t *testing.T) {
+		t.Setenv(EnvProject, "journ")
+		if got := Project(""); got != "journ" {
+			t.Errorf("Project(\"\") = %q, want journ", got)
+		}
+	})
+
+	t.Run("a flag overrides the environment", func(t *testing.T) {
+		t.Setenv(EnvProject, "journ")
+		if got := Project("other"); got != "other" {
+			t.Errorf("Project(\"other\") = %q, want other", got)
+		}
+	})
+
+	t.Run("is empty when neither is set, so callers can require it", func(t *testing.T) {
+		t.Setenv(EnvProject, "")
+		if got := Project(""); got != "" {
+			t.Errorf("Project(\"\") = %q, want empty", got)
+		}
+	})
+}
+
+func TestSetURLPersistsWithoutTouchingTheToken(t *testing.T) {
+	t.Setenv(EnvURL, "")
+	t.Setenv(EnvToken, "")
+	t.Setenv(EnvHome, t.TempDir())
+
+	if err := Save("https://old.example.com", "keep-me"); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+	if err := SetURL("new.example.com"); err != nil {
+		t.Fatalf("SetURL() error = %v", err)
+	}
+
+	cfg, err := Resolve("", "")
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if cfg.URL != "https://new.example.com" {
+		t.Errorf("URL = %q, want the normalized new URL", cfg.URL)
+	}
+	if cfg.Token != "keep-me" {
+		t.Errorf("Token = %q, want the existing token preserved", cfg.Token)
+	}
+}
+
+func TestSetURLRejectsAMalformedURL(t *testing.T) {
+	t.Setenv(EnvHome, t.TempDir())
+
+	if err := SetURL("htp://nope.example.com"); err == nil {
+		t.Fatal("SetURL() error = nil, want an error for a bad scheme")
 	}
 }
 

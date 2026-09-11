@@ -13,8 +13,6 @@ import (
 	"journ/cli/internal/client"
 )
 
-// bodyFrom reads "-" as stdin so an agent can pipe markdown rather than
-// escape it into an argument.
 func bodyFrom(value string) (string, error) {
 	if value != "-" {
 		return value, nil
@@ -54,7 +52,8 @@ func logListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List a project's log entries, newest first",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 			if tags != "" {
@@ -66,7 +65,7 @@ func logListCommand() *cobra.Command {
 				return err
 			}
 
-			entries, err := journ.ListLogs(flagProject, filter)
+			entries, err := journ.ListLogs(project, filter)
 			if err != nil {
 				return err
 			}
@@ -119,7 +118,8 @@ func logWriteCommand() *cobra.Command {
 		Short: "Write a log entry, with --body - to read markdown from stdin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 
@@ -142,7 +142,7 @@ func logWriteCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := journ.WriteLog(flagProject, in)
+			entry, err := journ.WriteLog(project, in)
 			if err != nil {
 				return err
 			}
@@ -294,7 +294,6 @@ func renderLogs(entries []client.LogEntry) error {
 	return out.Flush()
 }
 
-// renderLogDetail prints the body, which the table view truncates away.
 func renderLogDetail(entry client.LogEntry) error {
 	fmt.Println(entry.Title)
 	fmt.Println(strings.Repeat("=", len(entry.Title)))

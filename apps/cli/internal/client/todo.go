@@ -24,9 +24,7 @@ type Todo struct {
 	UpdatedAt string   `json:"updated_at"`
 }
 
-// Pointers so an unset field is omitted: the API treats an absent field as
-// "leave alone" on PATCH and "use the default" on POST, while a zero value
-// would clear it.
+// Pointers: an absent field means "leave alone" on PATCH, "default" on POST.
 type TodoInput struct {
 	PlanID    *string   `json:"plan_id,omitempty"`
 	Title     *string   `json:"title,omitempty"`

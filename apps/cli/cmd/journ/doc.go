@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"journ/cli/internal/client"
+	"journ/cli/internal/config"
 )
 
 func docCommand() *cobra.Command {
@@ -33,7 +34,8 @@ func docListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List a project's docs",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 			if tags != "" {
@@ -45,7 +47,7 @@ func docListCommand() *cobra.Command {
 				return err
 			}
 
-			docs, err := journ.ListDocs(flagProject, filter)
+			docs, err := journ.ListDocs(project, filter)
 			if err != nil {
 				return err
 			}
@@ -72,12 +74,12 @@ func docGetCommand() *cobra.Command {
 				return err
 			}
 
-			// A slug is only unique within a project, so it is the project
-			// route that resolves one; ids work without a project.
+			// A slug is unique only within a project, so a slug needs the
+			// project route; ids resolve without one.
 			get := journ.GetDoc
-			if flagProject != "" {
+			if project := config.Project(flagProject); project != "" {
 				get = func(ref string) (client.Doc, error) {
-					return journ.GetDocBySlug(flagProject, ref)
+					return journ.GetDocBySlug(project, ref)
 				}
 			}
 
@@ -101,7 +103,8 @@ func docCreateCommand() *cobra.Command {
 		Short: "Create a doc, with --body - to read markdown from stdin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 
@@ -120,7 +123,7 @@ func docCreateCommand() *cobra.Command {
 				return err
 			}
 
-			doc, err := journ.CreateDoc(flagProject, in)
+			doc, err := journ.CreateDoc(project, in)
 			if err != nil {
 				return err
 			}

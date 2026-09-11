@@ -44,7 +44,9 @@ func main() {
 		loginCommand(),
 		logoutCommand(),
 		planCommand(),
+		projectCommand(),
 		todoCommand(),
+		useCommand(),
 	)
 
 	if err := root.Execute(); err != nil {

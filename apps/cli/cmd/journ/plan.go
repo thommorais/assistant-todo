@@ -32,7 +32,8 @@ func planListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List a project's plans",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 			if status != "" {
@@ -44,7 +45,7 @@ func planListCommand() *cobra.Command {
 				return err
 			}
 
-			plans, err := journ.ListPlans(flagProject, filter)
+			plans, err := journ.ListPlans(project, filter)
 			if err != nil {
 				return err
 			}
@@ -87,7 +88,8 @@ func planCreateCommand() *cobra.Command {
 		Short: "Create a plan",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 
@@ -101,7 +103,7 @@ func planCreateCommand() *cobra.Command {
 				return err
 			}
 
-			plan, err := journ.CreatePlan(flagProject, in)
+			plan, err := journ.CreatePlan(project, in)
 			if err != nil {
 				return err
 			}

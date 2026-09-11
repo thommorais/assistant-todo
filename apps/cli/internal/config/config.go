@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	EnvURL   = "JOURN_URL"
-	EnvToken = "JOURN_TOKEN"
+	EnvURL     = "JOURN_URL"
+	EnvToken   = "JOURN_TOKEN"
+	EnvProject = "JOURN_PROJECT"
+	EnvHome    = "JOURN_CONFIG_DIR"
 
 	DefaultURL = "http://127.0.0.1:8090"
 )
@@ -29,7 +31,31 @@ type cached struct {
 	Token string `json:"token"`
 }
 
+// Not persisted: two shells can hold different projects.
+func Project(flag string) string {
+	if flag != "" {
+		return flag
+	}
+	return os.Getenv(EnvProject)
+}
+
+func SetURL(raw string) error {
+	normalized, err := NormalizeURL(raw)
+	if err != nil {
+		return err
+	}
+
+	stored, _ := load()
+	return Save(normalized, stored.Token)
+}
+
 func Path() (string, error) {
+	// os.UserConfigDir ignores XDG_CONFIG_HOME on darwin, so tests need an
+	// override that works on every platform.
+	if dir := os.Getenv(EnvHome); dir != "" {
+		return filepath.Join(dir, "credentials.json"), nil
+	}
+
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err

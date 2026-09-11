@@ -68,8 +68,6 @@ func (c *Client) GetDoc(id string) (Doc, error) {
 	return doc, err
 }
 
-// GetDocBySlug addresses a doc by its per-project slug, which is how a human
-// or an agent refers to one without knowing its id.
 func (c *Client) GetDocBySlug(project, slug string) (Doc, error) {
 	var doc Doc
 	err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/docs/"+slug, nil, &doc)

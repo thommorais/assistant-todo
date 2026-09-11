@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"journ/cli/internal/client"
+	"journ/cli/internal/config"
 )
 
 func todoCommand() *cobra.Command {
@@ -26,11 +27,15 @@ func todoCommand() *cobra.Command {
 	return cmd
 }
 
-func requireProject() error {
-	if flagProject == "" {
-		return errors.New("--project is required")
+var errProjectRequired = errors.New(
+	`no project: pass --project, or select one with: eval "$(journ use <project>)"`,
+)
+
+func resolveProject() (string, error) {
+	if project := config.Project(flagProject); project != "" {
+		return project, nil
 	}
-	return nil
+	return "", errProjectRequired
 }
 
 func todoListCommand() *cobra.Command {
@@ -41,7 +46,8 @@ func todoListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List a project's todos",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 			if status != "" {
@@ -56,7 +62,7 @@ func todoListCommand() *cobra.Command {
 				return err
 			}
 
-			todos, err := journ.ListTodos(flagProject, filter)
+			todos, err := journ.ListTodos(project, filter)
 			if err != nil {
 				return err
 			}
@@ -103,7 +109,8 @@ func todoCreateCommand() *cobra.Command {
 		Short: "Create a todo",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			if err := requireProject(); err != nil {
+			project, err := resolveProject()
+			if err != nil {
 				return err
 			}
 
@@ -120,7 +127,7 @@ func todoCreateCommand() *cobra.Command {
 				return err
 			}
 
-			todo, err := journ.CreateTodo(flagProject, in)
+			todo, err := journ.CreateTodo(project, in)
 			if err != nil {
 				return err
 			}

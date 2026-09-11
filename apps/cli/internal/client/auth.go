@@ -12,8 +12,7 @@ type Session struct {
 	Name  string
 }
 
-// Login does not go through do: it is the call that establishes a token, so it
-// must run without one.
+// Bypasses do: this is the call that establishes the token.
 func (c *Client) Login(identity, password string) (Session, error) {
 	payload, err := json.Marshal(map[string]string{"identity": identity, "password": password})
 	if err != nil {

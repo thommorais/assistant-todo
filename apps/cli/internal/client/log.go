@@ -105,8 +105,6 @@ func (c *Client) UpdateLog(id string, in LogInput) (LogEntry, error) {
 	return entry, err
 }
 
-// AppendLog adds a section to an existing body, so recording later progress
-// does not mean reading and resending the whole entry.
 func (c *Client) AppendLog(id, section string) (LogEntry, error) {
 	var entry LogEntry
 	body := struct {
