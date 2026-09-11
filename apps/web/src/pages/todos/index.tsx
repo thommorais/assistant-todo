@@ -53,6 +53,7 @@ const Todos = () => {
 		priority: search.priority,
 		tags: search.tags,
 		search: search.q,
+		sort: search.sort,
 	})
 
 	const setTodo = (todo: string | undefined) => {
