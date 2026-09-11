@@ -6,6 +6,7 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { intlayer } from 'vite-intlayer'
 import { comlink } from 'vite-plugin-comlink'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // oxlint-disable-next-line import/no-default-export
 export default defineConfig({
@@ -47,6 +48,79 @@ export default defineConfig({
 		tailwindcss(),
 		intlayer(),
 		comlink(),
+		VitePWA({
+			registerType: 'prompt',
+			// vite-plugin-pwa 1.3.0 resolves its virtual register module against a
+			// __dirname that leaks in from esbuild under Vite 8, so the injected
+			// client file is looked for inside esbuild and the build dies. The app
+			// registers the worker itself in register-sw.ts instead.
+			injectRegister: null,
+			includeAssets: ['favicon.svg', 'icons/favicon.ico', 'icons/apple-touch-icon-180x180.png'],
+			manifest: {
+				id: '/',
+				name: 'journ',
+				short_name: 'journ',
+				description: 'A project journal a code agent can write to.',
+				lang: 'en',
+				dir: 'ltr',
+				start_url: '/',
+				scope: '/',
+				display: 'standalone',
+				display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
+				background_color: '#060E0B',
+				theme_color: '#060E0B',
+				categories: ['productivity', 'developer'],
+				icons: [
+					{ src: '/icons/pwa-64x64.png', sizes: '64x64', type: 'image/png', purpose: 'any' },
+					{ src: '/icons/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+					{ src: '/icons/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+					{ src: '/icons/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+				],
+				screenshots: [
+					{
+						src: '/screenshots/wide-1280x800.png',
+						sizes: '1280x800',
+						type: 'image/png',
+						form_factor: 'wide',
+						label: 'journ',
+					},
+					{
+						src: '/screenshots/narrow-720x1280.png',
+						sizes: '720x1280',
+						type: 'image/png',
+						form_factor: 'narrow',
+						label: 'journ',
+					},
+				],
+			},
+			workbox: {
+				globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+				// A 2.24 MB rapier chunk arrives transitively through @thom/ui and no
+				// source file imports it. Precaching it would cost every install that
+				// much for code the app never runs, so it is left to the network.
+				// Raising maximumFileSizeToCacheInBytes instead would ship it to
+				// everyone; dropping the dependency is a separate change.
+				globIgnores: ['**/rapier-*.js'],
+				// The SPA falls back to index.html, which would swallow a missing
+				// API route and answer it with the app shell instead of a 404.
+				navigateFallbackDenylist: [/^\/api/, /^\/_/],
+				cleanupOutdatedCaches: true,
+				runtimeCaching: [
+					{
+						// Google Fonts ships immutable, hashed files, so they are worth
+						// keeping across deploys rather than refetching on every visit.
+						urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+						handler: 'CacheFirst',
+						options: {
+							cacheName: 'google-fonts',
+							expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+							cacheableResponse: { statuses: [0, 200] },
+						},
+					},
+				],
+			},
+			devOptions: { enabled: false },
+		}),
 	],
 	worker: {
 		plugins: () => [comlink()],

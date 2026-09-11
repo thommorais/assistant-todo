@@ -1,13 +1,17 @@
 import { createRootRoute, type ErrorComponentProps, Outlet, useRouter } from '@tanstack/react-router'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { Button } from '@thom/ui/button'
+import { Toaster } from '@thom/ui/toast'
 import { ContainerProvider } from '_/app/container'
+import { ReloadPrompt } from '_/components/reload-prompt'
 
 const RootComponent = () => {
 	return (
 		<ContainerProvider>
 			<NuqsAdapter>
 				<Outlet />
+				<Toaster />
+				<ReloadPrompt />
 			</NuqsAdapter>
 		</ContainerProvider>
 	)
