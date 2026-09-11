@@ -1,4 +1,4 @@
-module journ/cli
+module folio/cli
 
 go 1.27
 

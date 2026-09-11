@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Builds the journ CLI and installs it on PATH, then signs in if no token is
+# Builds the folio CLI and installs it on PATH, then signs in if no token is
 # cached yet. Defaults to ~/.local/bin so no sudo is needed; set PREFIX to
 # override (e.g. PREFIX=/usr/local/bin, which may require sudo).
 
 CLI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PREFIX="${PREFIX:-$HOME/.local/bin}"
-BINARY="journ"
+BINARY="folio"
 
 if [[ -n ${NO_COLOR:-} ]]; then
 	GREEN='' YELLOW='' NC=''
@@ -16,7 +16,7 @@ else
 fi
 
 echo "Building $BINARY..."
-(cd "$CLI_DIR" && go build -ldflags="-s -w" -o "$CLI_DIR/bin/$BINARY" ./cmd/journ)
+(cd "$CLI_DIR" && go build -ldflags="-s -w" -o "$CLI_DIR/bin/$BINARY" ./cmd/folio)
 
 mkdir -p "$PREFIX"
 if [[ ! -w $PREFIX ]]; then
@@ -33,8 +33,8 @@ if ! printf '%s' ":$PATH:" | grep -q ":$PREFIX:"; then
 fi
 
 CREDENTIALS="$("$PREFIX/$BINARY" config path)"
-if [[ -n ${JOURN_TOKEN:-} ]]; then
-	echo "JOURN_TOKEN is set; skipping login."
+if [[ -n ${FOLIO_TOKEN:-} ]]; then
+	echo "FOLIO_TOKEN is set; skipping login."
 	exit 0
 fi
 if [[ -f $CREDENTIALS ]]; then
@@ -50,5 +50,5 @@ if [[ ! -t 0 ]]; then
 fi
 
 echo
-echo "Sign in to journ:"
+echo "Sign in to folio:"
 "$PREFIX/$BINARY" login

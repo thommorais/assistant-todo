@@ -16,11 +16,11 @@ func TestListPlans(t *testing.T) {
 	}))
 	defer server.Close()
 
-	plans, err := New(server.URL, "tok").ListPlans("journ", PlanFilter{Status: []string{"active", "draft"}})
+	plans, err := New(server.URL, "tok").ListPlans("folio", PlanFilter{Status: []string{"active", "draft"}})
 	if err != nil {
 		t.Fatalf("ListPlans() error = %v", err)
 	}
-	if gotPath != "/api/journ/projects/journ/plans" {
+	if gotPath != "/api/folio/projects/folio/plans" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if gotQuery != "status=active%2Cdraft" {
@@ -44,7 +44,7 @@ func TestCreatePlan(t *testing.T) {
 	}))
 	defer server.Close()
 
-	plan, err := New(server.URL, "tok").CreatePlan("journ", PlanInput{Title: strptr("New")})
+	plan, err := New(server.URL, "tok").CreatePlan("folio", PlanInput{Title: strptr("New")})
 	if err != nil {
 		t.Fatalf("CreatePlan() error = %v", err)
 	}
@@ -74,7 +74,7 @@ func TestUpdatePlan(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpdatePlan() error = %v", err)
 	}
-	if gotMethod != http.MethodPatch || gotPath != "/api/journ/plans/p1" {
+	if gotMethod != http.MethodPatch || gotPath != "/api/folio/plans/p1" {
 		t.Errorf("%s %s", gotMethod, gotPath)
 	}
 	if _, sent := gotBody["title"]; sent {
@@ -97,7 +97,7 @@ func TestDeletePlan(t *testing.T) {
 	if err := New(server.URL, "tok").DeletePlan("p1"); err != nil {
 		t.Fatalf("DeletePlan() error = %v", err)
 	}
-	if gotMethod != http.MethodDelete || gotPath != "/api/journ/plans/p1" {
+	if gotMethod != http.MethodDelete || gotPath != "/api/folio/plans/p1" {
 		t.Errorf("%s %s", gotMethod, gotPath)
 	}
 }
@@ -111,7 +111,7 @@ func TestListLogs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	logs, err := New(server.URL, "tok").ListLogs("journ", LogFilter{Branch: "feat/search", Search: "fts5", Limit: 5})
+	logs, err := New(server.URL, "tok").ListLogs("folio", LogFilter{Branch: "feat/search", Search: "fts5", Limit: 5})
 	if err != nil {
 		t.Fatalf("ListLogs() error = %v", err)
 	}
@@ -133,7 +133,7 @@ func TestWriteLog(t *testing.T) {
 	}))
 	defer server.Close()
 
-	entry, err := New(server.URL, "tok").WriteLog("journ", LogInput{Title: strptr("Entry"), Body: strptr("text")})
+	entry, err := New(server.URL, "tok").WriteLog("folio", LogInput{Title: strptr("Entry"), Body: strptr("text")})
 	if err != nil {
 		t.Fatalf("WriteLog() error = %v", err)
 	}
@@ -160,7 +160,7 @@ func TestAppendLog(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AppendLog() error = %v", err)
 	}
-	if gotPath != "/api/journ/logs/l1/append" {
+	if gotPath != "/api/folio/logs/l1/append" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if gotBody["section"] != "more" {
@@ -180,11 +180,11 @@ func TestListDocs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	docs, err := New(server.URL, "tok").ListDocs("journ", DocFilter{})
+	docs, err := New(server.URL, "tok").ListDocs("folio", DocFilter{})
 	if err != nil {
 		t.Fatalf("ListDocs() error = %v", err)
 	}
-	if gotPath != "/api/journ/projects/journ/docs" {
+	if gotPath != "/api/folio/projects/folio/docs" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if len(docs) != 1 || docs[0].Slug != "architecture" {
@@ -201,11 +201,11 @@ func TestGetDocBySlug(t *testing.T) {
 	}))
 	defer server.Close()
 
-	doc, err := New(server.URL, "tok").GetDocBySlug("journ", "architecture")
+	doc, err := New(server.URL, "tok").GetDocBySlug("folio", "architecture")
 	if err != nil {
 		t.Fatalf("GetDocBySlug() error = %v", err)
 	}
-	if gotPath != "/api/journ/projects/journ/docs/architecture" {
+	if gotPath != "/api/folio/projects/folio/docs/architecture" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if doc.Title != "Architecture" {
@@ -223,7 +223,7 @@ func TestCreateDoc(t *testing.T) {
 	}))
 	defer server.Close()
 
-	doc, err := New(server.URL, "tok").CreateDoc("journ", DocInput{Title: strptr("New Doc")})
+	doc, err := New(server.URL, "tok").CreateDoc("folio", DocInput{Title: strptr("New Doc")})
 	if err != nil {
 		t.Fatalf("CreateDoc() error = %v", err)
 	}
@@ -245,7 +245,7 @@ func TestEntityErrorsCarryTheAPIMessage(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := New(server.URL, "tok").ListPlans("journ", PlanFilter{}); err == nil {
+	if _, err := New(server.URL, "tok").ListPlans("folio", PlanFilter{}); err == nil {
 		t.Fatal("ListPlans() error = nil, want an error")
 	} else if err.Error() != "403: you do not have access to this resource" {
 		t.Errorf("err = %q", err.Error())

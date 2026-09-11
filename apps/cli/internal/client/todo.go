@@ -87,7 +87,7 @@ func (c *Client) ListTodos(project string, filter TodoFilter) ([]Todo, error) {
 	var body struct {
 		Todos []Todo `json:"todos"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/todos"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/todos"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Todos, nil
@@ -95,22 +95,22 @@ func (c *Client) ListTodos(project string, filter TodoFilter) ([]Todo, error) {
 
 func (c *Client) GetTodo(id string) (Todo, error) {
 	var todo Todo
-	err := c.do(http.MethodGet, "/api/journ/todos/"+id, nil, &todo)
+	err := c.do(http.MethodGet, "/api/folio/todos/"+id, nil, &todo)
 	return todo, err
 }
 
 func (c *Client) CreateTodo(project string, in TodoInput) (Todo, error) {
 	var todo Todo
-	err := c.do(http.MethodPost, "/api/journ/projects/"+project+"/todos", in, &todo)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/todos", in, &todo)
 	return todo, err
 }
 
 func (c *Client) UpdateTodo(id string, in TodoInput) (Todo, error) {
 	var todo Todo
-	err := c.do(http.MethodPatch, "/api/journ/todos/"+id, in, &todo)
+	err := c.do(http.MethodPatch, "/api/folio/todos/"+id, in, &todo)
 	return todo, err
 }
 
 func (c *Client) DeleteTodo(id string) error {
-	return c.do(http.MethodDelete, "/api/journ/todos/"+id, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/todos/"+id, nil, nil)
 }

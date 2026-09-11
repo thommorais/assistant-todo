@@ -25,9 +25,9 @@ RUN pnpm --filter @thom/web build
 # ---- Stage 2: build the Go server ----
 FROM golang:1.27 AS base
 WORKDIR /src
-# journ-core is a replace target of apps/base, so it has to be present before
+# folio-core is a replace target of apps/base, so it has to be present before
 # `go mod download` can resolve the module graph.
-COPY packages/journ-core/ packages/journ-core/
+COPY packages/folio-core/ packages/folio-core/
 COPY apps/base/go.mod apps/base/go.sum apps/base/
 WORKDIR /src/apps/base
 RUN go mod download
@@ -47,7 +47,7 @@ COPY --from=base /out/base ./base
 # publicDir() resolves pb_public next to the binary, so no env var is needed.
 COPY --from=web /repo/apps/web/dist ./pb_public
 
-# The journ collections install from the OnBootstrap hook that serve runs, so
+# The folio collections install from the OnBootstrap hook that serve runs, so
 # there is no separate migrate step. Railway injects $PORT; pb_data is a
 # mounted volume.
 CMD ["sh", "-c", "exec ./base serve --http=0.0.0.0:${PORT:-8080} --dir=/app/pb_data"]

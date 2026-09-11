@@ -7,8 +7,8 @@
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180x180.png" sizes="180x180" />
 		<meta name="theme-color" content="#060E0B" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-title" content="journ" />
-		<meta name="description" content="A project journal a code agent can write to." />
+		<meta name="apple-mobile-web-app-title" content="folio" />
+		<meta name="description" content="The shared channel between developers and their coding agents." />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,13 +16,13 @@
 			href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Sans&family=Hedvig+Letters+Serif:opsz@12..24&display=swap"
 			rel="stylesheet"
 		/>
-		<title>journ</title>
+		<title>folio</title>
 		<script>
 			// Inline and before first paint: React mounting the theme later would
 			// flash the light palette on a dark-theme reload.
 			;(() => {
 				try {
-					const stored = localStorage.getItem('journ.theme')
+					const stored = localStorage.getItem('folio.theme')
 					const theme = stored === 'light' || stored === 'dark' ? stored : 'system'
 					const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
 					document.documentElement.classList.toggle('dark', dark)

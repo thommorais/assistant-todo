@@ -4,7 +4,7 @@ const keys = [ArrowUp, ArrowDown, CornerDownLeft]
 
 export const SearchFooter = () => (
 	<div className='search-footer bg-background border-border flex h-[40px] w-full items-center border border-t-0 px-3 backdrop-blur-lg dark:bg-[#0C0C0C]/99'>
-		<span className='text-dimmer font-serif text-sm'>journ</span>
+		<span className='text-dimmer font-serif text-sm'>folio</span>
 
 		<div className='ml-auto flex space-x-2'>
 			{keys.map(Key => (

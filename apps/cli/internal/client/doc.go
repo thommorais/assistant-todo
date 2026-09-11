@@ -62,7 +62,7 @@ func (c *Client) ListDocs(project string, filter DocFilter) ([]Doc, error) {
 	var body struct {
 		Docs []Doc `json:"docs"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/docs"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/docs"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Docs, nil
@@ -70,28 +70,28 @@ func (c *Client) ListDocs(project string, filter DocFilter) ([]Doc, error) {
 
 func (c *Client) GetDoc(id string) (Doc, error) {
 	var doc Doc
-	err := c.do(http.MethodGet, "/api/journ/docs/"+id, nil, &doc)
+	err := c.do(http.MethodGet, "/api/folio/docs/"+id, nil, &doc)
 	return doc, err
 }
 
 func (c *Client) GetDocBySlug(project, slug string) (Doc, error) {
 	var doc Doc
-	err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/docs/"+slug, nil, &doc)
+	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/docs/"+slug, nil, &doc)
 	return doc, err
 }
 
 func (c *Client) CreateDoc(project string, in DocInput) (Doc, error) {
 	var doc Doc
-	err := c.do(http.MethodPost, "/api/journ/projects/"+project+"/docs", in, &doc)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/docs", in, &doc)
 	return doc, err
 }
 
 func (c *Client) UpdateDoc(id string, in DocInput) (Doc, error) {
 	var doc Doc
-	err := c.do(http.MethodPatch, "/api/journ/docs/"+id, in, &doc)
+	err := c.do(http.MethodPatch, "/api/folio/docs/"+id, in, &doc)
 	return doc, err
 }
 
 func (c *Client) DeleteDoc(id string) error {
-	return c.do(http.MethodDelete, "/api/journ/docs/"+id, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/docs/"+id, nil, nil)
 }

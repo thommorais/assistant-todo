@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"journ/cli/internal/client"
+	"folio/cli/internal/client"
 )
 
 type screen int

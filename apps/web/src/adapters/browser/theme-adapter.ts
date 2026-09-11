@@ -1,7 +1,7 @@
 import type { Appearance, Theme, ThemePort } from '_/core/ports/theme'
 import { THEMES } from '_/core/ports/theme'
 
-const STORAGE_KEY = 'journ.theme'
+const STORAGE_KEY = 'folio.theme'
 
 const isTheme = (value: unknown): value is Theme => THEMES.includes(value as Theme)
 

@@ -65,7 +65,7 @@ func (c *Client) ListPlans(project string, filter PlanFilter) ([]Plan, error) {
 	var body struct {
 		Plans []Plan `json:"plans"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/plans"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/plans"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Plans, nil
@@ -73,22 +73,22 @@ func (c *Client) ListPlans(project string, filter PlanFilter) ([]Plan, error) {
 
 func (c *Client) GetPlan(id string) (Plan, error) {
 	var plan Plan
-	err := c.do(http.MethodGet, "/api/journ/plans/"+id, nil, &plan)
+	err := c.do(http.MethodGet, "/api/folio/plans/"+id, nil, &plan)
 	return plan, err
 }
 
 func (c *Client) CreatePlan(project string, in PlanInput) (Plan, error) {
 	var plan Plan
-	err := c.do(http.MethodPost, "/api/journ/projects/"+project+"/plans", in, &plan)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/plans", in, &plan)
 	return plan, err
 }
 
 func (c *Client) UpdatePlan(id string, in PlanInput) (Plan, error) {
 	var plan Plan
-	err := c.do(http.MethodPatch, "/api/journ/plans/"+id, in, &plan)
+	err := c.do(http.MethodPatch, "/api/folio/plans/"+id, in, &plan)
 	return plan, err
 }
 
 func (c *Client) DeletePlan(id string) error {
-	return c.do(http.MethodDelete, "/api/journ/plans/"+id, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/plans/"+id, nil, nil)
 }

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var ErrNoToken = errors.New("no token: set JOURN_TOKEN or run `journ login`")
+var ErrNoToken = errors.New("no token: set FOLIO_TOKEN or run `folio login`")
 
 type Client struct {
 	baseURL string

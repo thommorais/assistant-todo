@@ -19,7 +19,7 @@ func TestListTodos(t *testing.T) {
 		}))
 		defer server.Close()
 
-		todos, err := New(server.URL, "tok").ListTodos("journ", TodoFilter{Status: []string{"pending"}, Limit: 5})
+		todos, err := New(server.URL, "tok").ListTodos("folio", TodoFilter{Status: []string{"pending"}, Limit: 5})
 		if err != nil {
 			t.Fatalf("ListTodos() error = %v", err)
 		}
@@ -27,7 +27,7 @@ func TestListTodos(t *testing.T) {
 		if gotAuth != "tok" {
 			t.Errorf("Authorization = %q, want %q", gotAuth, "tok")
 		}
-		if gotPath != "/api/journ/projects/journ/todos" {
+		if gotPath != "/api/folio/projects/folio/todos" {
 			t.Errorf("path = %q", gotPath)
 		}
 		if gotQuery != "limit=5&status=pending" {
@@ -48,7 +48,7 @@ func TestListTodos(t *testing.T) {
 		}))
 		defer server.Close()
 
-		_, err := New(server.URL, "tok").ListTodos("journ", TodoFilter{})
+		_, err := New(server.URL, "tok").ListTodos("folio", TodoFilter{})
 		if err == nil {
 			t.Fatal("ListTodos() error = nil, want an error")
 		}
@@ -58,7 +58,7 @@ func TestListTodos(t *testing.T) {
 	})
 
 	t.Run("refuses to send without a token", func(t *testing.T) {
-		_, err := New("http://127.0.0.1:1", "").ListTodos("journ", TodoFilter{})
+		_, err := New("http://127.0.0.1:1", "").ListTodos("folio", TodoFilter{})
 		if err == nil {
 			t.Fatal("ListTodos() error = nil, want a missing-token error")
 		}
@@ -77,7 +77,7 @@ func TestCreateTodo(t *testing.T) {
 	}))
 	defer server.Close()
 
-	todo, err := New(server.URL, "tok").CreateTodo("journ", TodoInput{Title: strptr("ship it")})
+	todo, err := New(server.URL, "tok").CreateTodo("folio", TodoInput{Title: strptr("ship it")})
 	if err != nil {
 		t.Fatalf("CreateTodo() error = %v", err)
 	}
@@ -114,7 +114,7 @@ func TestUpdateTodo(t *testing.T) {
 	if gotMethod != http.MethodPatch {
 		t.Errorf("method = %q, want PATCH", gotMethod)
 	}
-	if gotPath != "/api/journ/todos/t1" {
+	if gotPath != "/api/folio/todos/t1" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if gotBody["status"] != "done" {
@@ -144,14 +144,14 @@ func TestDeleteTodo(t *testing.T) {
 	if gotMethod != http.MethodDelete {
 		t.Errorf("method = %q, want DELETE", gotMethod)
 	}
-	if gotPath != "/api/journ/todos/t1" {
+	if gotPath != "/api/folio/todos/t1" {
 		t.Errorf("path = %q", gotPath)
 	}
 }
 
 func TestGetTodo(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/journ/todos/t1" {
+		if r.URL.Path != "/api/folio/todos/t1" {
 			t.Errorf("path = %q", r.URL.Path)
 		}
 		_, _ = w.Write([]byte(`{"id":"t1","project_id":"p1","title":"one","status":"pending","priority":"low","tags":[],"position":1,"depends_on":[],"blocked":true,"created_at":"2026-09-11T01:07:01Z","updated_at":"2026-09-11T01:07:01Z"}`))

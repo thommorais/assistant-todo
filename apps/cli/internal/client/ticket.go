@@ -77,7 +77,7 @@ func (c *Client) ListTickets(project string, filter TicketFilter) ([]Ticket, err
 	var body struct {
 		Tickets []Ticket `json:"tickets"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/tickets"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Tickets, nil
@@ -85,28 +85,28 @@ func (c *Client) ListTickets(project string, filter TicketFilter) ([]Ticket, err
 
 func (c *Client) GetTicket(id string) (Ticket, error) {
 	var ticket Ticket
-	err := c.do(http.MethodGet, "/api/journ/tickets/"+id, nil, &ticket)
+	err := c.do(http.MethodGet, "/api/folio/tickets/"+id, nil, &ticket)
 	return ticket, err
 }
 
 func (c *Client) GetTicketBySlug(project, slug string) (Ticket, error) {
 	var ticket Ticket
-	err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/tickets/"+slug, nil, &ticket)
+	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets/"+slug, nil, &ticket)
 	return ticket, err
 }
 
 func (c *Client) CreateTicket(project string, in TicketInput) (Ticket, error) {
 	var ticket Ticket
-	err := c.do(http.MethodPost, "/api/journ/projects/"+project+"/tickets", in, &ticket)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/tickets", in, &ticket)
 	return ticket, err
 }
 
 func (c *Client) UpdateTicket(id string, in TicketInput) (Ticket, error) {
 	var ticket Ticket
-	err := c.do(http.MethodPatch, "/api/journ/tickets/"+id, in, &ticket)
+	err := c.do(http.MethodPatch, "/api/folio/tickets/"+id, in, &ticket)
 	return ticket, err
 }
 
 func (c *Client) DeleteTicket(id string) error {
-	return c.do(http.MethodDelete, "/api/journ/tickets/"+id, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/tickets/"+id, nil, nil)
 }

@@ -9,13 +9,13 @@ func TestNormalizeURL(t *testing.T) {
 		want  string
 		error bool
 	}{
-		{name: "leaves an https origin alone", in: "https://journ.example.com", want: "https://journ.example.com"},
-		{name: "strips a trailing slash", in: "https://journ.example.com/", want: "https://journ.example.com"},
+		{name: "leaves an https origin alone", in: "https://folio.example.com", want: "https://folio.example.com"},
+		{name: "strips a trailing slash", in: "https://folio.example.com/", want: "https://folio.example.com"},
 		{name: "keeps an explicit port", in: "http://127.0.0.1:8090", want: "http://127.0.0.1:8090"},
 		{
 			name: "assumes https for a bare remote host",
-			in:   "journ.example.com",
-			want: "https://journ.example.com",
+			in:   "folio.example.com",
+			want: "https://folio.example.com",
 		},
 		{
 			name: "assumes http for a bare loopback host, which rarely has TLS",
@@ -25,12 +25,12 @@ func TestNormalizeURL(t *testing.T) {
 		{name: "assumes http for bare localhost", in: "localhost:8090", want: "http://localhost:8090"},
 		{
 			name: "drops a path, since the client appends its own",
-			in:   "https://journ.example.com/api",
-			want: "https://journ.example.com",
+			in:   "https://folio.example.com/api",
+			want: "https://folio.example.com",
 		},
-		{name: "trims surrounding whitespace", in: "  https://journ.example.com  ", want: "https://journ.example.com"},
-		{name: "rejects an unsupported scheme", in: "htp://journ.example.com", error: true},
-		{name: "rejects a non-http scheme", in: "ftp://journ.example.com", error: true},
+		{name: "trims surrounding whitespace", in: "  https://folio.example.com  ", want: "https://folio.example.com"},
+		{name: "rejects an unsupported scheme", in: "htp://folio.example.com", error: true},
+		{name: "rejects a non-http scheme", in: "ftp://folio.example.com", error: true},
 		{name: "rejects an empty host", in: "https://", error: true},
 	}
 
@@ -132,14 +132,14 @@ func TestResolveUsesBothHalvesOfTheCacheTogether(t *testing.T) {
 
 func TestProject(t *testing.T) {
 	t.Run("reads the environment", func(t *testing.T) {
-		t.Setenv(EnvProject, "journ")
-		if got := Project(""); got != "journ" {
-			t.Errorf("Project(\"\") = %q, want journ", got)
+		t.Setenv(EnvProject, "folio")
+		if got := Project(""); got != "folio" {
+			t.Errorf("Project(\"\") = %q, want folio", got)
 		}
 	})
 
 	t.Run("a flag overrides the environment", func(t *testing.T) {
-		t.Setenv(EnvProject, "journ")
+		t.Setenv(EnvProject, "folio")
 		if got := Project("other"); got != "other" {
 			t.Errorf("Project(\"other\") = %q, want other", got)
 		}

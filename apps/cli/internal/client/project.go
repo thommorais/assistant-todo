@@ -21,7 +21,7 @@ type Project struct {
 }
 
 func (c *Client) ListProjects(includeArchived bool) ([]Project, error) {
-	path := "/api/journ/projects"
+	path := "/api/folio/projects"
 	if includeArchived {
 		path += "?archived=true"
 	}
@@ -37,7 +37,7 @@ func (c *Client) ListProjects(includeArchived bool) ([]Project, error) {
 
 func (c *Client) GetProject(ref string) (Project, error) {
 	var project Project
-	err := c.do(http.MethodGet, "/api/journ/projects/"+ref, nil, &project)
+	err := c.do(http.MethodGet, "/api/folio/projects/"+ref, nil, &project)
 	return project, err
 }
 
@@ -55,18 +55,18 @@ type ProjectInput struct {
 
 func (c *Client) CreateProject(in CreateProjectInput) (Project, error) {
 	var project Project
-	err := c.do(http.MethodPost, "/api/journ/projects", in, &project)
+	err := c.do(http.MethodPost, "/api/folio/projects", in, &project)
 	return project, err
 }
 
 func (c *Client) UpdateProject(ref string, in ProjectInput) (Project, error) {
 	var project Project
-	err := c.do(http.MethodPatch, "/api/journ/projects/"+ref, in, &project)
+	err := c.do(http.MethodPatch, "/api/folio/projects/"+ref, in, &project)
 	return project, err
 }
 
 func (c *Client) DeleteProject(ref string) error {
-	return c.do(http.MethodDelete, "/api/journ/projects/"+ref, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/projects/"+ref, nil, nil)
 }
 
 func (c *Client) AddMember(ref, email, role string) (Project, error) {
@@ -75,7 +75,7 @@ func (c *Client) AddMember(ref, email, role string) (Project, error) {
 		Email string `json:"email"`
 		Role  string `json:"role,omitempty"`
 	}{Email: email, Role: role}
-	err := c.do(http.MethodPost, "/api/journ/projects/"+ref+"/members", body, &project)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+ref+"/members", body, &project)
 	return project, err
 }
 
@@ -84,12 +84,12 @@ func (c *Client) SetMemberRole(ref, user, role string) (Project, error) {
 	body := struct {
 		Role string `json:"role"`
 	}{Role: role}
-	err := c.do(http.MethodPatch, "/api/journ/projects/"+ref+"/members/"+user, body, &project)
+	err := c.do(http.MethodPatch, "/api/folio/projects/"+ref+"/members/"+user, body, &project)
 	return project, err
 }
 
 func (c *Client) RemoveMember(ref, user string) (Project, error) {
 	var project Project
-	err := c.do(http.MethodDelete, "/api/journ/projects/"+ref+"/members/"+user, nil, &project)
+	err := c.do(http.MethodDelete, "/api/folio/projects/"+ref+"/members/"+user, nil, &project)
 	return project, err
 }

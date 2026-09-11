@@ -85,7 +85,7 @@ func (c *Client) ListLogs(project string, filter LogFilter) ([]LogEntry, error) 
 	var body struct {
 		Logs []LogEntry `json:"logs"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/logs"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/logs"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Logs, nil
@@ -93,19 +93,19 @@ func (c *Client) ListLogs(project string, filter LogFilter) ([]LogEntry, error) 
 
 func (c *Client) GetLog(id string) (LogEntry, error) {
 	var entry LogEntry
-	err := c.do(http.MethodGet, "/api/journ/logs/"+id, nil, &entry)
+	err := c.do(http.MethodGet, "/api/folio/logs/"+id, nil, &entry)
 	return entry, err
 }
 
 func (c *Client) WriteLog(project string, in LogInput) (LogEntry, error) {
 	var entry LogEntry
-	err := c.do(http.MethodPost, "/api/journ/projects/"+project+"/logs", in, &entry)
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/logs", in, &entry)
 	return entry, err
 }
 
 func (c *Client) UpdateLog(id string, in LogInput) (LogEntry, error) {
 	var entry LogEntry
-	err := c.do(http.MethodPatch, "/api/journ/logs/"+id, in, &entry)
+	err := c.do(http.MethodPatch, "/api/folio/logs/"+id, in, &entry)
 	return entry, err
 }
 
@@ -114,10 +114,10 @@ func (c *Client) AppendLog(id, section string) (LogEntry, error) {
 	body := struct {
 		Section string `json:"section"`
 	}{Section: section}
-	err := c.do(http.MethodPost, "/api/journ/logs/"+id+"/append", body, &entry)
+	err := c.do(http.MethodPost, "/api/folio/logs/"+id+"/append", body, &entry)
 	return entry, err
 }
 
 func (c *Client) DeleteLog(id string) error {
-	return c.do(http.MethodDelete, "/api/journ/logs/"+id, nil, nil)
+	return c.do(http.MethodDelete, "/api/folio/logs/"+id, nil, nil)
 }

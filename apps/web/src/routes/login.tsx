@@ -55,9 +55,9 @@ const Login = () => {
 	return (
 		<main className='relative flex min-h-dvh w-full'>
 			<div className='border-border bg-card hidden w-1/2 flex-col justify-between border-r p-12 lg:flex'>
-				<span className='font-serif text-lg'>journ</span>
+				<span className='font-serif text-lg'>folio</span>
 				<p className='max-w-sm font-serif text-2xl leading-snug text-balance'>
-					A project journal a code agent can write to.
+					The shared channel between developers and their coding agents.
 				</p>
 				<span className='text-dim text-xs'>Plans, todos, work logs and docs.</span>
 			</div>
@@ -65,7 +65,7 @@ const Login = () => {
 			<div className='flex w-full flex-col items-center justify-center p-8 lg:w-1/2 lg:p-12'>
 				<div className='flex w-full max-w-md flex-1 flex-col justify-center space-y-8'>
 					<div className='space-y-2 text-center'>
-						<h1 className='mb-4 font-serif text-lg lg:text-xl'>Welcome to journ</h1>
+						<h1 className='mb-4 font-serif text-lg lg:text-xl'>Welcome to folio</h1>
 						<p className='text-dim text-sm'>Sign in to your account</p>
 					</div>
 

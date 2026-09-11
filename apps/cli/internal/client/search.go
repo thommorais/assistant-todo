@@ -51,7 +51,7 @@ func (c *Client) Search(project string, query SearchQuery) ([]SearchHit, error) 
 	var body struct {
 		Hits []SearchHit `json:"hits"`
 	}
-	if err := c.do(http.MethodGet, "/api/journ/projects/"+project+"/search?"+params.Encode(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/search?"+params.Encode(), nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Hits, nil

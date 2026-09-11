@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	EnvURL     = "JOURN_URL"
-	EnvToken   = "JOURN_TOKEN"
-	EnvProject = "JOURN_PROJECT"
-	EnvHome    = "JOURN_CONFIG_DIR"
+	EnvURL     = "FOLIO_URL"
+	EnvToken   = "FOLIO_TOKEN"
+	EnvProject = "FOLIO_PROJECT"
+	EnvHome    = "FOLIO_CONFIG_DIR"
 
 	DefaultURL = "http://127.0.0.1:8090"
 )
 
-var ErrNoToken = errors.New("no token: set " + EnvToken + " or run `journ login`")
+var ErrNoToken = errors.New("no token: set " + EnvToken + " or run `folio login`")
 
 type Config struct {
 	URL   string
@@ -60,7 +60,7 @@ func Path() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "journ", "credentials.json"), nil
+	return filepath.Join(dir, "folio", "credentials.json"), nil
 }
 
 // NormalizeURL turns what someone actually types into an origin the client can

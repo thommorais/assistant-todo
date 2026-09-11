@@ -41,7 +41,7 @@ func (m model) header(text string) string {
 
 func (m model) viewProjects() string {
 	var b strings.Builder
-	b.WriteString(m.header("journ"))
+	b.WriteString(m.header("folio"))
 
 	if m.err != nil {
 		return b.String() + warn.Render(m.err.Error()) + "\n"

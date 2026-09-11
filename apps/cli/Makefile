@@ -1,8 +1,8 @@
 .PHONY: build check format test clean
 
 BIN_DIR := bin
-BINARY := journ
-SRC := ./cmd/journ
+BINARY := folio
+SRC := ./cmd/folio
 GO ?= go
 LDFLAGS := -s -w
 

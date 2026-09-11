@@ -1,6 +1,6 @@
-// Command base is the journ backend: a PocketBase instance that also serves
-// the journ REST API. PocketBase owns auth, the admin UI and storage; journ
-// adds its collections and the /api/journ routes driven by journ-core.
+// Command base is the folio backend: a PocketBase instance that also serves
+// the folio REST API. PocketBase owns auth, the admin UI and storage; folio
+// adds its collections and the /api/folio routes driven by folio-core.
 package main
 
 import (
@@ -14,8 +14,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
-	journ "journ/journ-core"
-	"journ/journ-core/adapters/httpapi"
+	folio "folio/folio-core"
+	"folio/folio-core/adapters/httpapi"
 )
 
 func main() {
@@ -33,11 +33,11 @@ func main() {
 		if err := e.Next(); err != nil {
 			return err
 		}
-		return journ.Migrate(e.App)
+		return folio.Migrate(e.App)
 	})
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		useCases := journ.New(e.App, nil)
+		useCases := folio.New(e.App, nil)
 		httpapi.New(httpapi.Deps{
 			Projects: useCases.Projects,
 			Plans:    useCases.Plans,
@@ -50,7 +50,7 @@ func main() {
 
 		// Serve the built SPA when a directory is configured. Registered last
 		// so /api and /_ win, and with indexFallback so a deep link like
-		// /journ/todos reaches the client router instead of 404ing.
+		// /folio/todos reaches the client router instead of 404ing.
 		if dir := publicDir(); dir != "" {
 			e.Router.GET("/{path...}", apis.Static(os.DirFS(dir), true))
 		}

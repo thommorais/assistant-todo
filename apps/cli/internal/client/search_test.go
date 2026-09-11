@@ -15,11 +15,11 @@ func TestSearch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	hits, err := New(server.URL, "tok").Search("journ", SearchQuery{Text: "fts5"})
+	hits, err := New(server.URL, "tok").Search("folio", SearchQuery{Text: "fts5"})
 	if err != nil {
 		t.Fatalf("Search() error = %v", err)
 	}
-	if gotPath != "/api/journ/projects/journ/search" {
+	if gotPath != "/api/folio/projects/folio/search" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if gotQuery != "q=fts5" {
@@ -42,7 +42,7 @@ func TestSearchSendsKindsAndTags(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := New(server.URL, "tok").Search("journ", SearchQuery{
+	_, err := New(server.URL, "tok").Search("folio", SearchQuery{
 		Text:  "rules",
 		Kinds: []string{"log", "doc"},
 		Tags:  []string{"decision"},
@@ -66,7 +66,7 @@ func TestSearchRequiresATermOrTags(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := New(server.URL, "tok").Search("journ", SearchQuery{}); err == nil {
+	if _, err := New(server.URL, "tok").Search("folio", SearchQuery{}); err == nil {
 		t.Fatal("Search() error = nil, want an error for an empty query")
 	}
 	if reached {

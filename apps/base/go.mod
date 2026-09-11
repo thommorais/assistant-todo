@@ -1,11 +1,11 @@
-module journ/base
+module folio/base
 
 go 1.27
 
 require (
 	github.com/pocketbase/pocketbase v0.40.3
 	github.com/spf13/cobra v1.10.2
-	journ/journ-core v0.0.0
+	folio/folio-core v0.0.0
 )
 
 require (
@@ -44,4 +44,4 @@ require (
 	modernc.org/sqlite v1.57.0 // indirect
 )
 
-replace journ/journ-core => ../../packages/journ-core
+replace folio/folio-core => ../../packages/folio-core

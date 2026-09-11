@@ -10,10 +10,10 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/spf13/cobra"
 
-	journ "journ/journ-core"
-	"journ/journ-core/domain"
-	"journ/journ-core/ports"
-	"journ/journ-core/services"
+	folio "folio/folio-core"
+	"folio/folio-core/domain"
+	"folio/folio-core/ports"
+	"folio/folio-core/services"
 )
 
 const (
@@ -26,12 +26,12 @@ func newSeedCommand(app *pocketbase.PocketBase) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "seed",
-		Short: "Create the demo user and fill the journal with example data",
+		Short: "Create the demo user and fill the workspace with example data",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := app.Bootstrap(); err != nil {
 				return err
 			}
-			if err := journ.Migrate(app); err != nil {
+			if err := folio.Migrate(app); err != nil {
 				return fmt.Errorf("migrate: %w", err)
 			}
 
@@ -51,7 +51,7 @@ func newSeedCommand(app *pocketbase.PocketBase) *cobra.Command {
 				return fmt.Errorf("seed user: %w", err)
 			}
 
-			useCases := journ.New(app, nil)
+			useCases := folio.New(app, nil)
 			report, err := services.Seed(context.Background(), services.SeedUseCases{
 				Projects: useCases.Projects,
 				Plans:    useCases.Plans,

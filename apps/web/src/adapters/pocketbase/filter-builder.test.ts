@@ -17,10 +17,10 @@ const filter = filterFor<Columns>()
 
 describe('filterFor', () => {
 	it('binds values rather than interpolating them', () => {
-		const { expr, params } = filter([{ field: 'project.slug', comparator: 'eq', value: 'journ' }])
+		const { expr, params } = filter([{ field: 'project.slug', comparator: 'eq', value: 'folio' }])
 
 		expect(expr).toBe('project.slug = {:p0}')
-		expect(params).toEqual({ p0: 'journ' })
+		expect(params).toEqual({ p0: 'folio' })
 	})
 
 	it('skips empty values so callers need no pre-checks', () => {
@@ -37,7 +37,7 @@ describe('filterFor', () => {
 
 	it('joins multiple clauses with AND', () => {
 		const { expr } = filter([
-			{ field: 'project.slug', comparator: 'eq', value: 'journ' },
+			{ field: 'project.slug', comparator: 'eq', value: 'folio' },
 			{ field: 'priority', comparator: 'eq', value: 'low' },
 		])
 
@@ -97,7 +97,7 @@ describe('filterFor', () => {
 
 	it('types expr as the literal expression it will produce', () => {
 		const { expr } = filter([
-			{ field: 'project.slug', comparator: 'eq', value: 'journ' },
+			{ field: 'project.slug', comparator: 'eq', value: 'folio' },
 			{ field: 'title', comparator: 'contains', value: 'x' },
 		])
 

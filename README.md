@@ -1,9 +1,9 @@
-# journ
+# folio
 
-A project journal a code agent can write to: tickets, plans, todos, work logs
-and docs, scoped per project, reachable from any client.
+The shared channel between developers and their coding agents: tickets, plans,
+todos, work logs and docs, scoped per project, reachable from any client.
 
-One Go core (`packages/journ-core`) holds the domain and use cases. PocketBase
+One Go core (`packages/folio-core`) holds the domain and use cases. PocketBase
 (`apps/base`) provides storage, auth and the admin UI, and serves the REST API.
 An MCP server, CLI or web app mounts the same use cases rather than
 reimplementing the rules.
@@ -12,8 +12,8 @@ reimplementing the rules.
 
 | Path | What it is |
 | --- | --- |
-| `packages/journ-core` | Domain, ports, services and adapters (Go). |
-| `apps/base` | PocketBase backend serving `/api/journ`. |
+| `packages/folio-core` | Domain, ports, services and adapters (Go). |
+| `apps/base` | PocketBase backend serving `/api/folio`. |
 | `apps/site` | Next.js web app. |
 | `apps/docs` | API contracts. |
 
@@ -24,13 +24,13 @@ pnpm install
 cd apps/base && go run . serve
 ```
 
-PocketBase comes up on `:8090`, installs the journ collections on boot and
-mounts the API at `/api/journ`. Create the first superuser at
+PocketBase comes up on `:8090`, installs the folio collections on boot and
+mounts the API at `/api/folio`. Create the first superuser at
 `http://127.0.0.1:8090/_/`, then register users through PocketBase's own auth
 endpoints.
 
 ```bash
-cd packages/journ-core && go test ./...
+cd packages/folio-core && go test ./...
 ```
 
 ## Demo data
@@ -39,7 +39,7 @@ cd packages/journ-core && go test ./...
 cd apps/base && go run . seed
 ```
 
-Creates `user@test.com` / `pass@test` and fills the journal with two projects
+Creates `user@test.com` / `pass@test` and fills the workspace with two projects
 mid-flight: a ticket each, plans with real progress, todos in several states,
 and work logs carrying actual decisions. It refuses to run against a database that already
 has projects (`--force` overrides).
@@ -65,5 +65,5 @@ access.
 
 ## Docs
 
-- [API](apps/docs/journ-api.md)
-- [Core architecture](packages/journ-core/README.md)
+- [API](apps/docs/folio-api.md)
+- [Core architecture](packages/folio-core/README.md)

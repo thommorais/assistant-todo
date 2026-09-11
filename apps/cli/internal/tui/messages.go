@@ -3,7 +3,7 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
-	"journ/cli/internal/client"
+	"folio/cli/internal/client"
 )
 
 type projectsLoaded struct {
