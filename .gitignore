@@ -58,3 +58,6 @@ apps/base/pb_data/
 
 # CLI build output
 apps/cli/bin/
+
+# intlayer generated cache
+apps/web/.intlayer/cache/
