@@ -9,6 +9,7 @@
 		"lint": "oxlint .",
 		"typecheck": "nx run-many -t typecheck",
 		"build:icons": "node ./packages/ui/scripts/build-icons.mjs",
+		"cli:build": "pnpm --filter @thom/cli build",
 		"cli:dev": "pnpm --filter @thom/cli dev",
 		"cli:install": "pnpm --filter @thom/cli install:cli",
 		"web:dev": "nx run-many -t dev -p dashboard @thom/web",
