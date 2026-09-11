@@ -5,10 +5,16 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"journ/cli/internal/client"
 	"journ/cli/internal/config"
+	"journ/cli/internal/tui"
 )
+
+func isTerminal(f *os.File) bool {
+	return term.IsTerminal(int(f.Fd()))
+}
 
 var (
 	flagURL     string
@@ -31,7 +37,24 @@ func main() {
 		Short:         "Write to the journ project journal",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		Args:          cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Bare `journ` opens the browser on a terminal, but a pipe or a
+			// CI run gets help rather than an alt-screen program it cannot
+			// drive.
+			if !isTerminal(os.Stdout) {
+				return cmd.Help()
+			}
+
+			journ, err := api()
+			if err != nil {
+				return err
+			}
+			return tui.Run(journ, config.Project(flagProject))
+		},
 	}
+
+	root.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 
 	root.PersistentFlags().StringVar(&flagURL, "url", "", "journ base URL (default $JOURN_URL or "+config.DefaultURL+")")
 	root.PersistentFlags().StringVar(&flagToken, "token", "", "auth token (default $JOURN_TOKEN or the cached login)")
@@ -45,6 +68,7 @@ func main() {
 		logoutCommand(),
 		planCommand(),
 		projectCommand(),
+		searchCommand(),
 		todoCommand(),
 		useCommand(),
 	)
