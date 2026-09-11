@@ -22,21 +22,34 @@ const contentClasses = tv({
 	base: [
 		'fixed',
 		'inset-y-0',
-		'right-0',
 		'z-50',
 		'h-full',
 		'w-3/4',
 		'transition',
 		'ease-in-out',
-		'sm:max-w-[520px]',
 		'md:p-4',
 		'data-[state=open]:animate-in',
 		'data-[state=closed]:animate-out',
 		'data-[state=closed]:duration-200',
 		'data-[state=open]:duration-300',
-		'data-[state=closed]:slide-out-to-right',
-		'data-[state=open]:slide-in-from-right',
 	],
+	variants: {
+		side: {
+			left: [
+				'left-0',
+				'sm:max-w-sm',
+				'data-[state=closed]:slide-out-to-left',
+				'data-[state=open]:slide-in-from-left',
+			],
+			right: [
+				'right-0',
+				'sm:max-w-[520px]',
+				'data-[state=closed]:slide-out-to-right',
+				'data-[state=open]:slide-in-from-right',
+			],
+		},
+	},
+	defaultVariants: { side: 'right' },
 })
 
 const panelClasses = tv({
@@ -51,10 +64,11 @@ const SheetClose = SheetPrimitive.Close
 
 type SheetContentProps = ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & {
 	readonly title: string
+	readonly side?: 'left' | 'right'
 }
 
 const SheetContent = forwardRef<ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-	({ className, children, title, ...props }, ref) => (
+	({ className, children, title, side = 'right', ...props }, ref) => (
 		<SheetPrimitive.Portal>
 			<SheetPrimitive.Overlay className={overlayClasses()} />
 			<SheetPrimitive.Content
@@ -63,7 +77,7 @@ const SheetContent = forwardRef<ElementRef<typeof SheetPrimitive.Content>, Sheet
 				onOpenAutoFocus={event => {
 					event.preventDefault()
 				}}
-				className={contentClasses()}
+				className={contentClasses({ side })}
 				{...props}
 			>
 				<div className={panelClasses({ class: className })}>
