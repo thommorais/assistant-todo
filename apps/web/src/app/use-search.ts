@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import type { SearchHit } from '_/core/ports/search'
+import { useEffect, useState } from 'react'
 import { useContainer } from './container'
 
 type SearchState = {

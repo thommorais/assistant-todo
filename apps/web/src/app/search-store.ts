@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { create } from '_/lib/store'
 
 type SearchState = {
 	isOpen: boolean
