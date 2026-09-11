@@ -45,18 +45,18 @@ const log = {
   "prefix": "\u001b[38;5;239m[intlayer] \u001b[0m"
 };
 const system = {
-  "baseDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web",
-  "moduleAugmentationDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/types",
-  "unmergedDictionariesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/unmerged_dictionary",
-  "remoteDictionariesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/remote_dictionary",
-  "dictionariesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/dictionary",
-  "dynamicDictionariesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/dynamic_dictionary",
-  "fetchDictionariesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/fetch_dictionary",
-  "typesDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/types",
-  "mainDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/main",
-  "configDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/config",
-  "cacheDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/cache",
-  "tempDir": "/Users/thommorais/shed/journ/assistant-todo/apps/web/.intlayer/tmp"
+  "baseDir": "/Users/thommorais/shed/journ/folio/apps/web",
+  "moduleAugmentationDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/types",
+  "unmergedDictionariesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/unmerged_dictionary",
+  "remoteDictionariesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/remote_dictionary",
+  "dictionariesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/dictionary",
+  "dynamicDictionariesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/dynamic_dictionary",
+  "fetchDictionariesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/fetch_dictionary",
+  "typesDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/types",
+  "mainDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/main",
+  "configDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/config",
+  "cacheDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/cache",
+  "tempDir": "/Users/thommorais/shed/journ/folio/apps/web/.intlayer/tmp"
 };
 const content = {
   "fileExtensions": [
@@ -75,10 +75,10 @@ const content = {
     ".content.yml"
   ],
   "contentDir": [
-    "/Users/thommorais/shed/journ/assistant-todo/apps/web"
+    "/Users/thommorais/shed/journ/folio/apps/web"
   ],
   "codeDir": [
-    "/Users/thommorais/shed/journ/assistant-todo/apps/web"
+    "/Users/thommorais/shed/journ/folio/apps/web"
   ],
   "excludedPath": [
     "**/node_modules/**",
