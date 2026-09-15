@@ -48,7 +48,7 @@ func main() {
 			Plans:    useCases.Plans,
 			Tickets:  useCases.Tickets,
 			Todos:    useCases.Todos,
-			Logs:     useCases.Logs,
+			Journal:  useCases.Journal,
 			Docs:     useCases.Docs,
 			Search:   useCases.Search,
 		}).Mount(e)

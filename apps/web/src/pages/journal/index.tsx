@@ -1,14 +1,14 @@
 import { useParams, useSearch } from '@tanstack/react-router'
 import { Badge } from '@thom/ui/badge'
-import { useLogs } from '_/app/use-logs'
-import { LogsFilters } from './log-filters'
+import { useJournal } from '_/app/use-journal'
+import { LogsFilters } from './journal-filters'
 
 const dayMonth = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' })
 
 const Logs = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/logs' })
-	const search = useSearch({ from: '/_authenticated/$slug/logs' })
-	const state = useLogs(slug, {
+	const { slug } = useParams({ from: '/_authenticated/$slug/journal' })
+	const search = useSearch({ from: '/_authenticated/$slug/journal' })
+	const state = useJournal(slug, {
 		ticketId: search.ticket,
 		tags: search.tags,
 		search: search.q,
@@ -32,13 +32,13 @@ const Logs = () => {
 			return <p className='text-destructive text-sm'>{state.message}</p>
 		}
 
-		if (state.logs.length === 0) {
-			return <p className='text-dim text-sm'>{filtered ? 'No logs match.' : 'No logs yet.'}</p>
+		if (state.journal.length === 0) {
+			return <p className='text-dim text-sm'>{filtered ? 'No journal entries match.' : 'No journal entries yet.'}</p>
 		}
 
 		return (
 		<div className='border-border divide-border divide-y border'>
-			{state.logs.map(entry => (
+			{state.journal.map(entry => (
 				<article key={entry.id} className='space-y-2 px-4 py-4'>
 					<div className='flex items-start justify-between gap-4'>
 						<h3 className='text-sm font-medium'>{entry.title}</h3>

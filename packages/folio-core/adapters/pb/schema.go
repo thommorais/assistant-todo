@@ -209,8 +209,8 @@ func ensureTodos(app core.App) error {
 	return app.Save(c)
 }
 
-func ensureLogs(app core.App) error {
-	if _, ok := find(app, ColLogs); ok {
+func ensureJournal(app core.App) error {
+	if _, ok := find(app, ColJournal); ok {
 		return nil
 	}
 	projects, err := app.FindCollectionByNameOrId(ColProjects)
@@ -235,7 +235,7 @@ func ensureLogs(app core.App) error {
 		return err
 	}
 
-	c := core.NewBaseCollection(ColLogs)
+	c := core.NewBaseCollection(ColJournal)
 	c.Fields.Add(
 		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
 		ticketField(tickets),
@@ -251,12 +251,12 @@ func ensureLogs(app core.App) error {
 		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
 	)
 	c.Fields.Add(autodates()...)
-	c.AddIndex("idx_journ_logs_project_created", false, "project, created", "")
-	c.AddIndex("idx_journ_logs_plan", false, "plan", "")
-	c.AddIndex("idx_journ_logs_todo", false, "todo", "")
-	c.AddIndex("idx_journ_logs_branch", false, "branch", "")
-	c.AddIndex("idx_journ_logs_ticket", false, "ticket", "")
-	c.AddIndex("idx_journ_logs_external_ref", false, "external_ref", "")
+	c.AddIndex("idx_journ_journal_project_created", false, "project, created", "")
+	c.AddIndex("idx_journ_journal_plan", false, "plan", "")
+	c.AddIndex("idx_journ_journal_todo", false, "todo", "")
+	c.AddIndex("idx_journ_journal_branch", false, "branch", "")
+	c.AddIndex("idx_journ_journal_ticket", false, "ticket", "")
+	c.AddIndex("idx_journ_journal_external_ref", false, "external_ref", "")
 
 	return app.Save(c)
 }
@@ -340,7 +340,7 @@ func applyRules(app core.App) error {
 		return err
 	}
 
-	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColLogs} {
+	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColJournal} {
 		c, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			return err

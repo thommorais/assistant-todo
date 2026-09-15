@@ -142,7 +142,7 @@ func toTodoView(t domain.Todo) todoView {
 	return v
 }
 
-type logView struct {
+type journalView struct {
 	ID          string         `json:"id"`
 	ProjectID   string         `json:"project_id"`
 	TicketID    string         `json:"ticket_id,omitempty"`
@@ -160,8 +160,8 @@ type logView struct {
 	UpdatedAt   string         `json:"updated_at"`
 }
 
-func toLogView(e domain.LogEntry) logView {
-	return logView{
+func toJournalView(e domain.JournalEntry) journalView {
+	return journalView{
 		ID: string(e.ID), ProjectID: string(e.ProjectID), TicketID: string(e.TicketID),
 		PlanID: string(e.PlanID), TodoID: string(e.TodoID), Title: e.Title, Body: e.Body,
 		Branch: e.Branch, PR: e.PR, ExternalRef: e.ExternalRef,
@@ -233,20 +233,20 @@ func orEmpty(s []string) []string {
 }
 
 type ticketBriefView struct {
-	Ticket ticketView `json:"ticket"`
-	Plans  []planView `json:"plans"`
-	Todos  []todoView `json:"todos"`
-	Logs   []logView  `json:"logs"`
-	Docs   []docView  `json:"docs"`
+	Ticket  ticketView    `json:"ticket"`
+	Plans   []planView    `json:"plans"`
+	Todos   []todoView    `json:"todos"`
+	Journal []journalView `json:"journal"`
+	Docs    []docView     `json:"docs"`
 }
 
 func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
 	out := ticketBriefView{
-		Ticket: toTicketView(b.Ticket),
-		Plans:  make([]planView, 0, len(b.Plans)),
-		Todos:  make([]todoView, 0, len(b.Todos)),
-		Logs:   make([]logView, 0, len(b.Logs)),
-		Docs:   make([]docView, 0, len(b.Docs)),
+		Ticket:  toTicketView(b.Ticket),
+		Plans:   make([]planView, 0, len(b.Plans)),
+		Todos:   make([]todoView, 0, len(b.Todos)),
+		Journal: make([]journalView, 0, len(b.Journal)),
+		Docs:    make([]docView, 0, len(b.Docs)),
 	}
 	for _, p := range b.Plans {
 		out.Plans = append(out.Plans, toPlanView(p))
@@ -254,8 +254,8 @@ func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
 	for _, t := range b.Todos {
 		out.Todos = append(out.Todos, toTodoView(t))
 	}
-	for _, e := range b.Logs {
-		out.Logs = append(out.Logs, toLogView(e))
+	for _, e := range b.Journal {
+		out.Journal = append(out.Journal, toJournalView(e))
 	}
 	for _, d := range b.Docs {
 		out.Docs = append(out.Docs, toDocView(d))

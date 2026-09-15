@@ -106,18 +106,18 @@ func ticketGetCommand() *cobra.Command {
 }
 
 func ticketBriefCommand() *cobra.Command {
-	var recentLogs int
+	var recentJournal int
 
 	cmd := &cobra.Command{
 		Use:   "brief <id-or-slug>",
-		Short: "Show a ticket with its plans, todos, logs and docs; a slug needs --project",
+		Short: "Show a ticket with its plans, todos, journal and docs; a slug needs --project",
 		Long: `Everything filed under a ticket in one call, for opening a session on it.
 
 Todos come back open first, so the next step is the first row. Logs are the
 most recent only.
 
   folio ticket brief mobile-nav
-  folio ticket brief $ID --recent-logs 3 --json`,
+  folio ticket brief $ID --recent-journal 3 --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			folio, err := api()
@@ -126,11 +126,11 @@ most recent only.
 			}
 
 			get := func(ref string) (client.TicketBrief, error) {
-				return folio.GetTicketBrief(ref, recentLogs)
+				return folio.GetTicketBrief(ref, recentJournal)
 			}
 			if project := config.Project(flagProject); project != "" {
 				get = func(ref string) (client.TicketBrief, error) {
-					return folio.GetTicketBriefBySlug(project, ref, recentLogs)
+					return folio.GetTicketBriefBySlug(project, ref, recentJournal)
 				}
 			}
 
@@ -145,7 +145,7 @@ most recent only.
 		},
 	}
 
-	cmd.Flags().IntVar(&recentLogs, "recent-logs", 0, "how many log entries to carry")
+	cmd.Flags().IntVar(&recentJournal, "recent-journal", 0, "how many journal entries to carry")
 
 	return cmd
 }
@@ -177,11 +177,11 @@ func renderBrief(b client.TicketBrief) error {
 	}
 	section("todos", todos)
 
-	logs := make([]string, 0, len(b.Logs))
-	for _, e := range b.Logs {
-		logs = append(logs, fmt.Sprintf("%s  %s  %s", e.ID, e.CreatedAt, e.Title))
+	journal := make([]string, 0, len(b.Journal))
+	for _, e := range b.Journal {
+		journal = append(journal, fmt.Sprintf("%s  %s  %s", e.ID, e.CreatedAt, e.Title))
 	}
-	section("logs", logs)
+	section("journal", journal)
 
 	docs := make([]string, 0, len(b.Docs))
 	for _, d := range b.Docs {
@@ -294,7 +294,7 @@ func ticketUpdateCommand() *cobra.Command {
 func ticketDeleteCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete <id>",
-		Short: "Delete a ticket, detaching its plans, todos, logs and docs",
+		Short: "Delete a ticket, detaching its plans, todos, journal and docs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			folio, err := api()

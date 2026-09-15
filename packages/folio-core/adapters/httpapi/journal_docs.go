@@ -10,12 +10,12 @@ import (
 	"folio/folio-core/ports"
 )
 
-func (h *Handler) listLogs(e *core.RequestEvent) error {
+func (h *Handler) listJournal(e *core.RequestEvent) error {
 	project, err := h.resolveProject(e)
 	if err != nil {
 		return fail(e, err)
 	}
-	filter := domain.LogFilter{
+	filter := domain.JournalFilter{
 		PlanID:      domain.PlanID(e.Request.URL.Query().Get("plan_id")),
 		TodoID:      domain.TodoID(e.Request.URL.Query().Get("todo_id")),
 		TicketID:    domain.TicketID(e.Request.URL.Query().Get("ticket_id")),
@@ -33,15 +33,15 @@ func (h *Handler) listLogs(e *core.RequestEvent) error {
 		filter.Until = until
 	}
 
-	entries, err := h.logs.ListLogs(e.Request.Context(), actorOf(e), project, filter)
+	entries, err := h.journal.ListJournal(e.Request.Context(), actorOf(e), project, filter)
 	if err != nil {
 		return fail(e, err)
 	}
-	out := make([]logView, 0, len(entries))
+	out := make([]journalView, 0, len(entries))
 	for _, entry := range entries {
-		out = append(out, toLogView(entry))
+		out = append(out, toJournalView(entry))
 	}
-	return e.JSON(http.StatusOK, map[string]any{"logs": out})
+	return e.JSON(http.StatusOK, map[string]any{"journal": out})
 }
 
 // queryTime parses an RFC 3339 query parameter, reporting whether one was
@@ -59,12 +59,12 @@ func queryTime(e *core.RequestEvent, key string) (*time.Time, bool) {
 	return &t, true
 }
 
-func (h *Handler) getLog(e *core.RequestEvent) error {
-	entry, err := h.logs.GetLog(e.Request.Context(), actorOf(e), domain.LogID(e.Request.PathValue("log")))
+func (h *Handler) getJournalEntry(e *core.RequestEvent) error {
+	entry, err := h.journal.GetJournalEntry(e.Request.Context(), actorOf(e), domain.JournalID(e.Request.PathValue("entry")))
 	if err != nil {
 		return fail(e, err)
 	}
-	return e.JSON(http.StatusOK, toLogView(entry))
+	return e.JSON(http.StatusOK, toJournalView(entry))
 }
 
 type logBody struct {
@@ -80,7 +80,7 @@ type logBody struct {
 	Meta        *map[string]any `json:"meta"`
 }
 
-func (h *Handler) writeLog(e *core.RequestEvent) error {
+func (h *Handler) writeJournalEntry(e *core.RequestEvent) error {
 	project, err := h.resolveProject(e)
 	if err != nil {
 		return fail(e, err)
@@ -90,7 +90,7 @@ func (h *Handler) writeLog(e *core.RequestEvent) error {
 		return e.BadRequestError("invalid request body", err)
 	}
 
-	in := ports.WriteLogInput{ProjectID: project}
+	in := ports.WriteJournalInput{ProjectID: project}
 	if body.TicketID != nil {
 		in.TicketID = domain.TicketID(*body.TicketID)
 	}
@@ -122,19 +122,19 @@ func (h *Handler) writeLog(e *core.RequestEvent) error {
 		in.Meta = *body.Meta
 	}
 
-	entry, err := h.logs.WriteLog(e.Request.Context(), actorOf(e), in)
+	entry, err := h.journal.WriteJournalEntry(e.Request.Context(), actorOf(e), in)
 	if err != nil {
 		return fail(e, err)
 	}
-	return e.JSON(http.StatusCreated, toLogView(entry))
+	return e.JSON(http.StatusCreated, toJournalView(entry))
 }
 
-func (h *Handler) updateLog(e *core.RequestEvent) error {
+func (h *Handler) updateJournalEntry(e *core.RequestEvent) error {
 	var body logBody
 	if err := e.BindBody(&body); err != nil {
 		return e.BadRequestError("invalid request body", err)
 	}
-	in := ports.UpdateLogInput{
+	in := ports.UpdateJournalInput{
 		Title: body.Title, Body: body.Body, Branch: body.Branch,
 		PR: body.PR, ExternalRef: body.ExternalRef, Tags: body.Tags, Meta: body.Meta,
 	}
@@ -151,33 +151,33 @@ func (h *Handler) updateLog(e *core.RequestEvent) error {
 		in.TodoID = &id
 	}
 
-	entry, err := h.logs.UpdateLog(e.Request.Context(), actorOf(e), domain.LogID(e.Request.PathValue("log")), in)
+	entry, err := h.journal.UpdateJournalEntry(e.Request.Context(), actorOf(e), domain.JournalID(e.Request.PathValue("entry")), in)
 	if err != nil {
 		return fail(e, err)
 	}
-	return e.JSON(http.StatusOK, toLogView(entry))
+	return e.JSON(http.StatusOK, toJournalView(entry))
 }
 
-type appendLogBody struct {
+type appendJournalBody struct {
 	Section string `json:"section"`
 }
 
 // appendLog adds a section to an existing entry, so recording progress on
 // work already written up does not mean resending the whole body.
-func (h *Handler) appendLog(e *core.RequestEvent) error {
-	var body appendLogBody
+func (h *Handler) appendJournalEntry(e *core.RequestEvent) error {
+	var body appendJournalBody
 	if err := e.BindBody(&body); err != nil {
 		return e.BadRequestError("invalid request body", err)
 	}
-	entry, err := h.logs.AppendToLog(e.Request.Context(), actorOf(e), domain.LogID(e.Request.PathValue("log")), body.Section)
+	entry, err := h.journal.AppendToJournalEntry(e.Request.Context(), actorOf(e), domain.JournalID(e.Request.PathValue("entry")), body.Section)
 	if err != nil {
 		return fail(e, err)
 	}
-	return e.JSON(http.StatusOK, toLogView(entry))
+	return e.JSON(http.StatusOK, toJournalView(entry))
 }
 
-func (h *Handler) deleteLog(e *core.RequestEvent) error {
-	if err := h.logs.DeleteLog(e.Request.Context(), actorOf(e), domain.LogID(e.Request.PathValue("log"))); err != nil {
+func (h *Handler) deleteJournalEntry(e *core.RequestEvent) error {
+	if err := h.journal.DeleteJournalEntry(e.Request.Context(), actorOf(e), domain.JournalID(e.Request.PathValue("entry"))); err != nil {
 		return fail(e, err)
 	}
 	return e.NoContent(http.StatusNoContent)

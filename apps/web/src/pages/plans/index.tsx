@@ -52,7 +52,7 @@ const Plans = () => {
 	})
 
 	const setPlan = (plan: string | undefined) => {
-		void navigate({ to: '.', search: (prev: PlansSearch) => ({ ...prev, plan }) })
+		void navigate({ from: '/$slug/plans', to: '.', search: (prev: PlansSearch) => ({ ...prev, plan }) })
 	}
 
 	const filtered = search.q !== undefined || search.statuses !== undefined || search.tags !== undefined

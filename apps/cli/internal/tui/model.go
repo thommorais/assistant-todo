@@ -36,7 +36,7 @@ type rows struct {
 	tickets []client.Ticket
 	plans   []client.Plan
 	todos   []client.Todo
-	logs    []client.LogEntry
+	logs    []client.JournalEntry
 	docs    []client.Doc
 }
 

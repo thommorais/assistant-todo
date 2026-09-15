@@ -13,19 +13,19 @@ import (
 	"folio/folio-core/ports"
 )
 
-type LogRepository struct {
+type JournalRepository struct {
 	app core.App
 }
 
-func NewLogRepository(app core.App) *LogRepository {
-	return &LogRepository{app: app}
+func NewJournalRepository(app core.App) *JournalRepository {
+	return &JournalRepository{app: app}
 }
 
-var _ ports.LogRepository = (*LogRepository)(nil)
+var _ ports.JournalRepository = (*JournalRepository)(nil)
 
-func toLogEntry(rec *core.Record) domain.LogEntry {
-	return domain.LogEntry{
-		ID:          domain.LogID(rec.Id),
+func toJournalEntry(rec *core.Record) domain.JournalEntry {
+	return domain.JournalEntry{
+		ID:          domain.JournalID(rec.Id),
 		ProjectID:   domain.ProjectID(rec.GetString("project")),
 		PlanID:      domain.PlanID(rec.GetString("plan")),
 		TodoID:      domain.TodoID(rec.GetString("todo")),
@@ -45,7 +45,7 @@ func toLogEntry(rec *core.Record) domain.LogEntry {
 
 // List returns entries newest first: the recent work is what a reader
 // catching up on a project needs first.
-func (r *LogRepository) List(ctx context.Context, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error) {
+func (r *JournalRepository) List(ctx context.Context, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error) {
 	filter := []string{"project = {:project}"}
 	params := dbx.Params{"project": string(project)}
 
@@ -88,7 +88,7 @@ func (r *LogRepository) List(ctx context.Context, project domain.ProjectID, f do
 	}
 
 	records, err := r.app.FindRecordsByFilter(
-		ColLogs,
+		ColJournal,
 		strings.Join(filter, " && "),
 		"-created",
 		f.Limit,
@@ -98,48 +98,48 @@ func (r *LogRepository) List(ctx context.Context, project domain.ProjectID, f do
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	out := make([]domain.LogEntry, 0, len(records))
+	out := make([]domain.JournalEntry, 0, len(records))
 	for _, rec := range records {
-		out = append(out, toLogEntry(rec))
+		out = append(out, toJournalEntry(rec))
 	}
 	return out, nil
 }
 
-func (r *LogRepository) GetByID(ctx context.Context, id domain.LogID) (domain.LogEntry, error) {
-	rec, err := r.app.FindRecordById(ColLogs, string(id))
+func (r *JournalRepository) GetByID(ctx context.Context, id domain.JournalID) (domain.JournalEntry, error) {
+	rec, err := r.app.FindRecordById(ColJournal, string(id))
 	if err != nil {
-		return domain.LogEntry{}, mapErr(err)
+		return domain.JournalEntry{}, mapErr(err)
 	}
-	return toLogEntry(rec), nil
+	return toJournalEntry(rec), nil
 }
 
-func (r *LogRepository) Create(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error) {
-	collection, err := r.app.FindCollectionByNameOrId(ColLogs)
+func (r *JournalRepository) Create(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
+	collection, err := r.app.FindCollectionByNameOrId(ColJournal)
 	if err != nil {
-		return domain.LogEntry{}, mapErr(err)
+		return domain.JournalEntry{}, mapErr(err)
 	}
 	rec := core.NewRecord(collection)
 	rec.Id = string(e.ID)
-	applyLogEntry(rec, e)
+	applyJournalEntry(rec, e)
 	if err := r.app.Save(rec); err != nil {
-		return domain.LogEntry{}, mapErr(err)
+		return domain.JournalEntry{}, mapErr(err)
 	}
-	return toLogEntry(rec), nil
+	return toJournalEntry(rec), nil
 }
 
-func (r *LogRepository) Update(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error) {
-	rec, err := r.app.FindRecordById(ColLogs, string(e.ID))
+func (r *JournalRepository) Update(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
+	rec, err := r.app.FindRecordById(ColJournal, string(e.ID))
 	if err != nil {
-		return domain.LogEntry{}, mapErr(err)
+		return domain.JournalEntry{}, mapErr(err)
 	}
-	applyLogEntry(rec, e)
+	applyJournalEntry(rec, e)
 	if err := r.app.Save(rec); err != nil {
-		return domain.LogEntry{}, mapErr(err)
+		return domain.JournalEntry{}, mapErr(err)
 	}
-	return toLogEntry(rec), nil
+	return toJournalEntry(rec), nil
 }
 
-func applyLogEntry(rec *core.Record, e domain.LogEntry) {
+func applyJournalEntry(rec *core.Record, e domain.JournalEntry) {
 	rec.Set("project", string(e.ProjectID))
 	rec.Set("plan", string(e.PlanID))
 	rec.Set("todo", string(e.TodoID))
@@ -156,8 +156,8 @@ func applyLogEntry(rec *core.Record, e domain.LogEntry) {
 	}
 }
 
-func (r *LogRepository) Delete(ctx context.Context, id domain.LogID) error {
-	rec, err := r.app.FindRecordById(ColLogs, string(id))
+func (r *JournalRepository) Delete(ctx context.Context, id domain.JournalID) error {
+	rec, err := r.app.FindRecordById(ColJournal, string(id))
 	if err != nil {
 		return mapErr(err)
 	}

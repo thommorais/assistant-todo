@@ -57,7 +57,7 @@ const Todos = () => {
 	})
 
 	const setTodo = (todo: string | undefined) => {
-		void navigate({ to: '.', search: (prev: TodosSearch) => ({ ...prev, todo }) })
+		void navigate({ from: '/$slug/todos', to: '.', search: (prev: TodosSearch) => ({ ...prev, todo }) })
 	}
 
 	return (

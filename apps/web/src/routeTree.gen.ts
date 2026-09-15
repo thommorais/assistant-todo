@@ -15,7 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSlugRouteImport } from './routes/_authenticated/$slug'
 import { Route as AuthenticatedSlugIndexRouteImport } from './routes/_authenticated/$slug/index'
 import { Route as AuthenticatedSlugDocsRouteImport } from './routes/_authenticated/$slug/docs'
-import { Route as AuthenticatedSlugLogsRouteImport } from './routes/_authenticated/$slug/logs'
+import { Route as AuthenticatedSlugJournalRouteImport } from './routes/_authenticated/$slug/journal'
 import { Route as AuthenticatedSlugPlansRouteImport } from './routes/_authenticated/$slug/plans'
 import { Route as AuthenticatedSlugTodosRouteImport } from './routes/_authenticated/$slug/todos'
 import { Route as AuthenticatedSlugTicketsIndexRouteImport } from './routes/_authenticated/$slug/tickets/index'
@@ -50,11 +50,12 @@ const AuthenticatedSlugDocsRoute = AuthenticatedSlugDocsRouteImport.update({
   path: '/docs',
   getParentRoute: () => AuthenticatedSlugRoute,
 } as any)
-const AuthenticatedSlugLogsRoute = AuthenticatedSlugLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => AuthenticatedSlugRoute,
-} as any)
+const AuthenticatedSlugJournalRoute =
+  AuthenticatedSlugJournalRouteImport.update({
+    id: '/journal',
+    path: '/journal',
+    getParentRoute: () => AuthenticatedSlugRoute,
+  } as any)
 const AuthenticatedSlugPlansRoute = AuthenticatedSlugPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -83,7 +84,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/$slug/docs': typeof AuthenticatedSlugDocsRoute
-  '/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/$slug/journal': typeof AuthenticatedSlugJournalRoute
   '/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/$slug/': typeof AuthenticatedSlugIndexRoute
@@ -94,7 +95,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthenticatedIndexRoute
   '/$slug/docs': typeof AuthenticatedSlugDocsRoute
-  '/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/$slug/journal': typeof AuthenticatedSlugJournalRoute
   '/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/$slug': typeof AuthenticatedSlugIndexRoute
@@ -108,7 +109,7 @@ export interface FileRoutesById {
   '/_authenticated/$slug': typeof AuthenticatedSlugRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/$slug/docs': typeof AuthenticatedSlugDocsRoute
-  '/_authenticated/$slug/logs': typeof AuthenticatedSlugLogsRoute
+  '/_authenticated/$slug/journal': typeof AuthenticatedSlugJournalRoute
   '/_authenticated/$slug/plans': typeof AuthenticatedSlugPlansRoute
   '/_authenticated/$slug/todos': typeof AuthenticatedSlugTodosRoute
   '/_authenticated/$slug/': typeof AuthenticatedSlugIndexRoute
@@ -122,7 +123,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/$slug'
     | '/$slug/docs'
-    | '/$slug/logs'
+    | '/$slug/journal'
     | '/$slug/plans'
     | '/$slug/todos'
     | '/$slug/'
@@ -133,7 +134,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/'
     | '/$slug/docs'
-    | '/$slug/logs'
+    | '/$slug/journal'
     | '/$slug/plans'
     | '/$slug/todos'
     | '/$slug'
@@ -146,7 +147,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$slug'
     | '/_authenticated/'
     | '/_authenticated/$slug/docs'
-    | '/_authenticated/$slug/logs'
+    | '/_authenticated/$slug/journal'
     | '/_authenticated/$slug/plans'
     | '/_authenticated/$slug/todos'
     | '/_authenticated/$slug/'
@@ -203,11 +204,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSlugDocsRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
-    '/_authenticated/$slug/logs': {
-      id: '/_authenticated/$slug/logs'
-      path: '/logs'
-      fullPath: '/$slug/logs'
-      preLoaderRoute: typeof AuthenticatedSlugLogsRouteImport
+    '/_authenticated/$slug/journal': {
+      id: '/_authenticated/$slug/journal'
+      path: '/journal'
+      fullPath: '/$slug/journal'
+      preLoaderRoute: typeof AuthenticatedSlugJournalRouteImport
       parentRoute: typeof AuthenticatedSlugRoute
     }
     '/_authenticated/$slug/plans': {
@@ -243,7 +244,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSlugRouteChildren {
   AuthenticatedSlugDocsRoute: typeof AuthenticatedSlugDocsRoute
-  AuthenticatedSlugLogsRoute: typeof AuthenticatedSlugLogsRoute
+  AuthenticatedSlugJournalRoute: typeof AuthenticatedSlugJournalRoute
   AuthenticatedSlugPlansRoute: typeof AuthenticatedSlugPlansRoute
   AuthenticatedSlugTodosRoute: typeof AuthenticatedSlugTodosRoute
   AuthenticatedSlugIndexRoute: typeof AuthenticatedSlugIndexRoute
@@ -253,7 +254,7 @@ interface AuthenticatedSlugRouteChildren {
 
 const AuthenticatedSlugRouteChildren: AuthenticatedSlugRouteChildren = {
   AuthenticatedSlugDocsRoute: AuthenticatedSlugDocsRoute,
-  AuthenticatedSlugLogsRoute: AuthenticatedSlugLogsRoute,
+  AuthenticatedSlugJournalRoute: AuthenticatedSlugJournalRoute,
   AuthenticatedSlugPlansRoute: AuthenticatedSlugPlansRoute,
   AuthenticatedSlugTodosRoute: AuthenticatedSlugTodosRoute,
   AuthenticatedSlugIndexRoute: AuthenticatedSlugIndexRoute,

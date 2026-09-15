@@ -1,10 +1,10 @@
 import type { Sort, LogSortField } from './sort'
 import type { Result } from '_/lib/result'
 import type { ActionEvent } from '_/types'
-import type { LogEntry } from '../domain/log'
+import type { JournalEntry } from '../domain/journal'
 import type { Unsubscribe } from './subscription'
 
-export type LogFilter = {
+export type JournalFilter = {
 	readonly sort?: Sort<LogSortField>
 	readonly ticketId?: string
 	readonly branch?: string
@@ -17,12 +17,12 @@ export type LogFilter = {
 	readonly offset?: number
 }
 
-export type LogsPort = {
-	readonly count: (project: string, filter?: LogFilter) => Promise<Result<number>>
-	readonly list: (project: string, filter?: LogFilter) => Promise<Result<ReadonlyArray<LogEntry>>>
+export type JournalPort = {
+	readonly count: (project: string, filter?: JournalFilter) => Promise<Result<number>>
+	readonly list: (project: string, filter?: JournalFilter) => Promise<Result<ReadonlyArray<JournalEntry>>>
 	readonly subscribeToList: (
 		project: string,
-		update: (entry: LogEntry, action: ActionEvent) => void,
-		filter?: LogFilter,
+		update: (entry: JournalEntry, action: ActionEvent) => void,
+		filter?: JournalFilter,
 	) => Promise<Result<Unsubscribe>>
 }

@@ -122,9 +122,9 @@ func ValidateTodo(t domain.Todo) error {
 	return nil
 }
 
-// ValidateLogEntry checks a work log. The body is optional: an entry may be
+// ValidateJournalEntry checks a work log. The body is optional: an entry may be
 // created as a stub and filled in as the work proceeds.
-func ValidateLogEntry(e domain.LogEntry) error {
+func ValidateJournalEntry(e domain.JournalEntry) error {
 	if e.ProjectID == "" {
 		return domain.Invalid("project", "is required")
 	}

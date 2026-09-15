@@ -1,13 +1,13 @@
 ---
 name: folio-cli
-description: How to drive the folio CLI — the `folio` command for projects, tickets, plans, todos, logs and docs. Use when reading or writing anything in a folio workspace, when a task mentions folio tickets/todos/plans/logs/docs, or when `folio` appears in a command.
+description: How to drive the folio CLI — the `folio` command for projects, tickets, plans, todos, journal and docs. Use when reading or writing anything in a folio workspace, when a task mentions folio tickets/todos/plans/journal/docs, or when `folio` appears in a command.
 ---
 
 # folio CLI
 
 `folio` is a Go/cobra CLI over the folio HTTP API. Five record kinds live under a
 project: **tickets** (units of work, sluggable), **plans** (intent), **todos**
-(steps), **logs** (what happened, newest first), **docs** (reference, sluggable).
+(steps), **journal** (what happened, newest first), **docs** (reference, sluggable).
 
 Run `folio <command> --help` for the current flag list. This skill covers what
 help output does not say.
@@ -56,13 +56,13 @@ instead, so it is safe to call from a script.
 Prose bodies come from stdin with `--body -`:
 
 ```bash
-folio log write "Cut the 0.4 release" --body - <<'EOF'
+folio journal write "Cut the 0.4 release" --body - <<'EOF'
 Tagged and pushed. The migration ran clean.
 EOF
 ```
 
-`--body -` works on `log write`, `log update`, `doc create`, `doc update`;
-`log append --section -` adds to an existing entry without rewriting it.
+`--body -` works on `journal write`, `journal update`, `doc create`, `doc update`;
+`journal append --section -` adds to an existing entry without rewriting it.
 
 ## Tags are a closed vocabulary
 
@@ -73,7 +73,7 @@ suggestion. Two axes, and a record usually carries one of each:
 - **kind** (what sort of work): bug, chore, decision, deploy, dx, perf, refactor, release, security, spike, test
 
 ```bash
-folio tags            # tally across todos, plans, logs and docs
+folio tags            # tally across todos, plans, journal and docs
 folio tags --unused   # also list known tags nothing carries yet
 ```
 
@@ -88,17 +88,17 @@ findable only by title. Tag todos you create.
 
 ## Reading
 
-`folio ticket brief <id-or-slug>` returns a ticket with its plans, todos, logs
+`folio ticket brief <id-or-slug>` returns a ticket with its plans, todos, journal
 and docs in one call. This is what to run when opening a session on a known
-ticket. Todos come back open first, so the next step is the first row; logs are
-the 10 most recent, `--recent-logs` overrides.
+ticket. Todos come back open first, so the next step is the first row; journal entries are
+the 10 most recent, `--recent-journal` overrides.
 
-`folio search` hits logs, docs, todos and plans in one call, newest first, each
+`folio search` hits journal, docs, todos and plans in one call, newest first, each
 hit with a snippet. Reach for it when you do not know where something lives;
 reach for `ticket brief` when you already know the ticket.
 
 ```bash
-folio search "index strategy" --kind log,doc --limit 5 --json
+folio search "index strategy" --kind journal,doc --limit 5 --json
 folio search --tags decision
 ```
 
@@ -121,11 +121,11 @@ an error rather than a no-op. `create` takes the title as a positional argument.
 folio ticket create "Mobile nav" --body "No nav below md." --tags frontend,bug
 folio todo create "Add the hamburger" --ticket <id> --tags frontend,bug
 folio todo update <id> --status done
-folio log write "Shipped mobile nav" --branch develop --pr 42 --ticket <id> --tags frontend,release
+folio journal write "Shipped mobile nav" --branch develop --pr 42 --ticket <id> --tags frontend,release
 ```
 
 Deletes cascade downward and are not prompted, since an agent cannot answer a
-prompt. `ticket delete` detaches its plans, todos, logs and docs.
+prompt. `ticket delete` detaches its plans, todos, journal and docs.
 `project delete` destroys everything under the project and refuses to run
 without `--yes`.
 

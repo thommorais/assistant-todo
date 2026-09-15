@@ -45,9 +45,9 @@ type TicketFilter struct {
 }
 
 type TicketBrief struct {
-	Ticket Ticket
-	Plans  []Plan
-	Todos  []Todo
-	Logs   []LogEntry
-	Docs   []Doc
+	Ticket  Ticket
+	Plans   []Plan
+	Todos   []Todo
+	Journal []JournalEntry
+	Docs    []Doc
 }

@@ -102,18 +102,18 @@ func TestDeletePlan(t *testing.T) {
 	}
 }
 
-func TestListLogs(t *testing.T) {
+func TestListJournal(t *testing.T) {
 	var gotQuery string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotQuery = r.URL.RawQuery
-		_, _ = w.Write([]byte(`{"logs":[{"id":"l1","project_id":"pr1","title":"Chose FTS5","body":"## Context","branch":"feat/search","ticket":"J-12","tags":["decision"],"created_at":"2026-09-11T01:07:01Z","updated_at":"2026-09-11T01:07:01Z"}]}`))
+		_, _ = w.Write([]byte(`{"journal":[{"id":"l1","project_id":"pr1","title":"Chose FTS5","body":"## Context","branch":"feat/search","ticket":"J-12","tags":["decision"],"created_at":"2026-09-11T01:07:01Z","updated_at":"2026-09-11T01:07:01Z"}]}`))
 	}))
 	defer server.Close()
 
-	logs, err := New(server.URL, "tok").ListLogs("folio", LogFilter{Branch: "feat/search", Search: "fts5", Limit: 5})
+	logs, err := New(server.URL, "tok").ListJournal("folio", JournalFilter{Branch: "feat/search", Search: "fts5", Limit: 5})
 	if err != nil {
-		t.Fatalf("ListLogs() error = %v", err)
+		t.Fatalf("ListJournal() error = %v", err)
 	}
 	if gotQuery != "branch=feat%2Fsearch&limit=5&q=fts5" {
 		t.Errorf("query = %q", gotQuery)
@@ -123,7 +123,7 @@ func TestListLogs(t *testing.T) {
 	}
 }
 
-func TestWriteLog(t *testing.T) {
+func TestWriteJournalEntry(t *testing.T) {
 	var gotBody map[string]any
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -133,9 +133,9 @@ func TestWriteLog(t *testing.T) {
 	}))
 	defer server.Close()
 
-	entry, err := New(server.URL, "tok").WriteLog("folio", LogInput{Title: strptr("Entry"), Body: strptr("text")})
+	entry, err := New(server.URL, "tok").WriteJournalEntry("folio", LogInput{Title: strptr("Entry"), Body: strptr("text")})
 	if err != nil {
-		t.Fatalf("WriteLog() error = %v", err)
+		t.Fatalf("WriteJournalEntry() error = %v", err)
 	}
 	if gotBody["title"] != "Entry" || gotBody["body"] != "text" {
 		t.Errorf("body = %v", gotBody)
@@ -145,7 +145,7 @@ func TestWriteLog(t *testing.T) {
 	}
 }
 
-func TestAppendLog(t *testing.T) {
+func TestAppendJournalEntry(t *testing.T) {
 	var gotPath string
 	var gotBody map[string]string
 
@@ -156,11 +156,11 @@ func TestAppendLog(t *testing.T) {
 	}))
 	defer server.Close()
 
-	entry, err := New(server.URL, "tok").AppendLog("l1", "more")
+	entry, err := New(server.URL, "tok").AppendJournalEntry("l1", "more")
 	if err != nil {
-		t.Fatalf("AppendLog() error = %v", err)
+		t.Fatalf("AppendJournalEntry() error = %v", err)
 	}
-	if gotPath != "/api/folio/logs/l1/append" {
+	if gotPath != "/api/folio/journal/l1/append" {
 		t.Errorf("path = %q", gotPath)
 	}
 	if gotBody["section"] != "more" {

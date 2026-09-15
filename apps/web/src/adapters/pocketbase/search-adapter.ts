@@ -31,7 +31,7 @@ type SearchColumns = {
 }
 
 const sources: Record<SearchKind, { collection: string; text: keyof SearchColumns }> = {
-	log: { collection: Collections.JournLogs, text: 'body' },
+	log: { collection: Collections.JournJournal, text: 'body' },
 	doc: { collection: Collections.JournDocs, text: 'body' },
 	todo: { collection: Collections.JournTodos, text: 'details' },
 	plan: { collection: Collections.JournPlans, text: 'goal' },

@@ -3,7 +3,7 @@ import { cn } from '@thom/libs/cn'
 import { Badge } from '@thom/ui/badge'
 import { Heading } from '@thom/ui/heading'
 import { useDocs } from '_/app/use-docs'
-import { useLogs } from '_/app/use-logs'
+import { useJournal } from '_/app/use-journal'
 import { usePlans } from '_/app/use-plans'
 import { useTicket } from '_/app/use-ticket'
 import { useTodos } from '_/app/use-todos'
@@ -54,7 +54,7 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 	const ticketId = ticket.id
 	const plans = usePlans(project, { ticketId })
 	const todos = useTodos(project, { ticketId })
-	const logs = useLogs(project, { ticketId })
+	const journal = useJournal(project, { ticketId })
 	const docs = useDocs(project, { ticketId })
 
 	return (
@@ -132,11 +132,11 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 				)}
 			</Section>
 
-			<Section title='Logs'>
-				{logs.status === 'ready' && logs.logs.length === 0 && <Empty what='logs' />}
-				{logs.status === 'ready' && logs.logs.length > 0 && (
+			<Section title='Journal'>
+				{journal.status === 'ready' && journal.journal.length === 0 && <Empty what='journal entries' />}
+				{journal.status === 'ready' && journal.journal.length > 0 && (
 					<ul className='border-border divide-border divide-y border'>
-						{logs.logs.map(entry => (
+						{journal.journal.map(entry => (
 							<li key={entry.id} className='px-4 py-3 text-sm'>
 								{entry.title}
 							</li>

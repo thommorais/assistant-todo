@@ -2,6 +2,7 @@ package pb
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -17,6 +18,9 @@ import (
 // collection does not yet exist, so structure is created first and the access
 // rules are applied in a second pass once every collection is present.
 func Register(app core.App) error {
+	if err := renameLogsToJournal(app); err != nil {
+		return fmt.Errorf("rename journal: %w", err)
+	}
 	if err := ensureProjects(app); err != nil {
 		return fmt.Errorf("projects: %w", err)
 	}
@@ -34,8 +38,8 @@ func Register(app core.App) error {
 	if err := ensureTodos(app); err != nil {
 		return fmt.Errorf("todos: %w", err)
 	}
-	if err := ensureLogs(app); err != nil {
-		return fmt.Errorf("logs: %w", err)
+	if err := ensureJournal(app); err != nil {
+		return fmt.Errorf("journal: %w", err)
 	}
 	if err := ensureDocs(app); err != nil {
 		return fmt.Errorf("docs: %w", err)
@@ -52,6 +56,25 @@ func Register(app core.App) error {
 	return nil
 }
 
+func renameLogsToJournal(app core.App) error {
+	c, ok := find(app, "journ_logs")
+	if !ok {
+		return nil
+	}
+	if _, taken := find(app, ColJournal); taken {
+		return nil
+	}
+
+	c.Name = ColJournal
+	renamed := make([]string, 0, len(c.Indexes))
+	for _, idx := range c.Indexes {
+		renamed = append(renamed, strings.ReplaceAll(idx, "idx_journ_logs", "idx_journ_journal"))
+	}
+	c.Indexes = renamed
+
+	return app.Save(c)
+}
+
 // alterForTickets brings a pre-ticket database up to date: it adds the ticket
 // relation to every child collection and renames the log's free-text ticket
 // key to external_ref. Both steps are no-ops once applied, so Register stays
@@ -62,7 +85,7 @@ func alterForTickets(app core.App) error {
 		return err
 	}
 
-	for _, name := range []string{ColPlans, ColTodos, ColLogs, ColDocs} {
+	for _, name := range []string{ColPlans, ColTodos, ColJournal, ColDocs} {
 		c, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			return err

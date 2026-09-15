@@ -8,7 +8,7 @@ describe('collectCounts', () => {
 
 		expect(state).toEqual({
 			status: 'ready',
-			counts: { tickets: 2, plans: 3, todos: 13, logs: 6, docs: 3 },
+			counts: { tickets: 2, plans: 3, todos: 13, journal: 6, docs: 3 },
 		})
 	})
 
@@ -29,7 +29,7 @@ describe('collectCounts', () => {
 
 		expect(state).toEqual({
 			status: 'ready',
-			counts: { tickets: 0, plans: 0, todos: 0, logs: 0, docs: 0 },
+			counts: { tickets: 0, plans: 0, todos: 0, journal: 0, docs: 0 },
 		})
 	})
 })

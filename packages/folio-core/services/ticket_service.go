@@ -12,19 +12,19 @@ import (
 // TicketService manages tickets: units of work under a project that carry
 // their own plans, todos, logs and docs.
 type TicketService struct {
-	repo  ports.TicketRepository
-	todos ports.TodoRepository
-	plans ports.PlanRepository
-	logs  ports.LogRepository
-	docs  ports.DocRepository
-	guard ports.Guard
-	clock ports.Clock
-	ids   ports.IDGenerator
-	log   ports.Logger
+	repo    ports.TicketRepository
+	todos   ports.TodoRepository
+	plans   ports.PlanRepository
+	journal ports.JournalRepository
+	docs    ports.DocRepository
+	guard   ports.Guard
+	clock   ports.Clock
+	ids     ports.IDGenerator
+	log     ports.Logger
 }
 
-func NewTicketService(repo ports.TicketRepository, todos ports.TodoRepository, plans ports.PlanRepository, logs ports.LogRepository, docs ports.DocRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TicketService {
-	return &TicketService{repo: repo, todos: todos, plans: plans, logs: logs, docs: docs, guard: guard, clock: clock, ids: ids, log: log}
+func NewTicketService(repo ports.TicketRepository, todos ports.TodoRepository, plans ports.PlanRepository, journal ports.JournalRepository, docs ports.DocRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TicketService {
+	return &TicketService{repo: repo, todos: todos, plans: plans, journal: journal, docs: docs, guard: guard, clock: clock, ids: ids, log: log}
 }
 
 var _ ports.TicketUseCase = (*TicketService)(nil)
@@ -242,14 +242,14 @@ func (s *TicketService) detachChildren(ctx context.Context, ticket domain.Ticket
 		}
 	}
 
-	entries, err := s.logs.List(ctx, ticket.ProjectID, domain.LogFilter{TicketID: ticket.ID, Limit: MaxPageSize})
+	entries, err := s.journal.List(ctx, ticket.ProjectID, domain.JournalFilter{TicketID: ticket.ID, Limit: MaxPageSize})
 	if err != nil {
 		return err
 	}
 	for _, e := range entries {
 		e.TicketID = ""
 		e.UpdatedAt = now
-		if _, err := s.logs.Update(ctx, e); err != nil {
+		if _, err := s.journal.Update(ctx, e); err != nil {
 			return err
 		}
 	}

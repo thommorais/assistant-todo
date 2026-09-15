@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { TICKET_STATUSES, type TicketStatus } from '_/core/domain/ticket'
 import { PRIORITIES, type Priority } from '_/core/domain/todo'
 import { TICKET_SORT_FIELDS, type TicketSortField } from '_/core/ports/sort'
@@ -17,12 +17,11 @@ const SORT_LABELS: Record<TicketSortField, string> = {
 }
 
 const TicketFilters = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/tickets/' })
 	const search = useSearch({ from: '/_authenticated/$slug/tickets/' })
 	const navigate = useNavigate()
 
 	const setFilter = (patch: Partial<TicketsSearch>) => {
-		void navigate({ to: '.', search: (prev: TicketsSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/tickets/', to: '.', search: (prev: TicketsSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const chips: ActiveFilter[] = []

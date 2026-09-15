@@ -12,7 +12,7 @@ export const Collections = {
 	Otps: "_otps",
 	Superusers: "_superusers",
 	JournDocs: "journ_docs",
-	JournLogs: "journ_logs",
+	JournJournal: "journ_journal",
 	JournMembers: "journ_members",
 	JournPlans: "journ_plans",
 	JournProjects: "journ_projects",
@@ -113,7 +113,7 @@ export type JournDocsRecord<Ttags = unknown> = {
 	updated: IsoAutoDateString
 }
 
-export type JournLogsRecord<Tmeta = unknown, Ttags = unknown> = {
+export type JournJournalRecord<Tmeta = unknown, Ttags = unknown> = {
 	body?: HTMLString
 	branch?: string
 	created: IsoAutoDateString
@@ -260,7 +260,7 @@ export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemF
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
 export type JournDocsResponse<Ttags = unknown, Texpand = unknown> = Required<JournDocsRecord<Ttags>> & BaseSystemFields<Texpand>
-export type JournLogsResponse<Tmeta = unknown, Ttags = unknown, Texpand = unknown> = Required<JournLogsRecord<Tmeta, Ttags>> & BaseSystemFields<Texpand>
+export type JournJournalResponse<Tmeta = unknown, Ttags = unknown, Texpand = unknown> = Required<JournJournalRecord<Tmeta, Ttags>> & BaseSystemFields<Texpand>
 export type JournMembersResponse<Texpand = unknown> = Required<JournMembersRecord> & BaseSystemFields<Texpand>
 export type JournPlansResponse<Ttags = unknown, Texpand = unknown> = Required<JournPlansRecord<Ttags>> & BaseSystemFields<Texpand>
 export type JournProjectsResponse<Texpand = unknown> = Required<JournProjectsRecord> & BaseSystemFields<Texpand>
@@ -277,7 +277,7 @@ export type CollectionRecords = {
 	_otps: OtpsRecord
 	_superusers: SuperusersRecord
 	journ_docs: JournDocsRecord
-	journ_logs: JournLogsRecord
+	journ_journal: JournJournalRecord
 	journ_members: JournMembersRecord
 	journ_plans: JournPlansRecord
 	journ_projects: JournProjectsRecord
@@ -293,7 +293,7 @@ export type CollectionResponses = {
 	_otps: OtpsResponse
 	_superusers: SuperusersResponse
 	journ_docs: JournDocsResponse
-	journ_logs: JournLogsResponse
+	journ_journal: JournJournalResponse
 	journ_members: JournMembersResponse
 	journ_plans: JournPlansResponse
 	journ_projects: JournProjectsResponse

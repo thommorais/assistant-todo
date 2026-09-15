@@ -7,7 +7,7 @@ import { collectCounts, type CountsState } from './counts'
 const noop = () => {}
 
 export const useCounts = (project: string): CountsState => {
-	const { docs, logs, plans, tickets, todos } = useContainer()
+	const { docs, journal, plans, tickets, todos } = useContainer()
 	const [state, setState] = useState<CountsState>({ status: 'loading' })
 
 	const load = useEffectEvent(async () => {
@@ -15,7 +15,7 @@ export const useCounts = (project: string): CountsState => {
 			tickets.count(project),
 			plans.count(project),
 			todos.count(project),
-			logs.count(project),
+			journal.count(project),
 			docs.count(project),
 		])
 
@@ -51,7 +51,7 @@ export const useCounts = (project: string): CountsState => {
 		void subscribe(tickets.subscribeToList(project, recount))
 		void subscribe(plans.subscribeToList(project, recount))
 		void subscribe(todos.subscribeToList(project, recount))
-		void subscribe(logs.subscribeToList(project, recount))
+		void subscribe(journal.subscribeToList(project, recount))
 		void subscribe(docs.subscribeToList(project, recount))
 
 		return () => {
@@ -60,7 +60,7 @@ export const useCounts = (project: string): CountsState => {
 				void close().catch(noop)
 			}
 		}
-	}, [project, tickets, plans, todos, logs, docs])
+	}, [project, tickets, plans, todos, journal, docs])
 
 	return state
 }

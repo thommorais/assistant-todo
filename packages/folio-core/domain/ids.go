@@ -8,7 +8,7 @@ type (
 	PlanID    string
 	TicketID  string
 	TodoID    string
-	LogID     string
+	JournalID string
 	DocID     string
 	UserID    string
 )

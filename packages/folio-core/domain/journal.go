@@ -2,15 +2,15 @@ package domain
 
 import "time"
 
-// LogEntry documents a piece of work: what was built, how, where it stands
+// JournalEntry documents a piece of work: what was built, how, where it stands
 // and why it was done that way. It is the project's memory, written for
 // whoever picks the work up next, including the agent itself on a later run.
 //
 // An entry is titled and editable rather than a timestamped event: the state
 // of a piece of work changes as it progresses, and the record should follow
 // it instead of accumulating corrections in a stream.
-type LogEntry struct {
-	ID        LogID
+type JournalEntry struct {
+	ID        JournalID
 	ProjectID ProjectID
 	// PlanID and TodoID are optional back-references to the work the entry
 	// documents.
@@ -42,8 +42,8 @@ type LogEntry struct {
 	UpdatedAt time.Time
 }
 
-// LogFilter narrows a log query. Zero values mean "no restriction".
-type LogFilter struct {
+// JournalFilter narrows a log query. Zero values mean "no restriction".
+type JournalFilter struct {
 	PlanID      PlanID
 	TodoID      TodoID
 	TicketID    TicketID

@@ -28,10 +28,10 @@ func clampLimit(limit int) int {
 	return limit
 }
 
-// LogService manages the work log: titled, searchable entries describing what
+// JournalService manages the work log: titled, searchable entries describing what
 // was built, how, and where it stands.
-type LogService struct {
-	repo    ports.LogRepository
+type JournalService struct {
+	repo    ports.JournalRepository
 	tickets ports.TicketRepository
 	guard   ports.Guard
 	clock   ports.Clock
@@ -39,13 +39,13 @@ type LogService struct {
 	log     ports.Logger
 }
 
-func NewLogService(repo ports.LogRepository, tickets ports.TicketRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *LogService {
-	return &LogService{repo: repo, tickets: tickets, guard: guard, clock: clock, ids: ids, log: log}
+func NewJournalService(repo ports.JournalRepository, tickets ports.TicketRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *JournalService {
+	return &JournalService{repo: repo, tickets: tickets, guard: guard, clock: clock, ids: ids, log: log}
 }
 
-var _ ports.LogUseCase = (*LogService)(nil)
+var _ ports.JournalUseCase = (*JournalService)(nil)
 
-func (s *LogService) ListLogs(ctx context.Context, actor ports.Actor, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error) {
+func (s *JournalService) ListJournal(ctx context.Context, actor ports.Actor, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error) {
 	if _, err := s.guard.EnsureRead(ctx, actor, project); err != nil {
 		return nil, err
 	}
@@ -55,34 +55,34 @@ func (s *LogService) ListLogs(ctx context.Context, actor ports.Actor, project do
 		return nil, err
 	}
 	if entries == nil {
-		entries = []domain.LogEntry{}
+		entries = []domain.JournalEntry{}
 	}
 	return entries, nil
 }
 
-func (s *LogService) GetLog(ctx context.Context, actor ports.Actor, id domain.LogID) (domain.LogEntry, error) {
+func (s *JournalService) GetJournalEntry(ctx context.Context, actor ports.Actor, id domain.JournalID) (domain.JournalEntry, error) {
 	entry, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 	if _, err := s.guard.EnsureRead(ctx, actor, entry.ProjectID); err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 	return entry, nil
 }
 
-func (s *LogService) WriteLog(ctx context.Context, actor ports.Actor, in ports.WriteLogInput) (domain.LogEntry, error) {
+func (s *JournalService) WriteJournalEntry(ctx context.Context, actor ports.Actor, in ports.WriteJournalInput) (domain.JournalEntry, error) {
 	if _, err := s.guard.EnsureWrite(ctx, actor, in.ProjectID); err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 
 	if err := ticketScope(ctx, s.tickets, in.TicketID, in.ProjectID); err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 
 	now := s.clock.Now()
-	entry := domain.LogEntry{
-		ID:          domain.LogID(s.ids.NewID()),
+	entry := domain.JournalEntry{
+		ID:          domain.JournalID(s.ids.NewID()),
 		ProjectID:   in.ProjectID,
 		TicketID:    in.TicketID,
 		PlanID:      in.PlanID,
@@ -98,21 +98,21 @@ func (s *LogService) WriteLog(ctx context.Context, actor ports.Actor, in ports.W
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
-	if err := rules.ValidateLogEntry(entry); err != nil {
-		return domain.LogEntry{}, err
+	if err := rules.ValidateJournalEntry(entry); err != nil {
+		return domain.JournalEntry{}, err
 	}
 	return s.repo.Create(ctx, entry)
 }
 
-func (s *LogService) UpdateLog(ctx context.Context, actor ports.Actor, id domain.LogID, in ports.UpdateLogInput) (domain.LogEntry, error) {
+func (s *JournalService) UpdateJournalEntry(ctx context.Context, actor ports.Actor, id domain.JournalID, in ports.UpdateJournalInput) (domain.JournalEntry, error) {
 	entry, err := s.writable(ctx, actor, id)
 	if err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 
 	if in.TicketID != nil {
 		if err := ticketScope(ctx, s.tickets, *in.TicketID, entry.ProjectID); err != nil {
-			return domain.LogEntry{}, err
+			return domain.JournalEntry{}, err
 		}
 		entry.TicketID = *in.TicketID
 	}
@@ -146,17 +146,17 @@ func (s *LogService) UpdateLog(ctx context.Context, actor ports.Actor, id domain
 	return s.save(ctx, entry)
 }
 
-// AppendToLog adds a section to an entry's body. An agent recording progress
+// AppendToJournalEntry adds a section to an entry's body. An agent recording progress
 // on work it already wrote up should not have to read, splice and resend the
 // whole body just to add a paragraph.
-func (s *LogService) AppendToLog(ctx context.Context, actor ports.Actor, id domain.LogID, section string) (domain.LogEntry, error) {
+func (s *JournalService) AppendToJournalEntry(ctx context.Context, actor ports.Actor, id domain.JournalID, section string) (domain.JournalEntry, error) {
 	text := strings.TrimSpace(section)
 	if text == "" {
-		return domain.LogEntry{}, domain.Invalid("section", "is required")
+		return domain.JournalEntry{}, domain.Invalid("section", "is required")
 	}
 	entry, err := s.writable(ctx, actor, id)
 	if err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 
 	if existing := strings.TrimRight(entry.Body, "\n"); existing == "" {
@@ -168,7 +168,7 @@ func (s *LogService) AppendToLog(ctx context.Context, actor ports.Actor, id doma
 	return s.save(ctx, entry)
 }
 
-func (s *LogService) DeleteLog(ctx context.Context, actor ports.Actor, id domain.LogID) error {
+func (s *JournalService) DeleteJournalEntry(ctx context.Context, actor ports.Actor, id domain.JournalID) error {
 	if _, err := s.writable(ctx, actor, id); err != nil {
 		return err
 	}
@@ -176,22 +176,22 @@ func (s *LogService) DeleteLog(ctx context.Context, actor ports.Actor, id domain
 }
 
 // writable loads an entry and checks the actor may change it.
-func (s *LogService) writable(ctx context.Context, actor ports.Actor, id domain.LogID) (domain.LogEntry, error) {
+func (s *JournalService) writable(ctx context.Context, actor ports.Actor, id domain.JournalID) (domain.JournalEntry, error) {
 	entry, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 	if _, err := s.guard.EnsureWrite(ctx, actor, entry.ProjectID); err != nil {
-		return domain.LogEntry{}, err
+		return domain.JournalEntry{}, err
 	}
 	return entry, nil
 }
 
 // save validates and persists an edit. CreatedAt is left untouched: an edit
 // records when the entry changed, never when the work happened.
-func (s *LogService) save(ctx context.Context, entry domain.LogEntry) (domain.LogEntry, error) {
-	if err := rules.ValidateLogEntry(entry); err != nil {
-		return domain.LogEntry{}, err
+func (s *JournalService) save(ctx context.Context, entry domain.JournalEntry) (domain.JournalEntry, error) {
+	if err := rules.ValidateJournalEntry(entry); err != nil {
+		return domain.JournalEntry{}, err
 	}
 	entry.UpdatedAt = s.clock.Now()
 	return s.repo.Update(ctx, entry)

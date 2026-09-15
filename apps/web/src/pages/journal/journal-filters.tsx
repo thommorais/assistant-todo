@@ -5,7 +5,7 @@ import { LOG_SORT_FIELDS, type LogSortField } from '_/core/ports/sort'
 import { ActiveFilter, FilterBar, FilterCheckboxItem, FilterMenuItem, toggle } from '_/components/list/filter-bar'
 import { SortMenu } from '_/components/list/sort-menu'
 import { CONTEXT_TAGS, KIND_TAGS } from '_/pages/todos/tag-vocabulary'
-import type { LogsSearch } from '_/routes/_authenticated/$slug/logs'
+import type { LogsSearch } from '_/routes/_authenticated/$slug/journal'
 
 const SORT_LABELS: Record<LogSortField, string> = {
 	title: 'Title',
@@ -14,13 +14,13 @@ const SORT_LABELS: Record<LogSortField, string> = {
 }
 
 const LogsFilters = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/logs' })
-	const search = useSearch({ from: '/_authenticated/$slug/logs' })
+	const { slug } = useParams({ from: '/_authenticated/$slug/journal' })
+	const search = useSearch({ from: '/_authenticated/$slug/journal' })
 	const navigate = useNavigate()
 	const tickets = useTickets(slug)
 
 	const setFilter = (patch: Partial<LogsSearch>) => {
-		void navigate({ to: '.', search: (prev: LogsSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/journal', to: '.', search: (prev: LogsSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const ticketTitle = (id: string): string =>

@@ -24,33 +24,33 @@ func bodyFrom(value string) (string, error) {
 	return string(piped), nil
 }
 
-func logCommand() *cobra.Command {
+func journalCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "log",
-		Short:   "Write and read work log entries",
-		Aliases: []string{"logs"},
+		Use:     "journal",
+		Short:   "Write and read journal entries",
+		Aliases: []string{"log", "logs"},
 	}
 
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 	cmd.AddCommand(
-		logListCommand(),
-		logGetCommand(),
-		logWriteCommand(),
-		logUpdateCommand(),
-		logAppendCommand(),
-		logDeleteCommand(),
+		journalListCommand(),
+		journalGetCommand(),
+		journalWriteCommand(),
+		journalUpdateCommand(),
+		journalAppendCommand(),
+		journalDeleteCommand(),
 	)
 
 	return cmd
 }
 
-func logListCommand() *cobra.Command {
-	var filter client.LogFilter
+func journalListCommand() *cobra.Command {
+	var filter client.JournalFilter
 	var tags string
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List a project's log entries, newest first",
+		Short: "List a project's journal entries, newest first",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			project, err := resolveProject()
 			if err != nil {
@@ -65,7 +65,7 @@ func logListCommand() *cobra.Command {
 				return err
 			}
 
-			entries, err := folio.ListLogs(project, filter)
+			entries, err := folio.ListJournal(project, filter)
 			if err != nil {
 				return err
 			}
@@ -89,7 +89,7 @@ func logListCommand() *cobra.Command {
 	return cmd
 }
 
-func logGetCommand() *cobra.Command {
+func journalGetCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "get <id>",
 		Short: "Show one entry with its body",
@@ -100,7 +100,7 @@ func logGetCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := folio.GetLog(args[0])
+			entry, err := folio.GetJournalEntry(args[0])
 			if err != nil {
 				return err
 			}
@@ -112,12 +112,12 @@ func logGetCommand() *cobra.Command {
 	}
 }
 
-func logWriteCommand() *cobra.Command {
+func journalWriteCommand() *cobra.Command {
 	var body, branch, pr, ticket, externalRef, plan, todo, tags string
 
 	cmd := &cobra.Command{
 		Use:   "write <title>",
-		Short: "Write a log entry, with --body - to read markdown from stdin",
+		Short: "Write a journal entry, with --body - to read markdown from stdin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			project, err := resolveProject()
@@ -147,7 +147,7 @@ func logWriteCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := folio.WriteLog(project, in)
+			entry, err := folio.WriteJournalEntry(project, in)
 			if err != nil {
 				return err
 			}
@@ -168,7 +168,7 @@ func logWriteCommand() *cobra.Command {
 	return cmd
 }
 
-func logUpdateCommand() *cobra.Command {
+func journalUpdateCommand() *cobra.Command {
 	var title, body, branch, pr, ticket, externalRef, tags string
 
 	cmd := &cobra.Command{
@@ -201,7 +201,7 @@ func logUpdateCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := folio.UpdateLog(args[0], in)
+			entry, err := folio.UpdateJournalEntry(args[0], in)
 			if err != nil {
 				return err
 			}
@@ -221,7 +221,7 @@ func logUpdateCommand() *cobra.Command {
 	return cmd
 }
 
-func logAppendCommand() *cobra.Command {
+func journalAppendCommand() *cobra.Command {
 	var section string
 
 	cmd := &cobra.Command{
@@ -242,7 +242,7 @@ func logAppendCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := folio.AppendLog(args[0], text)
+			entry, err := folio.AppendJournalEntry(args[0], text)
 			if err != nil {
 				return err
 			}
@@ -255,10 +255,10 @@ func logAppendCommand() *cobra.Command {
 	return cmd
 }
 
-func logDeleteCommand() *cobra.Command {
+func journalDeleteCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete <id>",
-		Short: "Delete a log entry",
+		Short: "Delete a journal entry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			folio, err := api()
@@ -266,7 +266,7 @@ func logDeleteCommand() *cobra.Command {
 				return err
 			}
 
-			if err := folio.DeleteLog(args[0]); err != nil {
+			if err := folio.DeleteJournalEntry(args[0]); err != nil {
 				return err
 			}
 			if !flagJSON {
@@ -277,20 +277,20 @@ func logDeleteCommand() *cobra.Command {
 	}
 }
 
-func renderLog(entry client.LogEntry) error {
+func renderLog(entry client.JournalEntry) error {
 	if flagJSON {
 		return encode(entry)
 	}
-	return renderLogs([]client.LogEntry{entry})
+	return renderLogs([]client.JournalEntry{entry})
 }
 
-func renderLogs(entries []client.LogEntry) error {
+func renderLogs(entries []client.JournalEntry) error {
 	if flagJSON {
 		return encode(entries)
 	}
 
 	if len(entries) == 0 {
-		fmt.Println("no log entries")
+		fmt.Println("no journal entries")
 		return nil
 	}
 
@@ -306,7 +306,7 @@ func renderLogs(entries []client.LogEntry) error {
 	return out.Flush()
 }
 
-func renderLogDetail(entry client.LogEntry) error {
+func renderLogDetail(entry client.JournalEntry) error {
 	fmt.Println(entry.Title)
 	fmt.Println(strings.Repeat("=", len(entry.Title)))
 

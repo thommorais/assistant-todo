@@ -186,17 +186,17 @@ func TestCanTransitionTodo(t *testing.T) {
 	})
 }
 
-func TestValidateLogEntry(t *testing.T) {
-	valid := domain.LogEntry{ProjectID: "p1", Title: "Restored GA4 pageview tracking", Body: "The config call was deleted."}
+func TestValidateJournalEntry(t *testing.T) {
+	valid := domain.JournalEntry{ProjectID: "p1", Title: "Restored GA4 pageview tracking", Body: "The config call was deleted."}
 
-	if err := rules.ValidateLogEntry(valid); err != nil {
+	if err := rules.ValidateJournalEntry(valid); err != nil {
 		t.Fatalf("want nil, got %v", err)
 	}
 
 	t.Run("requires a title", func(t *testing.T) {
 		bad := valid
 		bad.Title = "   "
-		if !errors.Is(rules.ValidateLogEntry(bad), domain.ErrValidation) {
+		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
 			t.Fatal("an entry without a title could never be found again")
 		}
 	})
@@ -204,7 +204,7 @@ func TestValidateLogEntry(t *testing.T) {
 	t.Run("allows an empty body", func(t *testing.T) {
 		stub := valid
 		stub.Body = ""
-		if err := rules.ValidateLogEntry(stub); err != nil {
+		if err := rules.ValidateJournalEntry(stub); err != nil {
 			t.Fatalf("work is often logged before it is finished, got %v", err)
 		}
 	})
@@ -212,7 +212,7 @@ func TestValidateLogEntry(t *testing.T) {
 	t.Run("requires a project", func(t *testing.T) {
 		bad := valid
 		bad.ProjectID = ""
-		if !errors.Is(rules.ValidateLogEntry(bad), domain.ErrValidation) {
+		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
 			t.Fatal("want validation error")
 		}
 	})
@@ -220,7 +220,7 @@ func TestValidateLogEntry(t *testing.T) {
 	t.Run("bounds the work refs", func(t *testing.T) {
 		bad := valid
 		bad.Branch = strings.Repeat("b", rules.RefMaxLen+1)
-		if !errors.Is(rules.ValidateLogEntry(bad), domain.ErrValidation) {
+		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
 			t.Fatal("want validation error")
 		}
 	})

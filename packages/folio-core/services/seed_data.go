@@ -10,7 +10,7 @@ type seedSpec struct {
 	project ports.CreateProjectInput
 	plans   []ports.CreatePlanInput
 	tickets []ports.CreateTicketInput
-	logs    []ports.WriteLogInput
+	journal []ports.WriteJournalInput
 	docs    []ports.CreateDocInput
 	// done advances the first todos of plan i to the given statuses, so the
 	// demo shows plans in progress rather than every one at 0%.
@@ -70,7 +70,7 @@ matches three times. Needs a score that combines match count with age.`,
 			done: [][]domain.TodoStatus{
 				{domain.TodoDone, domain.TodoDone, domain.TodoInProgress},
 			},
-			logs: []ports.WriteLogInput{
+			journal: []ports.WriteJournalInput{
 				{
 					Title:       "Chose SQLite FTS5 over a separate search service",
 					Branch:      "feat/search",
@@ -249,7 +249,7 @@ starts.`,
 			done: [][]domain.TodoStatus{
 				{domain.TodoDone, domain.TodoInProgress},
 			},
-			logs: []ports.WriteLogInput{
+			journal: []ports.WriteJournalInput{
 				{
 					Title:       "GA4 pageview tracking restored on prod",
 					Branch:      "release/r378-ga-pageview-fix",

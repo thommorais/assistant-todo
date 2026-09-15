@@ -65,14 +65,14 @@ type TicketRepository interface {
 	Delete(ctx context.Context, id domain.TicketID) error
 }
 
-// LogRepository stores the work log. Entries are editable: a log documents
+// JournalRepository stores the work log. Entries are editable: a log documents
 // the state of a piece of work, and that state changes as the work proceeds.
-type LogRepository interface {
-	List(ctx context.Context, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error)
-	GetByID(ctx context.Context, id domain.LogID) (domain.LogEntry, error)
-	Create(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error)
-	Update(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error)
-	Delete(ctx context.Context, id domain.LogID) error
+type JournalRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
+	GetByID(ctx context.Context, id domain.JournalID) (domain.JournalEntry, error)
+	Create(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
+	Update(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
+	Delete(ctx context.Context, id domain.JournalID) error
 }
 
 type DocRepository interface {

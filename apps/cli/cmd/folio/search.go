@@ -17,12 +17,12 @@ func searchCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "search [term]",
-		Short: "Search a project's logs, docs, todos and plans",
+		Short: "Search a project's journal, docs, todos and plans",
 		Long: `Search across all four kinds at once, newest first, each hit carrying a
 snippet so it is judgeable without a second call.
 
   folio search fts5
-  folio search rules --kind log,doc
+  folio search rules --kind journal,doc
   folio search --tags decision
   folio search "index strategy" --limit 5 --json`,
 		Args: cobra.MaximumNArgs(1),
@@ -55,7 +55,7 @@ snippet so it is judgeable without a second call.
 	}
 
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
-	cmd.Flags().StringVar(&kinds, "kind", "", "comma separated: log,doc,todo,plan")
+	cmd.Flags().StringVar(&kinds, "kind", "", "comma separated: journal,doc,todo,plan")
 	cmd.Flags().StringVar(&tags, "tags", "", "comma separated tags")
 	registerTagCompletion(cmd)
 	cmd.Flags().IntVar(&query.Limit, "limit", 0, "maximum hits")

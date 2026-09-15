@@ -8,7 +8,7 @@ export type LogId = Branded<string, 'LogId'>
 
 export const logId = (value: string): LogId => value as LogId
 
-export type LogEntry = {
+export type JournalEntry = {
 	readonly id: LogId
 	readonly projectId: ProjectId
 	readonly ticketId: TicketId | undefined

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type LogEntry struct {
+type JournalEntry struct {
 	ID          string         `json:"id"`
 	ProjectID   string         `json:"project_id"`
 	TicketID    string         `json:"ticket_id,omitempty"`
@@ -36,7 +36,7 @@ type LogInput struct {
 	Tags        *[]string `json:"tags,omitempty"`
 }
 
-type LogFilter struct {
+type JournalFilter struct {
 	TicketID    string
 	PlanID      string
 	TodoID      string
@@ -50,7 +50,7 @@ type LogFilter struct {
 	Offset      int
 }
 
-func (f LogFilter) query() string {
+func (f JournalFilter) query() string {
 	params := url.Values{}
 	for key, value := range map[string]string{
 		"ticket_id":    f.TicketID,
@@ -81,43 +81,43 @@ func (f LogFilter) query() string {
 	return "?" + params.Encode()
 }
 
-func (c *Client) ListLogs(project string, filter LogFilter) ([]LogEntry, error) {
+func (c *Client) ListJournal(project string, filter JournalFilter) ([]JournalEntry, error) {
 	var body struct {
-		Logs []LogEntry `json:"logs"`
+		Journal []JournalEntry `json:"journal"`
 	}
-	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/logs"+filter.query(), nil, &body); err != nil {
+	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/journal"+filter.query(), nil, &body); err != nil {
 		return nil, err
 	}
-	return body.Logs, nil
+	return body.Journal, nil
 }
 
-func (c *Client) GetLog(id string) (LogEntry, error) {
-	var entry LogEntry
-	err := c.do(http.MethodGet, "/api/folio/logs/"+id, nil, &entry)
+func (c *Client) GetJournalEntry(id string) (JournalEntry, error) {
+	var entry JournalEntry
+	err := c.do(http.MethodGet, "/api/folio/journal/"+id, nil, &entry)
 	return entry, err
 }
 
-func (c *Client) WriteLog(project string, in LogInput) (LogEntry, error) {
-	var entry LogEntry
-	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/logs", in, &entry)
+func (c *Client) WriteJournalEntry(project string, in LogInput) (JournalEntry, error) {
+	var entry JournalEntry
+	err := c.do(http.MethodPost, "/api/folio/projects/"+project+"/journal", in, &entry)
 	return entry, err
 }
 
-func (c *Client) UpdateLog(id string, in LogInput) (LogEntry, error) {
-	var entry LogEntry
-	err := c.do(http.MethodPatch, "/api/folio/logs/"+id, in, &entry)
+func (c *Client) UpdateJournalEntry(id string, in LogInput) (JournalEntry, error) {
+	var entry JournalEntry
+	err := c.do(http.MethodPatch, "/api/folio/journal/"+id, in, &entry)
 	return entry, err
 }
 
-func (c *Client) AppendLog(id, section string) (LogEntry, error) {
-	var entry LogEntry
+func (c *Client) AppendJournalEntry(id, section string) (JournalEntry, error) {
+	var entry JournalEntry
 	body := struct {
 		Section string `json:"section"`
 	}{Section: section}
-	err := c.do(http.MethodPost, "/api/folio/logs/"+id+"/append", body, &entry)
+	err := c.do(http.MethodPost, "/api/folio/journal/"+id+"/append", body, &entry)
 	return entry, err
 }
 
-func (c *Client) DeleteLog(id string) error {
-	return c.do(http.MethodDelete, "/api/folio/logs/"+id, nil, nil)
+func (c *Client) DeleteJournalEntry(id string) error {
+	return c.do(http.MethodDelete, "/api/folio/journal/"+id, nil, nil)
 }

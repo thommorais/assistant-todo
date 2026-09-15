@@ -39,8 +39,8 @@ func (r *SearchRepository) Search(ctx context.Context, project domain.ProjectID,
 	all := len(want) == 0
 
 	var hits []domain.SearchHit
-	if all || want[domain.SearchKindLog] {
-		found, err := r.searchLogs(project, q)
+	if all || want[domain.SearchKindJournal] {
+		found, err := r.searchJournal(project, q)
 		if err != nil {
 			return nil, err
 		}
@@ -102,16 +102,16 @@ func textFilter(project domain.ProjectID, q domain.SearchQuery, fields ...string
 	return strings.Join(filter, " && "), params
 }
 
-func (r *SearchRepository) searchLogs(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+func (r *SearchRepository) searchJournal(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
 	filter, params := textFilter(project, q, "title", "body")
-	records, err := r.app.FindRecordsByFilter(ColLogs, filter, "-created", q.Limit, 0, params)
+	records, err := r.app.FindRecordsByFilter(ColJournal, filter, "-created", q.Limit, 0, params)
 	if err != nil {
 		return nil, mapErr(err)
 	}
 	out := make([]domain.SearchHit, 0, len(records))
 	for _, rec := range records {
 		out = append(out, domain.SearchHit{
-			Kind:      domain.SearchKindLog,
+			Kind:      domain.SearchKindJournal,
 			ID:        rec.Id,
 			ProjectID: project,
 			Title:     rec.GetString("title"),

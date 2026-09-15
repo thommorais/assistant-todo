@@ -339,22 +339,22 @@ func (r *fakeTodos) Delete(_ context.Context, id domain.TodoID) error {
 	return nil
 }
 
-type fakeLogs struct {
-	items  []domain.LogEntry
+type fakeJournal struct {
+	items  []domain.JournalEntry
 	failOn string
 	// lastFilter records what the service actually asked storage for, so
 	// tests can assert on clamping the service applies before the call.
-	lastFilter domain.LogFilter
+	lastFilter domain.JournalFilter
 }
 
-func newFakeLogs() *fakeLogs { return &fakeLogs{} }
+func newFakeJournal() *fakeJournal { return &fakeJournal{} }
 
-func (r *fakeLogs) List(_ context.Context, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error) {
+func (r *fakeJournal) List(_ context.Context, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error) {
 	r.lastFilter = f
 	if r.failOn == "List" {
 		return nil, fmt.Errorf("storage exploded")
 	}
-	out := []domain.LogEntry{}
+	out := []domain.JournalEntry{}
 	for _, e := range r.items {
 		if e.ProjectID != project {
 			continue
@@ -385,34 +385,34 @@ func (r *fakeLogs) List(_ context.Context, project domain.ProjectID, f domain.Lo
 	return out, nil
 }
 
-func (r *fakeLogs) GetByID(_ context.Context, id domain.LogID) (domain.LogEntry, error) {
+func (r *fakeJournal) GetByID(_ context.Context, id domain.JournalID) (domain.JournalEntry, error) {
 	for _, e := range r.items {
 		if e.ID == id {
 			return e, nil
 		}
 	}
-	return domain.LogEntry{}, domain.ErrNotFound
+	return domain.JournalEntry{}, domain.ErrNotFound
 }
 
-func (r *fakeLogs) Create(_ context.Context, e domain.LogEntry) (domain.LogEntry, error) {
+func (r *fakeJournal) Create(_ context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
 	if r.failOn == "Create" {
-		return domain.LogEntry{}, fmt.Errorf("storage exploded")
+		return domain.JournalEntry{}, fmt.Errorf("storage exploded")
 	}
 	r.items = append(r.items, e)
 	return e, nil
 }
 
-func (r *fakeLogs) Update(_ context.Context, e domain.LogEntry) (domain.LogEntry, error) {
+func (r *fakeJournal) Update(_ context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
 	for i, existing := range r.items {
 		if existing.ID == e.ID {
 			r.items[i] = e
 			return e, nil
 		}
 	}
-	return domain.LogEntry{}, domain.ErrNotFound
+	return domain.JournalEntry{}, domain.ErrNotFound
 }
 
-func (r *fakeLogs) Delete(_ context.Context, id domain.LogID) error {
+func (r *fakeJournal) Delete(_ context.Context, id domain.JournalID) error {
 	for i, e := range r.items {
 		if e.ID == id {
 			r.items = append(r.items[:i], r.items[i+1:]...)
@@ -582,7 +582,7 @@ var (
 	_ ports.ProjectRepository = (*fakeProjects)(nil)
 	_ ports.PlanRepository    = (*fakePlans)(nil)
 	_ ports.TodoRepository    = (*fakeTodos)(nil)
-	_ ports.LogRepository     = (*fakeLogs)(nil)
+	_ ports.JournalRepository = (*fakeJournal)(nil)
 	_ ports.DocRepository     = (*fakeDocs)(nil)
 	_ ports.TicketRepository  = (*fakeTickets)(nil)
 	_ ports.SearchRepository  = (*fakeSearch)(nil)

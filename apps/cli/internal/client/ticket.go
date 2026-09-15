@@ -112,28 +112,28 @@ func (c *Client) DeleteTicket(id string) error {
 }
 
 type TicketBrief struct {
-	Ticket Ticket     `json:"ticket"`
-	Plans  []Plan     `json:"plans"`
-	Todos  []Todo     `json:"todos"`
-	Logs   []LogEntry `json:"logs"`
-	Docs   []Doc      `json:"docs"`
+	Ticket  Ticket         `json:"ticket"`
+	Plans   []Plan         `json:"plans"`
+	Todos   []Todo         `json:"todos"`
+	Journal []JournalEntry `json:"journal"`
+	Docs    []Doc          `json:"docs"`
 }
 
-func (c *Client) GetTicketBrief(id string, recentLogs int) (TicketBrief, error) {
+func (c *Client) GetTicketBrief(id string, recentJournal int) (TicketBrief, error) {
 	var brief TicketBrief
-	err := c.do(http.MethodGet, "/api/folio/tickets/"+id+"/brief"+recentLogsQuery(recentLogs), nil, &brief)
+	err := c.do(http.MethodGet, "/api/folio/tickets/"+id+"/brief"+recentJournalQuery(recentJournal), nil, &brief)
 	return brief, err
 }
 
-func (c *Client) GetTicketBriefBySlug(project, slug string, recentLogs int) (TicketBrief, error) {
+func (c *Client) GetTicketBriefBySlug(project, slug string, recentJournal int) (TicketBrief, error) {
 	var brief TicketBrief
-	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets/"+slug+"/brief"+recentLogsQuery(recentLogs), nil, &brief)
+	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets/"+slug+"/brief"+recentJournalQuery(recentJournal), nil, &brief)
 	return brief, err
 }
 
-func recentLogsQuery(n int) string {
+func recentJournalQuery(n int) string {
 	if n <= 0 {
 		return ""
 	}
-	return "?recent_logs=" + strconv.Itoa(n)
+	return "?recent_journal=" + strconv.Itoa(n)
 }

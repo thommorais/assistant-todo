@@ -70,7 +70,7 @@ type TicketUseCase interface {
 }
 
 type BriefOptions struct {
-	RecentLogs int
+	RecentJournal int
 }
 
 type CreateTicketInput struct {
@@ -145,16 +145,16 @@ type BatchError struct {
 	Reason string
 }
 
-type LogUseCase interface {
-	ListLogs(ctx context.Context, actor Actor, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error)
-	GetLog(ctx context.Context, actor Actor, id domain.LogID) (domain.LogEntry, error)
-	WriteLog(ctx context.Context, actor Actor, in WriteLogInput) (domain.LogEntry, error)
-	UpdateLog(ctx context.Context, actor Actor, id domain.LogID, in UpdateLogInput) (domain.LogEntry, error)
-	AppendToLog(ctx context.Context, actor Actor, id domain.LogID, section string) (domain.LogEntry, error)
-	DeleteLog(ctx context.Context, actor Actor, id domain.LogID) error
+type JournalUseCase interface {
+	ListJournal(ctx context.Context, actor Actor, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
+	GetJournalEntry(ctx context.Context, actor Actor, id domain.JournalID) (domain.JournalEntry, error)
+	WriteJournalEntry(ctx context.Context, actor Actor, in WriteJournalInput) (domain.JournalEntry, error)
+	UpdateJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, in UpdateJournalInput) (domain.JournalEntry, error)
+	AppendToJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, section string) (domain.JournalEntry, error)
+	DeleteJournalEntry(ctx context.Context, actor Actor, id domain.JournalID) error
 }
 
-type WriteLogInput struct {
+type WriteJournalInput struct {
 	ProjectID   domain.ProjectID
 	TicketID    domain.TicketID
 	PlanID      domain.PlanID
@@ -168,7 +168,7 @@ type WriteLogInput struct {
 	Meta        map[string]any
 }
 
-type UpdateLogInput struct {
+type UpdateJournalInput struct {
 	TicketID    *domain.TicketID
 	PlanID      *domain.PlanID
 	TodoID      *domain.TodoID

@@ -11,21 +11,21 @@ import (
 )
 
 type ticketFixture struct {
-	tickets   *fakeTickets
-	todos     *fakeTodos
-	plans     *fakePlans
-	logs      *fakeLogs
-	docs      *fakeDocs
-	ticketSvc *services.TicketService
-	todoSvc   *services.TodoService
-	planSvc   *services.PlanService
-	docSvc    *services.DocService
-	logSvc    *services.LogService
-	owner     ports.Actor
-	viewer    ports.Actor
-	outside   ports.Actor
-	project   domain.ProjectID
-	other     domain.ProjectID
+	tickets    *fakeTickets
+	todos      *fakeTodos
+	plans      *fakePlans
+	journal    *fakeJournal
+	docs       *fakeDocs
+	ticketSvc  *services.TicketService
+	todoSvc    *services.TodoService
+	planSvc    *services.PlanService
+	docSvc     *services.DocService
+	journalSvc *services.JournalService
+	owner      ports.Actor
+	viewer     ports.Actor
+	outside    ports.Actor
+	project    domain.ProjectID
+	other      domain.ProjectID
 }
 
 func newTicketFixture(t *testing.T) *ticketFixture {
@@ -44,7 +44,7 @@ func newTicketFixture(t *testing.T) *ticketFixture {
 	tickets := newFakeTickets()
 	todos := newFakeTodos()
 	plans := newFakePlans()
-	logs := newFakeLogs()
+	journal := newFakeJournal()
 	docs := newFakeDocs()
 	guard := services.NewProjectGuard(projects)
 	clock := &fakeClock{now: testNow}
@@ -52,17 +52,17 @@ func newTicketFixture(t *testing.T) *ticketFixture {
 	todoSvc := services.NewTodoService(todos, plans, tickets, guard, clock, &seqIDs{prefix: "t"}, nopLogger{})
 
 	return &ticketFixture{
-		tickets: tickets, todos: todos, plans: plans, logs: logs, docs: docs,
-		ticketSvc: services.NewTicketService(tickets, todos, plans, logs, docs, guard, clock, &seqIDs{prefix: "tk"}, nopLogger{}),
-		todoSvc:   todoSvc,
-		planSvc:   services.NewPlanService(plans, todos, tickets, todoSvc, guard, clock, &seqIDs{prefix: "pl"}, nopLogger{}),
-		docSvc:    services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
-		logSvc:    services.NewLogService(logs, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
-		owner:     ports.Actor{UserID: "u-owner"},
-		viewer:    ports.Actor{UserID: "u-viewer"},
-		outside:   ports.Actor{UserID: "u-stranger"},
-		project:   "p001",
-		other:     "p002",
+		tickets: tickets, todos: todos, plans: plans, journal: journal, docs: docs,
+		ticketSvc:  services.NewTicketService(tickets, todos, plans, journal, docs, guard, clock, &seqIDs{prefix: "tk"}, nopLogger{}),
+		todoSvc:    todoSvc,
+		planSvc:    services.NewPlanService(plans, todos, tickets, todoSvc, guard, clock, &seqIDs{prefix: "pl"}, nopLogger{}),
+		docSvc:     services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
+		journalSvc: services.NewJournalService(journal, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
+		owner:      ports.Actor{UserID: "u-owner"},
+		viewer:     ports.Actor{UserID: "u-viewer"},
+		outside:    ports.Actor{UserID: "u-stranger"},
+		project:    "p001",
+		other:      "p002",
 	}
 }
 
@@ -241,7 +241,7 @@ func TestChildrenRejectATicketFromAnotherProject(t *testing.T) {
 	})
 
 	t.Run("log", func(t *testing.T) {
-		_, err := f.logSvc.WriteLog(ctx, f.owner, ports.WriteLogInput{
+		_, err := f.journalSvc.WriteJournalEntry(ctx, f.owner, ports.WriteJournalInput{
 			ProjectID: f.project, TicketID: foreign.ID, Title: "Sneak",
 		})
 		if !errors.Is(err, domain.ErrValidation) {
@@ -297,7 +297,7 @@ func TestDeleteTicketDetachesItsChildren(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	entry, err := f.logSvc.WriteLog(ctx, f.owner, ports.WriteLogInput{
+	entry, err := f.journalSvc.WriteJournalEntry(ctx, f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, TicketID: ticket.ID, Title: "Picked FTS5",
 	})
 	if err != nil {
@@ -336,12 +336,12 @@ func TestDeleteTicketDetachesItsChildren(t *testing.T) {
 		t.Errorf("doc ticket = %q, want empty", gotDoc.TicketID)
 	}
 
-	gotLog, err := f.logSvc.GetLog(ctx, f.owner, entry.ID)
+	gotEntry, err := f.journalSvc.GetJournalEntry(ctx, f.owner, entry.ID)
 	if err != nil {
 		t.Fatalf("log was deleted with the ticket: %v", err)
 	}
-	if gotLog.TicketID != "" {
-		t.Errorf("log ticket = %q, want empty", gotLog.TicketID)
+	if gotEntry.TicketID != "" {
+		t.Errorf("log ticket = %q, want empty", gotEntry.TicketID)
 	}
 }
 

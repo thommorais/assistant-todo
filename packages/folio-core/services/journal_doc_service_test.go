@@ -13,17 +13,17 @@ import (
 )
 
 type knowledgeFixture struct {
-	clock     *fakeClock
-	logs      *fakeLogs
-	docs      *fakeDocs
-	tickets   *fakeTickets
-	logSvc    *services.LogService
-	docSvc    *services.DocService
-	searchSvc *services.SearchService
-	owner     ports.Actor
-	viewer    ports.Actor
-	outside   ports.Actor
-	project   domain.ProjectID
+	clock      *fakeClock
+	logs       *fakeJournal
+	docs       *fakeDocs
+	tickets    *fakeTickets
+	journalSvc *services.JournalService
+	docSvc     *services.DocService
+	searchSvc  *services.SearchService
+	owner      ports.Actor
+	viewer     ports.Actor
+	outside    ports.Actor
+	project    domain.ProjectID
 }
 
 func newKnowledgeFixture(t *testing.T) *knowledgeFixture {
@@ -36,19 +36,19 @@ func newKnowledgeFixture(t *testing.T) *knowledgeFixture {
 	guard := services.NewProjectGuard(projects)
 	clock := &fakeClock{now: testNow}
 
-	logs := newFakeLogs()
+	logs := newFakeJournal()
 	docs := newFakeDocs()
 	tickets := newFakeTickets()
 	search := &fakeSearch{}
 
 	return &knowledgeFixture{
 		clock: clock, logs: logs, docs: docs, tickets: tickets, project: "p001",
-		logSvc:    services.NewLogService(logs, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
-		docSvc:    services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
-		searchSvc: services.NewSearchService(search, guard),
-		owner:     ports.Actor{UserID: "u-owner"},
-		viewer:    ports.Actor{UserID: "u-viewer"},
-		outside:   ports.Actor{UserID: "u-stranger"},
+		journalSvc: services.NewJournalService(logs, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
+		docSvc:     services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
+		searchSvc:  services.NewSearchService(search, guard),
+		owner:      ports.Actor{UserID: "u-owner"},
+		viewer:     ports.Actor{UserID: "u-viewer"},
+		outside:    ports.Actor{UserID: "u-stranger"},
 	}
 }
 
@@ -155,10 +155,10 @@ func TestSearchRejectsEmptyQuery(t *testing.T) {
 // titled, searchable and editable, and their dates come from the server clock
 // so the project reads back chronologically.
 
-func TestWriteLogRecordsAuthorAndClock(t *testing.T) {
+func TestWriteJournalEntryRecordsAuthorAndClock(t *testing.T) {
 	f := newKnowledgeFixture(t)
 
-	got, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	got, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID:   f.project,
 		Title:       "Restored GA4 pageview tracking",
 		Body:        "The config call was deleted in #4484, so nothing fired a hit.",
@@ -181,43 +181,43 @@ func TestWriteLogRecordsAuthorAndClock(t *testing.T) {
 	}
 }
 
-func TestWriteLogRequiresATitle(t *testing.T) {
+func TestWriteJournalEntryRequiresATitle(t *testing.T) {
 	f := newKnowledgeFixture(t)
 
 	// A body alone is not a log: without a title it cannot be found again.
-	if _, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	if _, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, Title: "  ", Body: "lots of detail",
 	}); !errors.Is(err, domain.ErrValidation) {
 		t.Fatalf("want validation error, got %v", err)
 	}
 }
 
-func TestWriteLogAcceptsAStub(t *testing.T) {
+func TestWriteJournalEntryAcceptsAStub(t *testing.T) {
 	f := newKnowledgeFixture(t)
 
 	// Work is often logged before it is finished; an empty body is allowed.
-	if _, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	if _, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, Title: "Investigating the OOM",
 	}); err != nil {
 		t.Fatalf("a stub entry must be allowed, got %v", err)
 	}
 }
 
-func TestWriteLogRequiresWriteAccess(t *testing.T) {
+func TestWriteJournalEntryRequiresWriteAccess(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	in := ports.WriteLogInput{ProjectID: f.project, Title: "x"}
+	in := ports.WriteJournalInput{ProjectID: f.project, Title: "x"}
 
-	if _, err := f.logSvc.WriteLog(context.Background(), f.viewer, in); !errors.Is(err, domain.ErrForbidden) {
+	if _, err := f.journalSvc.WriteJournalEntry(context.Background(), f.viewer, in); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("a viewer must not write logs, got %v", err)
 	}
-	if _, err := f.logSvc.WriteLog(context.Background(), f.outside, in); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := f.journalSvc.WriteJournalEntry(context.Background(), f.outside, in); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("non-member must get not-found, got %v", err)
 	}
 }
 
-func TestUpdateLogTracksTheEditButKeepsCreatedAt(t *testing.T) {
+func TestUpdateJournalEntryTracksTheEditButKeepsCreatedAt(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	entry, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, Title: "Search rewrite", Body: "first pass",
 	})
 	if err != nil {
@@ -227,7 +227,7 @@ func TestUpdateLogTracksTheEditButKeepsCreatedAt(t *testing.T) {
 	later := testNow.Add(48 * time.Hour)
 	f.clock.now = later
 	body := "first pass, then FTS5"
-	got, err := f.logSvc.UpdateLog(context.Background(), f.owner, entry.ID, ports.UpdateLogInput{Body: &body})
+	got, err := f.journalSvc.UpdateJournalEntry(context.Background(), f.owner, entry.ID, ports.UpdateJournalInput{Body: &body})
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -242,16 +242,16 @@ func TestUpdateLogTracksTheEditButKeepsCreatedAt(t *testing.T) {
 	}
 }
 
-func TestAppendToLogAddsASection(t *testing.T) {
+func TestAppendToJournalEntryAddsASection(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	entry, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, Title: "Search rewrite", Body: "Chose FTS5.",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := f.logSvc.AppendToLog(context.Background(), f.owner, entry.ID, "Ported to r379, clean cherry-pick.")
+	got, err := f.journalSvc.AppendToJournalEntry(context.Background(), f.owner, entry.ID, "Ported to r379, clean cherry-pick.")
 	if err != nil {
 		t.Fatalf("append: %v", err)
 	}
@@ -268,9 +268,9 @@ func TestAppendToLogAddsASection(t *testing.T) {
 
 func TestAppendToAnEmptyLogDoesNotLeadWithBlankLines(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, _ := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{ProjectID: f.project, Title: "Stub"})
+	entry, _ := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{ProjectID: f.project, Title: "Stub"})
 
-	got, err := f.logSvc.AppendToLog(context.Background(), f.owner, entry.ID, "First finding.")
+	got, err := f.journalSvc.AppendToJournalEntry(context.Background(), f.owner, entry.ID, "First finding.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,64 +279,64 @@ func TestAppendToAnEmptyLogDoesNotLeadWithBlankLines(t *testing.T) {
 	}
 }
 
-func TestAppendToLogRejectsEmptyText(t *testing.T) {
+func TestAppendToJournalEntryRejectsEmptyText(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, _ := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{ProjectID: f.project, Title: "Stub"})
+	entry, _ := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{ProjectID: f.project, Title: "Stub"})
 
-	if _, err := f.logSvc.AppendToLog(context.Background(), f.owner, entry.ID, "   "); !errors.Is(err, domain.ErrValidation) {
+	if _, err := f.journalSvc.AppendToJournalEntry(context.Background(), f.owner, entry.ID, "   "); !errors.Is(err, domain.ErrValidation) {
 		t.Fatalf("want validation error, got %v", err)
 	}
 }
 
 func TestLogReadsAreOpenToViewers(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, err := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{
+	entry, err := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, Title: "Visible to the team",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := f.logSvc.GetLog(context.Background(), f.viewer, entry.ID); err != nil {
+	if _, err := f.journalSvc.GetJournalEntry(context.Background(), f.viewer, entry.ID); err != nil {
 		t.Fatalf("a viewer must be able to read a log: %v", err)
 	}
-	got, err := f.logSvc.ListLogs(context.Background(), f.viewer, f.project, domain.LogFilter{})
+	got, err := f.journalSvc.ListJournal(context.Background(), f.viewer, f.project, domain.JournalFilter{})
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
 	if len(got) != 1 {
 		t.Fatalf("want 1 entry, got %d", len(got))
 	}
-	if _, err := f.logSvc.GetLog(context.Background(), f.outside, entry.ID); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := f.journalSvc.GetJournalEntry(context.Background(), f.outside, entry.ID); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("non-member must get not-found, got %v", err)
 	}
 }
 
 func TestEditingAndDeletingRequireWriteAccess(t *testing.T) {
 	f := newKnowledgeFixture(t)
-	entry, _ := f.logSvc.WriteLog(context.Background(), f.owner, ports.WriteLogInput{ProjectID: f.project, Title: "x"})
+	entry, _ := f.journalSvc.WriteJournalEntry(context.Background(), f.owner, ports.WriteJournalInput{ProjectID: f.project, Title: "x"})
 
 	title := "hijacked"
-	if _, err := f.logSvc.UpdateLog(context.Background(), f.viewer, entry.ID, ports.UpdateLogInput{Title: &title}); !errors.Is(err, domain.ErrForbidden) {
+	if _, err := f.journalSvc.UpdateJournalEntry(context.Background(), f.viewer, entry.ID, ports.UpdateJournalInput{Title: &title}); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("viewer must not edit, got %v", err)
 	}
-	if _, err := f.logSvc.AppendToLog(context.Background(), f.viewer, entry.ID, "sneaky"); !errors.Is(err, domain.ErrForbidden) {
+	if _, err := f.journalSvc.AppendToJournalEntry(context.Background(), f.viewer, entry.ID, "sneaky"); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("viewer must not append, got %v", err)
 	}
-	if err := f.logSvc.DeleteLog(context.Background(), f.viewer, entry.ID); !errors.Is(err, domain.ErrForbidden) {
+	if err := f.journalSvc.DeleteJournalEntry(context.Background(), f.viewer, entry.ID); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("viewer must not delete, got %v", err)
 	}
-	if err := f.logSvc.DeleteLog(context.Background(), f.owner, entry.ID); err != nil {
+	if err := f.journalSvc.DeleteJournalEntry(context.Background(), f.owner, entry.ID); err != nil {
 		t.Fatalf("owner delete: %v", err)
 	}
 }
 
-func TestListLogsCapsTheLimit(t *testing.T) {
+func TestListJournalCapsTheLimit(t *testing.T) {
 	f := newKnowledgeFixture(t)
 
 	// The log is the project's memory and grows without bound; an unbounded
 	// read would eventually blow a context window.
-	if _, err := f.logSvc.ListLogs(context.Background(), f.owner, f.project, domain.LogFilter{Limit: 100000}); err != nil {
+	if _, err := f.journalSvc.ListJournal(context.Background(), f.owner, f.project, domain.JournalFilter{Limit: 100000}); err != nil {
 		t.Fatal(err)
 	}
 	if got := f.logs.lastFilter.Limit; got != services.MaxPageSize {
