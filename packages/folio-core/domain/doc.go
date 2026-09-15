@@ -37,6 +37,8 @@ const (
 	SearchKindTodo    SearchKind = "todo"
 	SearchKindPlan    SearchKind = "plan"
 	SearchKindTicket  SearchKind = "ticket"
+	SearchKindWorkLog SearchKind = "worklog"
+	SearchKindCycle   SearchKind = "resolution"
 )
 
 // SearchHit is one result of a cross-collection search, flattened so a client
