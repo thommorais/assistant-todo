@@ -34,8 +34,36 @@ func (s *TodoService) ListTodos(ctx context.Context, actor ports.Actor, project 
 	if err != nil {
 		return nil, err
 	}
-	rules.ApplyBlocked(todos)
+	if err := s.markBlocked(ctx, project, todos); err != nil {
+		return nil, err
+	}
 	return todos, nil
+}
+
+func (s *TodoService) markBlocked(ctx context.Context, project domain.ProjectID, todos []domain.Todo) error {
+	wanted := false
+	for _, t := range todos {
+		if len(t.DependsOn) > 0 {
+			wanted = true
+			break
+		}
+	}
+	if !wanted {
+		return nil
+	}
+	siblings, err := s.repo.List(ctx, project, domain.TodoFilter{Limit: MaxPageSize})
+	if err != nil {
+		return err
+	}
+	rules.ApplyBlocked(siblings)
+	blocked := make(map[domain.TodoID]bool, len(siblings))
+	for _, sib := range siblings {
+		blocked[sib.ID] = sib.Blocked
+	}
+	for i := range todos {
+		todos[i].Blocked = blocked[todos[i].ID]
+	}
+	return nil
 }
 
 func (s *TodoService) GetTodo(ctx context.Context, actor ports.Actor, id domain.TodoID) (domain.Todo, error) {
@@ -121,7 +149,11 @@ func (s *TodoService) create(ctx context.Context, actor ports.Actor, in ports.Cr
 	if err := rules.ValidateTodo(todo); err != nil {
 		return domain.Todo{}, err
 	}
-	return s.repo.Create(ctx, todo)
+	created, err := s.repo.Create(ctx, todo)
+	if err != nil {
+		return domain.Todo{}, err
+	}
+	return s.withBlocked(ctx, created)
 }
 
 // checkPlan refuses to file a todo under a plan belonging to another project,
