@@ -61,3 +61,5 @@ apps/cli/bin/
 
 # intlayer generated cache
 apps/web/.intlayer/cache/
+
+.playwright-mcp/

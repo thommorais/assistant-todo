@@ -11,12 +11,16 @@ export const Collections = {
 	Mfas: "_mfas",
 	Otps: "_otps",
 	Superusers: "_superusers",
+	JournCycles: "journ_cycles",
 	JournDocs: "journ_docs",
 	JournJournal: "journ_journal",
 	JournMembers: "journ_members",
+	JournPlanLogs: "journ_plan_logs",
 	JournPlans: "journ_plans",
 	JournProjects: "journ_projects",
+	JournTicketLogs: "journ_ticket_logs",
 	JournTickets: "journ_tickets",
+	JournTodoLogs: "journ_todo_logs",
 	JournTodos: "journ_todos",
 	Users: "users",
 } as const
@@ -100,6 +104,26 @@ export type SuperusersRecord = {
 	verified?: boolean
 }
 
+export const JournCyclesPhaseOptions = {
+	"plan": "plan",
+	"do": "do",
+	"check": "check",
+	"act": "act",
+} as const
+export type JournCyclesPhaseOptions = typeof JournCyclesPhaseOptions[keyof typeof JournCyclesPhaseOptions]
+export type JournCyclesRecord = {
+	closed_at?: IsoDateString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	id: string
+	ordinal: number
+	phase: JournCyclesPhaseOptions
+	project: RecordIdString
+	resolution?: string
+	ticket: RecordIdString
+	updated: IsoAutoDateString
+}
+
 export type JournDocsRecord<Ttags = unknown> = {
 	body?: HTMLString
 	created: IsoAutoDateString
@@ -146,6 +170,16 @@ export type JournMembersRecord = {
 	user: RecordIdString
 }
 
+export type JournPlanLogsRecord = {
+	body?: HTMLString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	id: string
+	plan: RecordIdString
+	project: RecordIdString
+	updated: IsoAutoDateString
+}
+
 export const JournPlansStatusOptions = {
 	"draft": "draft",
 	"active": "active",
@@ -176,6 +210,17 @@ export type JournProjectsRecord = {
 	updated: IsoAutoDateString
 }
 
+export type JournTicketLogsRecord = {
+	body?: HTMLString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	cycle?: RecordIdString
+	id: string
+	project: RecordIdString
+	ticket: RecordIdString
+	updated: IsoAutoDateString
+}
+
 export const JournTicketsStatusOptions = {
 	"open": "open",
 	"in_progress": "in_progress",
@@ -191,19 +236,41 @@ export const JournTicketsPriorityOptions = {
 	"high": "high",
 } as const
 export type JournTicketsPriorityOptions = typeof JournTicketsPriorityOptions[keyof typeof JournTicketsPriorityOptions]
-export type JournTicketsRecord<Ttags = unknown> = {
+
+export const JournTicketsWayfinderOptions = {
+	"map": "map",
+	"research": "research",
+	"prototype": "prototype",
+	"grilling": "grilling",
+	"task": "task",
+} as const
+export type JournTicketsWayfinderOptions = typeof JournTicketsWayfinderOptions[keyof typeof JournTicketsWayfinderOptions]
+export type JournTicketsRecord<Tdepends_on = unknown, Ttags = unknown> = {
 	assignee?: RecordIdString
 	body?: HTMLString
 	created: IsoAutoDateString
 	created_by?: RecordIdString
+	depends_on?: null | Tdepends_on
 	external_ref?: string
 	id: string
+	parent?: RecordIdString
 	priority: JournTicketsPriorityOptions
 	project: RecordIdString
 	slug: string
 	status: JournTicketsStatusOptions
 	tags?: null | Ttags
 	title: string
+	updated: IsoAutoDateString
+	wayfinder?: JournTicketsWayfinderOptions
+}
+
+export type JournTodoLogsRecord = {
+	body?: HTMLString
+	created: IsoAutoDateString
+	created_by?: RecordIdString
+	id: string
+	project: RecordIdString
+	todo: RecordIdString
 	updated: IsoAutoDateString
 }
 
@@ -259,12 +326,16 @@ export type ExternalauthsResponse<Texpand = unknown> = Required<ExternalauthsRec
 export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemFields<Texpand>
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
+export type JournCyclesResponse<Texpand = unknown> = Required<JournCyclesRecord> & BaseSystemFields<Texpand>
 export type JournDocsResponse<Ttags = unknown, Texpand = unknown> = Required<JournDocsRecord<Ttags>> & BaseSystemFields<Texpand>
 export type JournJournalResponse<Tmeta = unknown, Ttags = unknown, Texpand = unknown> = Required<JournJournalRecord<Tmeta, Ttags>> & BaseSystemFields<Texpand>
 export type JournMembersResponse<Texpand = unknown> = Required<JournMembersRecord> & BaseSystemFields<Texpand>
+export type JournPlanLogsResponse<Texpand = unknown> = Required<JournPlanLogsRecord> & BaseSystemFields<Texpand>
 export type JournPlansResponse<Ttags = unknown, Texpand = unknown> = Required<JournPlansRecord<Ttags>> & BaseSystemFields<Texpand>
 export type JournProjectsResponse<Texpand = unknown> = Required<JournProjectsRecord> & BaseSystemFields<Texpand>
-export type JournTicketsResponse<Ttags = unknown, Texpand = unknown> = Required<JournTicketsRecord<Ttags>> & BaseSystemFields<Texpand>
+export type JournTicketLogsResponse<Texpand = unknown> = Required<JournTicketLogsRecord> & BaseSystemFields<Texpand>
+export type JournTicketsResponse<Tdepends_on = unknown, Ttags = unknown, Texpand = unknown> = Required<JournTicketsRecord<Tdepends_on, Ttags>> & BaseSystemFields<Texpand>
+export type JournTodoLogsResponse<Texpand = unknown> = Required<JournTodoLogsRecord> & BaseSystemFields<Texpand>
 export type JournTodosResponse<Tdepends_on = unknown, Ttags = unknown, Texpand = unknown> = Required<JournTodosRecord<Tdepends_on, Ttags>> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
@@ -276,12 +347,16 @@ export type CollectionRecords = {
 	_mfas: MfasRecord
 	_otps: OtpsRecord
 	_superusers: SuperusersRecord
+	journ_cycles: JournCyclesRecord
 	journ_docs: JournDocsRecord
 	journ_journal: JournJournalRecord
 	journ_members: JournMembersRecord
+	journ_plan_logs: JournPlanLogsRecord
 	journ_plans: JournPlansRecord
 	journ_projects: JournProjectsRecord
+	journ_ticket_logs: JournTicketLogsRecord
 	journ_tickets: JournTicketsRecord
+	journ_todo_logs: JournTodoLogsRecord
 	journ_todos: JournTodosRecord
 	users: UsersRecord
 }
@@ -292,12 +367,16 @@ export type CollectionResponses = {
 	_mfas: MfasResponse
 	_otps: OtpsResponse
 	_superusers: SuperusersResponse
+	journ_cycles: JournCyclesResponse
 	journ_docs: JournDocsResponse
 	journ_journal: JournJournalResponse
 	journ_members: JournMembersResponse
+	journ_plan_logs: JournPlanLogsResponse
 	journ_plans: JournPlansResponse
 	journ_projects: JournProjectsResponse
+	journ_ticket_logs: JournTicketLogsResponse
 	journ_tickets: JournTicketsResponse
+	journ_todo_logs: JournTodoLogsResponse
 	journ_todos: JournTodosResponse
 	users: UsersResponse
 }

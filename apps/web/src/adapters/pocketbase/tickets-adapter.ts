@@ -1,6 +1,6 @@
 import { sortExpr } from './sort'
 import { projectId as toProjectId, userId as toUserId } from '_/core/domain/project'
-import type { Ticket, TicketStatus } from '_/core/domain/ticket'
+import type { Ticket, TicketStatus, WayfinderType } from '_/core/domain/ticket'
 import { ticketId as toTicketId } from '_/core/domain/ticket'
 import type { Priority } from '_/core/domain/todo'
 import type { Unsubscribe } from '_/core/ports/subscription'
@@ -14,10 +14,11 @@ import { countRows } from './count-rows'
 import { filterFor } from './filter-builder'
 import { paginate } from './paginate'
 
-type TicketRecord = JournTicketsResponse<string[]>
+type TicketRecord = JournTicketsResponse<string[], string[]>
 
 type TicketColumns = {
 	'project.slug': string
+	parent: string
 	slug: string
 	title: string
 	body: string
@@ -33,6 +34,7 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
 const toTicket = (record: TicketRecord): Ticket => ({
 	id: toTicketId(record.id),
 	projectId: toProjectId(record.project),
+	parentId: record.parent ? toTicketId(record.parent) : undefined,
 	slug: record.slug,
 	title: record.title,
 	body: record.body ?? '',
@@ -41,6 +43,8 @@ const toTicket = (record: TicketRecord): Ticket => ({
 	assignee: record.assignee ? toUserId(record.assignee) : undefined,
 	tags: record.tags ?? [],
 	externalRef: record.external_ref ?? '',
+	dependsOn: (record.depends_on ?? []).map(toTicketId),
+	wayfinder: record.wayfinder ? (record.wayfinder as WayfinderType) : undefined,
 	createdBy: record.created_by ? toUserId(record.created_by) : undefined,
 	createdAt: new Date(record.created),
 	updatedAt: new Date(record.updated),
@@ -49,6 +53,7 @@ const toTicket = (record: TicketRecord): Ticket => ({
 const columns = (project: string, filter: TicketFilter) =>
 	filterFor<TicketColumns>()([
 		{ field: 'project.slug', comparator: 'eq', value: project },
+		{ field: 'parent', comparator: 'eq', value: filter.parentId },
 		{ field: 'status', comparator: 'anyOf', value: filter.status },
 		{ field: 'priority', comparator: 'eq', value: filter.priority },
 		{ field: 'tags', comparator: 'containsAll', value: filter.tags },
