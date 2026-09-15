@@ -8,7 +8,7 @@ export const OpenSearchButton = () => {
 		<button
 			type='button'
 			onClick={() => setOpen(true)}
-			className='text-muted-foreground hover:text-foreground relative hidden w-full min-w-[250px] cursor-pointer items-center justify-start gap-2 text-sm font-normal transition-colors md:flex md:w-40 lg:w-64'
+			className='text-muted-foreground hover:text-foreground relative flex w-full cursor-pointer items-center justify-start gap-2 text-sm font-normal transition-colors md:w-40 md:min-w-[250px] lg:w-64'
 		>
 			<Search size={18} />
 			<span>Find anything...</span>
