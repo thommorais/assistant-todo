@@ -1,13 +1,19 @@
 ---
 name: folio-cli
-description: How to drive the folio CLI — the `folio` command for projects, tickets, plans, todos, journal and docs. Use when reading or writing anything in a folio workspace, when a task mentions folio tickets/todos/plans/journal/docs, or when `folio` appears in a command.
+description: How to drive the folio CLI — the `folio` command for projects, tickets, plans, todos, cycles, work logs, journal and docs. Use when reading or writing anything in a folio workspace, when a task mentions folio tickets/todos/plans/cycles/worklogs/journal/docs, or when `folio` appears in a command.
 ---
 
 # folio CLI
 
-`folio` is a Go/cobra CLI over the folio HTTP API. Five record kinds live under a
-project: **tickets** (units of work, sluggable), **plans** (intent), **todos**
-(steps), **journal** (what happened, newest first), **docs** (reference, sluggable).
+`folio` is a Go/cobra CLI over the folio HTTP API. Record kinds under a project:
+**tickets** (units of work, sluggable), **plans** (intent), **todos** (steps),
+**journal** (what happened, newest first), **docs** (reference, sluggable).
+Under a ticket: **cycles** (PDCA rounds) and **work logs**; plans and todos
+carry work logs too.
+
+The journal and the work log are not the same thing. The journal is yours,
+kept per project, and nothing requires you to write one. A work log hangs off a
+single ticket, plan or todo and carries the context needed to resume that work.
 
 Run `folio <command> --help` for the current flag list. This skill covers what
 help output does not say.
@@ -110,7 +116,63 @@ Status values differ by kind — ticket: `open,in_progress,blocked,closed,cancel
 todo: `pending,in_progress,done,blocked,cancelled`; plan: `draft,active,done,abandoned`.
 
 `ticket get` and `doc get` accept an id or a slug, but a **slug only resolves
-with a project selected** — it is unique within a project, not globally.
+with a project selected** — it is unique within a project, not globally. With a
+project selected `ticket brief` treats its argument as a slug, so pass the slug
+rather than the id there.
+
+## Tickets form a graph
+
+A ticket can sit under another (`--parent`) and can be blocked by others
+(`--depends-on`, comma separated ids). `blocked` is derived on read from whether
+any blocker is still open, so it is never set by hand; the separate `blocked`
+*status* is the one you set yourself. Cycles in either the parent chain or the
+dependency graph are refused at write time.
+
+```bash
+folio ticket create "The map" --wayfinder map
+folio ticket create "Decide the shape" --parent <map-id> --wayfinder grilling
+folio ticket create "Build it" --parent <map-id> --depends-on <id1>,<id2>
+folio ticket frontier <map-id>
+```
+
+`ticket frontier <id>` lists that ticket's children that are open, unblocked and
+unassigned, oldest first. `--wayfinder` is one of `map`, `research`,
+`prototype`, `grilling`, `task`, and is a field of its own rather than a tag, so
+it does not touch the tag vocabulary.
+
+## Cycles carry the PDCA loop
+
+A ticket that ships, gets a bug and comes back opens a second cycle rather than
+overwriting the first. Each cycle has an ordinal, a phase and a resolution, and
+`ticket get` reports the latest as `cycle N: phase`.
+
+```bash
+folio cycle open <ticket-id>          # starts at plan
+folio cycle phase <cycle-id> do       # plan -> do -> check -> act, one step
+folio cycle resolve <cycle-id> "Shipped behind a flag"
+folio cycle list <ticket-id>
+```
+
+Phases advance one step at a time and never go backwards. A new cycle cannot
+open while the current one is unresolved, and **closing a ticket requires a
+resolution on its current cycle** — an earlier cycle's resolution does not
+count. A ticket that never opened a cycle closes freely, so this binds only
+work that opted into the loop.
+
+## Work logs
+
+```bash
+folio worklog write "Mapbox rejects feature-state in a filter" --ticket <id>
+folio worklog write - --plan <id> <<'EOF'
+Longer note from stdin.
+EOF
+folio worklog list --ticket <id> --cycle <cycle-id>
+```
+
+Exactly one of `--ticket`, `--plan` or `--todo` is required on every subcommand.
+A ticket work log written while a cycle is open is **stamped with that cycle**
+automatically, which is what `--cycle` then filters on. Work logs cascade with
+their parent rather than detaching the way plans and docs do.
 
 ## Writing
 
