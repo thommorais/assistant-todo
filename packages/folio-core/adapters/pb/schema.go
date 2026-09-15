@@ -265,6 +265,39 @@ func ensureJournal(app core.App) error {
 	return app.Save(c)
 }
 
+func ensureCycles(app core.App) error {
+	if _, ok := find(app, ColCycles); ok {
+		return nil
+	}
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+
+	c := core.NewBaseCollection(ColCycles)
+	c.Fields.Add(
+		&core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.RelationField{Name: "ticket", Required: true, CollectionId: tickets.Id, CascadeDelete: true, MaxSelect: 1},
+		&core.NumberField{Name: "ordinal", Required: true},
+		&core.SelectField{Name: "phase", Required: true, MaxSelect: 1, Values: []string{"plan", "do", "check", "act"}},
+		&core.TextField{Name: "resolution", Max: 2000},
+		&core.DateField{Name: "closed_at"},
+		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
+	)
+	c.Fields.Add(autodates()...)
+	c.AddIndex("idx_journ_cycles_ticket", false, "ticket, ordinal", "")
+
+	return app.Save(c)
+}
+
 func ensureDocs(app core.App) error {
 	if _, ok := find(app, ColDocs); ok {
 		return nil
@@ -344,7 +377,7 @@ func applyRules(app core.App) error {
 		return err
 	}
 
-	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColJournal} {
+	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColJournal, ColCycles} {
 		c, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			return err

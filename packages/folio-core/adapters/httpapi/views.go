@@ -90,6 +90,8 @@ type ticketView struct {
 	DependsOn   []string     `json:"depends_on"`
 	Wayfinder   string       `json:"wayfinder,omitempty"`
 	Blocked     bool         `json:"blocked"`
+	Cycle       int          `json:"cycle,omitempty"`
+	Phase       string       `json:"phase,omitempty"`
 	Progress    progressView `json:"progress"`
 	CreatedBy   string       `json:"created_by,omitempty"`
 	CreatedAt   string       `json:"created_at"`
@@ -103,10 +105,37 @@ func toTicketView(t domain.Ticket) ticketView {
 		Priority: string(t.Priority), Assignee: string(t.Assignee),
 		Tags: orEmpty(t.Tags), ExternalRef: t.ExternalRef,
 		DependsOn: fromTicketIDs(t.DependsOn), Wayfinder: string(t.Wayfinder), Blocked: t.Blocked,
+		Cycle: t.Cycle, Phase: string(t.Phase),
 		Progress:  progressView{Total: t.Progress.Total, Done: t.Progress.Done, Percent: t.Progress.Percent()},
 		CreatedBy: string(t.CreatedBy),
 		CreatedAt: rfc3339(t.CreatedAt), UpdatedAt: rfc3339(t.UpdatedAt),
 	}
+}
+
+type cycleView struct {
+	ID         string `json:"id"`
+	ProjectID  string `json:"project_id"`
+	TicketID   string `json:"ticket_id"`
+	Ordinal    int    `json:"ordinal"`
+	Phase      string `json:"phase"`
+	Resolution string `json:"resolution,omitempty"`
+	CreatedBy  string `json:"created_by,omitempty"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+	ClosedAt   string `json:"closed_at,omitempty"`
+}
+
+func toCycleView(c domain.Cycle) cycleView {
+	out := cycleView{
+		ID: string(c.ID), ProjectID: string(c.ProjectID), TicketID: string(c.TicketID),
+		Ordinal: c.Ordinal, Phase: string(c.Phase), Resolution: c.Resolution,
+		CreatedBy: string(c.CreatedBy),
+		CreatedAt: rfc3339(c.CreatedAt), UpdatedAt: rfc3339(c.UpdatedAt),
+	}
+	if c.ClosedAt != nil {
+		out.ClosedAt = rfc3339(*c.ClosedAt)
+	}
+	return out
 }
 
 type todoView struct {
@@ -243,6 +272,7 @@ type ticketBriefView struct {
 	Todos   []todoView    `json:"todos"`
 	Journal []journalView `json:"journal"`
 	Docs    []docView     `json:"docs"`
+	Cycles  []cycleView   `json:"cycles"`
 }
 
 func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
@@ -252,6 +282,7 @@ func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
 		Todos:   make([]todoView, 0, len(b.Todos)),
 		Journal: make([]journalView, 0, len(b.Journal)),
 		Docs:    make([]docView, 0, len(b.Docs)),
+		Cycles:  make([]cycleView, 0, len(b.Cycles)),
 	}
 	for _, p := range b.Plans {
 		out.Plans = append(out.Plans, toPlanView(p))
@@ -264,6 +295,9 @@ func toTicketBriefView(b domain.TicketBrief) ticketBriefView {
 	}
 	for _, d := range b.Docs {
 		out.Docs = append(out.Docs, toDocView(d))
+	}
+	for _, c := range b.Cycles {
+		out.Cycles = append(out.Cycles, toCycleView(c))
 	}
 	return out
 }

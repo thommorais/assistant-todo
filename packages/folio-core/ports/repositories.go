@@ -76,6 +76,14 @@ type JournalRepository interface {
 	Delete(ctx context.Context, id domain.JournalID) error
 }
 
+type CycleRepository interface {
+	ListByTicket(ctx context.Context, ticket domain.TicketID) ([]domain.Cycle, error)
+	GetByID(ctx context.Context, id domain.CycleID) (domain.Cycle, error)
+	Create(ctx context.Context, c domain.Cycle) (domain.Cycle, error)
+	Update(ctx context.Context, c domain.Cycle) (domain.Cycle, error)
+	Delete(ctx context.Context, id domain.CycleID) error
+}
+
 type DocRepository interface {
 	List(ctx context.Context, project domain.ProjectID, f domain.DocFilter) ([]domain.Doc, error)
 	GetByID(ctx context.Context, id domain.DocID) (domain.Doc, error)

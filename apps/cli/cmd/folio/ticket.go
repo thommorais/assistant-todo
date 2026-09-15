@@ -183,6 +183,16 @@ func renderBrief(b client.TicketBrief) error {
 	}
 	section("journal", journal)
 
+	cycles := make([]string, 0, len(b.Cycles))
+	for _, c := range b.Cycles {
+		state := c.Phase
+		if c.ClosedAt != "" {
+			state += " (resolved)"
+		}
+		cycles = append(cycles, fmt.Sprintf("%s  %d  %-16s %s", c.ID, c.Ordinal, state, c.Resolution))
+	}
+	section("cycles", cycles)
+
 	docs := make([]string, 0, len(b.Docs))
 	for _, d := range b.Docs {
 		docs = append(docs, fmt.Sprintf("%s  %-24s %s", d.ID, d.Slug, d.Title))
@@ -410,6 +420,9 @@ func renderTicketDetail(ticket client.Ticket) error {
 	fmt.Println(ticket.Title)
 	fmt.Printf("%s  %s  %s  %d/%d done\n",
 		ticket.ID, ticket.Status, ticket.Priority, ticket.Progress.Done, ticket.Progress.Total)
+	if ticket.Cycle > 0 {
+		fmt.Printf("cycle %d: %s\n", ticket.Cycle, ticket.Phase)
+	}
 
 	for label, value := range map[string]string{
 		"assignee": ticket.Assignee, "external ref": ticket.ExternalRef,

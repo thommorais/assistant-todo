@@ -18,14 +18,15 @@ type TicketService struct {
 	plans   ports.PlanRepository
 	journal ports.JournalRepository
 	docs    ports.DocRepository
+	cycles  ports.CycleRepository
 	guard   ports.Guard
 	clock   ports.Clock
 	ids     ports.IDGenerator
 	log     ports.Logger
 }
 
-func NewTicketService(repo ports.TicketRepository, todos ports.TodoRepository, plans ports.PlanRepository, journal ports.JournalRepository, docs ports.DocRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TicketService {
-	return &TicketService{repo: repo, todos: todos, plans: plans, journal: journal, docs: docs, guard: guard, clock: clock, ids: ids, log: log}
+func NewTicketService(repo ports.TicketRepository, todos ports.TodoRepository, plans ports.PlanRepository, journal ports.JournalRepository, docs ports.DocRepository, cycles ports.CycleRepository, guard ports.Guard, clock ports.Clock, ids ports.IDGenerator, log ports.Logger) *TicketService {
+	return &TicketService{repo: repo, todos: todos, plans: plans, journal: journal, docs: docs, cycles: cycles, guard: guard, clock: clock, ids: ids, log: log}
 }
 
 var _ ports.TicketUseCase = (*TicketService)(nil)
@@ -51,6 +52,17 @@ func (s *TicketService) ListTickets(ctx context.Context, actor ports.Actor, proj
 		return nil, err
 	}
 	return tickets, nil
+}
+
+func (s *TicketService) withCurrentCycle(ctx context.Context, ticket domain.Ticket) (domain.Ticket, error) {
+	cycles, err := s.cycles.ListByTicket(ctx, ticket.ID)
+	if err != nil {
+		return domain.Ticket{}, err
+	}
+	if current, ok := rules.CurrentCycle(cycles); ok {
+		ticket.Cycle, ticket.Phase = current.Ordinal, current.Phase
+	}
+	return ticket, nil
 }
 
 func (s *TicketService) markBlocked(ctx context.Context, project domain.ProjectID, tickets []domain.Ticket) error {
@@ -90,7 +102,11 @@ func (s *TicketService) GetTicket(ctx context.Context, actor ports.Actor, id dom
 	if ticket.Progress, err = s.progress(ctx, ticket.ID); err != nil {
 		return domain.Ticket{}, err
 	}
-	return s.withTicketBlocked(ctx, ticket)
+	ticket, err = s.withTicketBlocked(ctx, ticket)
+	if err != nil {
+		return domain.Ticket{}, err
+	}
+	return s.withCurrentCycle(ctx, ticket)
 }
 
 func (s *TicketService) GetTicketBySlug(ctx context.Context, actor ports.Actor, project domain.ProjectID, slug string) (domain.Ticket, error) {
@@ -104,7 +120,11 @@ func (s *TicketService) GetTicketBySlug(ctx context.Context, actor ports.Actor, 
 	if ticket.Progress, err = s.progress(ctx, ticket.ID); err != nil {
 		return domain.Ticket{}, err
 	}
-	return s.withTicketBlocked(ctx, ticket)
+	ticket, err = s.withTicketBlocked(ctx, ticket)
+	if err != nil {
+		return domain.Ticket{}, err
+	}
+	return s.withCurrentCycle(ctx, ticket)
 }
 
 // progress counts the ticket's todos, including those nested under its plans,
@@ -268,6 +288,15 @@ func (s *TicketService) UpdateTicket(ctx context.Context, actor ports.Actor, id 
 		if err := rules.CanTransitionTicket(ticket.Status, *in.Status); err != nil {
 			return domain.Ticket{}, err
 		}
+		if in.Status.IsTerminal() {
+			cycles, err := s.cycles.ListByTicket(ctx, ticket.ID)
+			if err != nil {
+				return domain.Ticket{}, err
+			}
+			if err := rules.CheckClosable(*in.Status, cycles); err != nil {
+				return domain.Ticket{}, err
+			}
+		}
 		ticket.Status = *in.Status
 	}
 	if in.ParentID != nil {
@@ -321,7 +350,11 @@ func (s *TicketService) UpdateTicket(ctx context.Context, actor ports.Actor, id 
 	if saved.Progress, err = s.progress(ctx, saved.ID); err != nil {
 		return domain.Ticket{}, err
 	}
-	return s.withTicketBlocked(ctx, saved)
+	saved, err = s.withTicketBlocked(ctx, saved)
+	if err != nil {
+		return domain.Ticket{}, err
+	}
+	return s.withCurrentCycle(ctx, saved)
 }
 
 func (s *TicketService) SetTicketStatus(ctx context.Context, actor ports.Actor, id domain.TicketID, status domain.TicketStatus) (domain.Ticket, error) {

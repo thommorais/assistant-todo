@@ -46,6 +46,8 @@ type Ticket struct {
 
 	Progress Progress
 	Blocked  bool
+	Cycle    int
+	Phase    Phase
 }
 
 type TicketFilter struct {
@@ -65,4 +67,5 @@ type TicketBrief struct {
 	Todos   []Todo
 	Journal []JournalEntry
 	Docs    []Doc
+	Cycles  []Cycle
 }

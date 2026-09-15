@@ -53,12 +53,21 @@ func (s *TicketService) brief(ctx context.Context, ticket domain.Ticket, in port
 		return domain.TicketBrief{}, err
 	}
 
+	cycles, err := s.cycles.ListByTicket(ctx, ticket.ID)
+	if err != nil {
+		return domain.TicketBrief{}, err
+	}
+	if cycles == nil {
+		cycles = []domain.Cycle{}
+	}
+
 	return domain.TicketBrief{
 		Ticket:  ticket,
 		Plans:   plans,
 		Todos:   todos,
 		Journal: journal,
 		Docs:    docs,
+		Cycles:  cycles,
 	}, nil
 }
 

@@ -588,6 +588,54 @@ func (r *fakeTickets) Delete(_ context.Context, id domain.TicketID) error {
 	return nil
 }
 
+type fakeCycles struct {
+	items map[domain.CycleID]domain.Cycle
+}
+
+func newFakeCycles() *fakeCycles {
+	return &fakeCycles{items: map[domain.CycleID]domain.Cycle{}}
+}
+
+func (r *fakeCycles) ListByTicket(_ context.Context, ticket domain.TicketID) ([]domain.Cycle, error) {
+	out := []domain.Cycle{}
+	for _, c := range r.items {
+		if c.TicketID == ticket {
+			out = append(out, c)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Ordinal < out[j].Ordinal })
+	return out, nil
+}
+
+func (r *fakeCycles) GetByID(_ context.Context, id domain.CycleID) (domain.Cycle, error) {
+	c, ok := r.items[id]
+	if !ok {
+		return domain.Cycle{}, domain.ErrNotFound
+	}
+	return c, nil
+}
+
+func (r *fakeCycles) Create(_ context.Context, c domain.Cycle) (domain.Cycle, error) {
+	r.items[c.ID] = c
+	return c, nil
+}
+
+func (r *fakeCycles) Update(_ context.Context, c domain.Cycle) (domain.Cycle, error) {
+	if _, ok := r.items[c.ID]; !ok {
+		return domain.Cycle{}, domain.ErrNotFound
+	}
+	r.items[c.ID] = c
+	return c, nil
+}
+
+func (r *fakeCycles) Delete(_ context.Context, id domain.CycleID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
 // compile-time checks that the doubles satisfy the ports they stand in for.
 var (
 	_ ports.ProjectRepository = (*fakeProjects)(nil)
@@ -596,6 +644,7 @@ var (
 	_ ports.JournalRepository = (*fakeJournal)(nil)
 	_ ports.DocRepository     = (*fakeDocs)(nil)
 	_ ports.TicketRepository  = (*fakeTickets)(nil)
+	_ ports.CycleRepository   = (*fakeCycles)(nil)
 	_ ports.SearchRepository  = (*fakeSearch)(nil)
 	_ ports.Clock             = (*fakeClock)(nil)
 	_ ports.IDGenerator       = (*seqIDs)(nil)

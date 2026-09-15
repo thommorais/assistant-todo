@@ -20,6 +20,7 @@ type Handler struct {
 	tickets  ports.TicketUseCase
 	todos    ports.TodoUseCase
 	journal  ports.JournalUseCase
+	cycles   ports.CycleUseCase
 	docs     ports.DocUseCase
 	search   ports.SearchUseCase
 }
@@ -30,6 +31,7 @@ type Deps struct {
 	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
 	Journal  ports.JournalUseCase
+	Cycles   ports.CycleUseCase
 	Docs     ports.DocUseCase
 	Search   ports.SearchUseCase
 }
@@ -37,7 +39,7 @@ type Deps struct {
 func New(d Deps) *Handler {
 	return &Handler{
 		projects: d.Projects, plans: d.Plans, tickets: d.Tickets, todos: d.Todos,
-		journal: d.Journal, docs: d.Docs, search: d.Search,
+		journal: d.Journal, cycles: d.Cycles, docs: d.Docs, search: d.Search,
 	}
 }
 
@@ -77,6 +79,9 @@ func (h *Handler) Mount(e *core.ServeEvent) {
 	g.GET("/tickets/{ticket}", h.getTicket)
 	g.GET("/tickets/{ticket}/brief", h.getTicketBrief)
 	g.GET("/tickets/{ticket}/frontier", h.ticketFrontier)
+	g.GET("/tickets/{ticket}/cycles", h.listCycles)
+	g.POST("/tickets/{ticket}/cycles", h.openCycle)
+	g.PATCH("/cycles/{cycle}", h.updateCycle)
 	g.PATCH("/tickets/{ticket}", h.updateTicket)
 	g.DELETE("/tickets/{ticket}", h.deleteTicket)
 

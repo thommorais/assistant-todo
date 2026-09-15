@@ -44,6 +44,9 @@ func Register(app core.App) error {
 	if err := ensureDocs(app); err != nil {
 		return fmt.Errorf("docs: %w", err)
 	}
+	if err := ensureCycles(app); err != nil {
+		return fmt.Errorf("cycles: %w", err)
+	}
 	// Existing databases predate tickets: their collections were created by
 	// an earlier Register and ensureX leaves them alone, so the new fields
 	// are added in a separate pass.

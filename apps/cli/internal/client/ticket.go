@@ -22,6 +22,8 @@ type Ticket struct {
 	DependsOn   []string `json:"depends_on"`
 	Wayfinder   string   `json:"wayfinder,omitempty"`
 	Blocked     bool     `json:"blocked"`
+	Cycle       int      `json:"cycle,omitempty"`
+	Phase       string   `json:"phase,omitempty"`
 	Progress    Progress `json:"progress"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
@@ -133,6 +135,7 @@ type TicketBrief struct {
 	Plans   []Plan         `json:"plans"`
 	Todos   []Todo         `json:"todos"`
 	Journal []JournalEntry `json:"journal"`
+	Cycles  []Cycle        `json:"cycles"`
 	Docs    []Doc          `json:"docs"`
 }
 

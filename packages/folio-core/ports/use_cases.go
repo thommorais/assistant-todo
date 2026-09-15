@@ -104,6 +104,13 @@ type UpdateTicketInput struct {
 	Wayfinder   *domain.WayfinderType
 }
 
+type CycleUseCase interface {
+	ListCycles(ctx context.Context, actor Actor, ticket domain.TicketID) ([]domain.Cycle, error)
+	OpenCycle(ctx context.Context, actor Actor, ticket domain.TicketID) (domain.Cycle, error)
+	AdvancePhase(ctx context.Context, actor Actor, id domain.CycleID, phase domain.Phase) (domain.Cycle, error)
+	ResolveCycle(ctx context.Context, actor Actor, id domain.CycleID, resolution string) (domain.Cycle, error)
+}
+
 type TodoUseCase interface {
 	ListTodos(ctx context.Context, actor Actor, project domain.ProjectID, f domain.TodoFilter) ([]domain.Todo, error)
 	GetTodo(ctx context.Context, actor Actor, id domain.TodoID) (domain.Todo, error)

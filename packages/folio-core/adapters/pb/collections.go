@@ -14,6 +14,7 @@ const (
 	ColTodos    = "journ_todos"
 	ColJournal  = "journ_journal"
 	ColDocs     = "journ_docs"
+	ColCycles   = "journ_cycles"
 
 	// ColUsers is PocketBase's built-in auth collection.
 	ColUsers = "users"

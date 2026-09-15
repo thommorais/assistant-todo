@@ -62,6 +62,7 @@ func main() {
 
 	root.AddCommand(
 		configCommand(),
+		cycleCommand(),
 		docCommand(),
 		journalCommand(),
 		loginCommand(),

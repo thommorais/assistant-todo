@@ -22,6 +22,7 @@ type App struct {
 	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
 	Journal  ports.JournalUseCase
+	Cycles   ports.CycleUseCase
 	Docs     ports.DocUseCase
 	Search   ports.SearchUseCase
 }
@@ -38,6 +39,7 @@ func New(app pbcore.App, logger *slog.Logger) *App {
 	todoRepo := pb.NewTodoRepository(app)
 	journalRepo := pb.NewJournalRepository(app)
 	docRepo := pb.NewDocRepository(app)
+	cycleRepo := pb.NewCycleRepository(app)
 	searchRepo := pb.NewSearchRepository(app)
 
 	guard := services.NewProjectGuard(projectRepo)
@@ -46,9 +48,10 @@ func New(app pbcore.App, logger *slog.Logger) *App {
 	return &App{
 		Projects: services.NewProjectService(projectRepo, guard, clock, ids, log),
 		Plans:    services.NewPlanService(planRepo, todoRepo, ticketRepo, todos, guard, clock, ids, log),
-		Tickets:  services.NewTicketService(ticketRepo, todoRepo, planRepo, journalRepo, docRepo, guard, clock, ids, log),
+		Tickets:  services.NewTicketService(ticketRepo, todoRepo, planRepo, journalRepo, docRepo, cycleRepo, guard, clock, ids, log),
 		Todos:    todos,
 		Journal:  services.NewJournalService(journalRepo, ticketRepo, guard, clock, ids, log),
+		Cycles:   services.NewCycleService(cycleRepo, ticketRepo, guard, clock, ids, log),
 		Docs:     services.NewDocService(docRepo, ticketRepo, guard, clock, ids, log),
 		Search:   services.NewSearchService(searchRepo, guard),
 	}
