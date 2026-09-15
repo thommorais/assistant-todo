@@ -143,6 +143,11 @@ func ValidateJournalEntry(e domain.JournalEntry) error {
 	return optional("external_ref", e.ExternalRef, RefMaxLen)
 }
 
+var wayfinderTypes = map[domain.WayfinderType]bool{
+	domain.WayfinderMap: true, domain.WayfinderResearch: true, domain.WayfinderPrototype: true,
+	domain.WayfinderGrilling: true, domain.WayfinderTask: true,
+}
+
 var ticketStatuses = map[domain.TicketStatus]bool{
 	domain.TicketOpen: true, domain.TicketInProgress: true, domain.TicketBlocked: true,
 	domain.TicketClosed: true, domain.TicketCancelled: true,
@@ -168,6 +173,17 @@ func ValidateTicket(t domain.Ticket) error {
 	}
 	if !priorities[t.Priority] {
 		return domain.Invalid("priority", "must be one of low, medium, high")
+	}
+	if t.ParentID == t.ID && t.ParentID != "" {
+		return domain.Invalid("parent", "a ticket cannot be its own parent")
+	}
+	for _, dep := range t.DependsOn {
+		if dep == t.ID && dep != "" {
+			return domain.Invalid("depends_on", "a ticket cannot depend on itself")
+		}
+	}
+	if t.Wayfinder != "" && !wayfinderTypes[t.Wayfinder] {
+		return domain.Invalid("wayfinder", "must be one of map, research, prototype, grilling, task")
 	}
 	return optional("external_ref", t.ExternalRef, RefMaxLen)
 }

@@ -58,6 +58,7 @@ type TodoRepository interface {
 // that carries its own plans, todos, logs and docs.
 type TicketRepository interface {
 	List(ctx context.Context, project domain.ProjectID, f domain.TicketFilter) ([]domain.Ticket, error)
+	ListByParent(ctx context.Context, parent domain.TicketID) ([]domain.Ticket, error)
 	GetByID(ctx context.Context, id domain.TicketID) (domain.Ticket, error)
 	GetBySlug(ctx context.Context, project domain.ProjectID, slug string) (domain.Ticket, error)
 	Create(ctx context.Context, t domain.Ticket) (domain.Ticket, error)

@@ -144,6 +144,8 @@ func ensureTickets(app core.App) error {
 		&core.RelationField{Name: "assignee", CollectionId: users.Id, CascadeDelete: false, MaxSelect: 1},
 		&core.JSONField{Name: "tags", MaxSize: 4000},
 		&core.TextField{Name: "external_ref", Max: 200},
+		&core.JSONField{Name: "depends_on", MaxSize: 4000},
+		&core.SelectField{Name: "wayfinder", MaxSelect: 1, Values: wayfinderValues},
 		&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1},
 	)
 	c.Fields.Add(autodates()...)
@@ -154,6 +156,8 @@ func ensureTickets(app core.App) error {
 
 	return app.Save(c)
 }
+
+var wayfinderValues = []string{"map", "research", "prototype", "grilling", "task"}
 
 // ticketField is the nullable back-reference every child collection carries.
 // Deleting a ticket detaches its children rather than destroying them, so the

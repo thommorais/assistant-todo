@@ -76,6 +76,7 @@ func (h *Handler) Mount(e *core.ServeEvent) {
 	g.GET("/projects/{project}/tickets/{slug}/brief", h.getTicketBriefBySlug)
 	g.GET("/tickets/{ticket}", h.getTicket)
 	g.GET("/tickets/{ticket}/brief", h.getTicketBrief)
+	g.GET("/tickets/{ticket}/frontier", h.ticketFrontier)
 	g.PATCH("/tickets/{ticket}", h.updateTicket)
 	g.DELETE("/tickets/{ticket}", h.deleteTicket)
 

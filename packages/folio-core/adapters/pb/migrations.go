@@ -50,6 +50,9 @@ func Register(app core.App) error {
 	if err := alterForTickets(app); err != nil {
 		return fmt.Errorf("alter: %w", err)
 	}
+	if err := alterForWayfinder(app); err != nil {
+		return fmt.Errorf("alter wayfinder: %w", err)
+	}
 	if err := applyRules(app); err != nil {
 		return fmt.Errorf("rules: %w", err)
 	}
@@ -114,6 +117,34 @@ func alterForTickets(app core.App) error {
 		}
 	}
 	return nil
+}
+
+func alterForWayfinder(app core.App) error {
+	c, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+	changed := false
+
+	if c.Fields.GetByName("parent") == nil {
+		c.Fields.Add(&core.RelationField{Name: "parent", CollectionId: c.Id, CascadeDelete: false, MaxSelect: 1})
+		changed = true
+	}
+	if c.Fields.GetByName("depends_on") == nil {
+		c.Fields.Add(&core.JSONField{Name: "depends_on", MaxSize: 4000})
+		changed = true
+	}
+	if c.Fields.GetByName("wayfinder") == nil {
+		c.Fields.Add(&core.SelectField{Name: "wayfinder", MaxSelect: 1, Values: wayfinderValues})
+		changed = true
+	}
+
+	if !changed {
+		return nil
+	}
+	c.AddIndex("idx_journ_tickets_parent", false, "project, parent", "")
+	c.AddIndex("idx_journ_tickets_wayfinder", false, "wayfinder", "")
+	return app.Save(c)
 }
 
 // find returns the collection if it already exists.

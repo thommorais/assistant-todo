@@ -539,6 +539,17 @@ func (r *fakeTickets) List(_ context.Context, project domain.ProjectID, f domain
 	return out, nil
 }
 
+func (r *fakeTickets) ListByParent(_ context.Context, parent domain.TicketID) ([]domain.Ticket, error) {
+	out := []domain.Ticket{}
+	for _, t := range r.items {
+		if t.ParentID == parent {
+			out = append(out, t)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
 func (r *fakeTickets) GetByID(_ context.Context, id domain.TicketID) (domain.Ticket, error) {
 	t, ok := r.items[id]
 	if !ok {

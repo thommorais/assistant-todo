@@ -78,6 +78,7 @@ func toPlanView(p domain.Plan) planView {
 type ticketView struct {
 	ID          string       `json:"id"`
 	ProjectID   string       `json:"project_id"`
+	ParentID    string       `json:"parent_id,omitempty"`
 	Slug        string       `json:"slug"`
 	Title       string       `json:"title"`
 	Body        string       `json:"body"`
@@ -86,6 +87,9 @@ type ticketView struct {
 	Assignee    string       `json:"assignee,omitempty"`
 	Tags        []string     `json:"tags"`
 	ExternalRef string       `json:"external_ref,omitempty"`
+	DependsOn   []string     `json:"depends_on"`
+	Wayfinder   string       `json:"wayfinder,omitempty"`
+	Blocked     bool         `json:"blocked"`
 	Progress    progressView `json:"progress"`
 	CreatedBy   string       `json:"created_by,omitempty"`
 	CreatedAt   string       `json:"created_at"`
@@ -94,10 +98,11 @@ type ticketView struct {
 
 func toTicketView(t domain.Ticket) ticketView {
 	return ticketView{
-		ID: string(t.ID), ProjectID: string(t.ProjectID), Slug: t.Slug,
+		ID: string(t.ID), ProjectID: string(t.ProjectID), ParentID: string(t.ParentID), Slug: t.Slug,
 		Title: t.Title, Body: t.Body, Status: string(t.Status),
 		Priority: string(t.Priority), Assignee: string(t.Assignee),
 		Tags: orEmpty(t.Tags), ExternalRef: t.ExternalRef,
+		DependsOn: fromTicketIDs(t.DependsOn), Wayfinder: string(t.Wayfinder), Blocked: t.Blocked,
 		Progress:  progressView{Total: t.Progress.Total, Done: t.Progress.Done, Percent: t.Progress.Percent()},
 		CreatedBy: string(t.CreatedBy),
 		CreatedAt: rfc3339(t.CreatedAt), UpdatedAt: rfc3339(t.UpdatedAt),

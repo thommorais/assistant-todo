@@ -10,6 +10,7 @@ import (
 type Ticket struct {
 	ID          string   `json:"id"`
 	ProjectID   string   `json:"project_id"`
+	ParentID    string   `json:"parent_id,omitempty"`
 	Slug        string   `json:"slug"`
 	Title       string   `json:"title"`
 	Body        string   `json:"body"`
@@ -18,12 +19,18 @@ type Ticket struct {
 	Assignee    string   `json:"assignee,omitempty"`
 	Tags        []string `json:"tags"`
 	ExternalRef string   `json:"external_ref,omitempty"`
+	DependsOn   []string `json:"depends_on"`
+	Wayfinder   string   `json:"wayfinder,omitempty"`
+	Blocked     bool     `json:"blocked"`
 	Progress    Progress `json:"progress"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
 }
 
 type TicketInput struct {
+	ParentID    *string   `json:"parent_id,omitempty"`
+	DependsOn   *[]string `json:"depends_on,omitempty"`
+	Wayfinder   *string   `json:"wayfinder,omitempty"`
 	Slug        *string   `json:"slug,omitempty"`
 	Title       *string   `json:"title,omitempty"`
 	Body        *string   `json:"body,omitempty"`
@@ -78,6 +85,16 @@ func (c *Client) ListTickets(project string, filter TicketFilter) ([]Ticket, err
 		Tickets []Ticket `json:"tickets"`
 	}
 	if err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/tickets"+filter.query(), nil, &body); err != nil {
+		return nil, err
+	}
+	return body.Tickets, nil
+}
+
+func (c *Client) TicketFrontier(id string) ([]Ticket, error) {
+	var body struct {
+		Tickets []Ticket `json:"tickets"`
+	}
+	if err := c.do(http.MethodGet, "/api/folio/tickets/"+id+"/frontier", nil, &body); err != nil {
 		return nil, err
 	}
 	return body.Tickets, nil

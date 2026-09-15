@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"folio/folio-core/domain"
 	"folio/folio-core/ports"
@@ -378,4 +379,162 @@ func TestListTicketsFiltersByStatus(t *testing.T) {
 	if len(got) != 1 || got[0].ID != open.ID {
 		t.Fatalf("got %d tickets, want only the open one", len(got))
 	}
+}
+
+func TestCreateTicketCarriesGraphFields(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+	parent := f.ticket(t, f.project, "The map")
+	blocker := f.ticket(t, f.project, "Decide the shape")
+
+	child, err := f.ticketSvc.CreateTicket(ctx, f.owner, ports.CreateTicketInput{
+		ProjectID: f.project, ParentID: parent.ID, Title: "Depends on the shape",
+		DependsOn: []domain.TicketID{blocker.ID}, Wayfinder: domain.WayfinderGrilling,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if child.ParentID != parent.ID {
+		t.Errorf("parent = %q, want %q", child.ParentID, parent.ID)
+	}
+	if child.Wayfinder != domain.WayfinderGrilling {
+		t.Errorf("wayfinder = %q, want grilling", child.Wayfinder)
+	}
+	if !child.Blocked {
+		t.Error("a ticket created behind an open blocker must report blocked")
+	}
+}
+
+func TestCreateTicketRejectsAParentFromAnotherProject(t *testing.T) {
+	f := newTicketFixture(t)
+	foreign := f.ticket(t, f.other, "Elsewhere")
+
+	_, err := f.ticketSvc.CreateTicket(context.Background(), f.owner, ports.CreateTicketInput{
+		ProjectID: f.project, ParentID: foreign.ID, Title: "Sneak",
+	})
+	if !errors.Is(err, domain.ErrValidation) {
+		t.Fatalf("want validation error, got %v", err)
+	}
+}
+
+func TestUpdateTicketRejectsADependencyCycle(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+	a := f.ticket(t, f.project, "A")
+	b, err := f.ticketSvc.CreateTicket(ctx, f.owner, ports.CreateTicketInput{
+		ProjectID: f.project, Title: "B", DependsOn: []domain.TicketID{a.ID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	deps := []domain.TicketID{b.ID}
+	if _, err := f.ticketSvc.UpdateTicket(ctx, f.owner, a.ID, ports.UpdateTicketInput{DependsOn: &deps}); !errors.Is(err, domain.ErrValidation) {
+		t.Fatalf("want validation error, got %v", err)
+	}
+}
+
+func TestFrontier(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+	mapTicket := f.ticket(t, f.project, "The map")
+
+	child := func(title string, in ports.CreateTicketInput) domain.Ticket {
+		t.Helper()
+		in.ProjectID, in.ParentID, in.Title = f.project, mapTicket.ID, title
+		ticket, err := f.ticketSvc.CreateTicket(ctx, f.owner, in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ticket
+	}
+
+	at := func(ticket domain.Ticket, offset time.Duration) domain.Ticket {
+		t.Helper()
+		stored := f.tickets.items[ticket.ID]
+		stored.CreatedAt = testNow.Add(offset)
+		f.tickets.items[ticket.ID] = stored
+		return stored
+	}
+
+	takeable := child("Takeable", ports.CreateTicketInput{})
+	blocker := child("Blocker", ports.CreateTicketInput{})
+	child("Blocked", ports.CreateTicketInput{DependsOn: []domain.TicketID{blocker.ID}})
+	child("Claimed", ports.CreateTicketInput{Assignee: "u-owner"})
+	closed := child("Closed", ports.CreateTicketInput{})
+	if _, err := f.ticketSvc.SetTicketStatus(ctx, f.owner, closed.ID, domain.TicketClosed); err != nil {
+		t.Fatal(err)
+	}
+
+	at(takeable, 2*time.Hour)
+	at(blocker, time.Hour)
+
+	frontier, err := f.ticketSvc.Frontier(ctx, f.owner, mapTicket.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := make([]domain.TicketID, 0, len(frontier))
+	for _, ticket := range frontier {
+		got = append(got, ticket.ID)
+	}
+	want := []domain.TicketID{blocker.ID, takeable.ID}
+	if len(got) != len(want) {
+		t.Fatalf("frontier = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("frontier = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestReadsReportBlocked(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+	blocker := f.ticket(t, f.project, "Blocker")
+	blocked, err := f.ticketSvc.CreateTicket(ctx, f.owner, ports.CreateTicketInput{
+		ProjectID: f.project, Title: "Blocked", DependsOn: []domain.TicketID{blocker.ID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("list", func(t *testing.T) {
+		tickets, err := f.ticketSvc.ListTickets(ctx, f.owner, f.project, domain.TicketFilter{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, ticket := range tickets {
+			if ticket.ID == blocked.ID && !ticket.Blocked {
+				t.Error("a ticket behind an open blocker must list as blocked")
+			}
+			if ticket.ID == blocker.ID && ticket.Blocked {
+				t.Error("a ticket with no dependencies must not list as blocked")
+			}
+		}
+	})
+
+	t.Run("get", func(t *testing.T) {
+		got, err := f.ticketSvc.GetTicket(ctx, f.owner, blocked.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !got.Blocked {
+			t.Error("a ticket behind an open blocker must read as blocked")
+		}
+	})
+
+	t.Run("clears once the blocker closes", func(t *testing.T) {
+		if _, err := f.ticketSvc.SetTicketStatus(ctx, f.owner, blocker.ID, domain.TicketClosed); err != nil {
+			t.Fatal(err)
+		}
+		got, err := f.ticketSvc.GetTicket(ctx, f.owner, blocked.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.Blocked {
+			t.Error("a closed blocker must not block")
+		}
+	})
 }

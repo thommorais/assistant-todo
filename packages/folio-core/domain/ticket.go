@@ -16,9 +16,20 @@ func (s TicketStatus) IsTerminal() bool {
 	return s == TicketClosed || s == TicketCancelled
 }
 
+type WayfinderType string
+
+const (
+	WayfinderMap       WayfinderType = "map"
+	WayfinderResearch  WayfinderType = "research"
+	WayfinderPrototype WayfinderType = "prototype"
+	WayfinderGrilling  WayfinderType = "grilling"
+	WayfinderTask      WayfinderType = "task"
+)
+
 type Ticket struct {
 	ID          TicketID
 	ProjectID   ProjectID
+	ParentID    TicketID
 	Slug        string
 	Title       string
 	Body        string
@@ -27,14 +38,18 @@ type Ticket struct {
 	Assignee    UserID
 	Tags        []string
 	ExternalRef string
+	DependsOn   []TicketID
+	Wayfinder   WayfinderType
 	CreatedBy   UserID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 
 	Progress Progress
+	Blocked  bool
 }
 
 type TicketFilter struct {
+	ParentID TicketID
 	Status   []TicketStatus
 	Priority Priority
 	Assignee UserID

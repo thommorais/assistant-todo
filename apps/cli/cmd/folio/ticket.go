@@ -23,7 +23,7 @@ func ticketCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 	cmd.AddCommand(
 		ticketListCommand(), ticketGetCommand(), ticketBriefCommand(), ticketCreateCommand(),
-		ticketUpdateCommand(), ticketDeleteCommand(),
+		ticketUpdateCommand(), ticketDeleteCommand(), ticketFrontierCommand(),
 	)
 
 	return cmd
@@ -194,6 +194,7 @@ func renderBrief(b client.TicketBrief) error {
 
 func ticketCreateCommand() *cobra.Command {
 	var slug, body, status, priority, assignee, externalRef, tags string
+	var parent, wayfinder, dependsOn string
 
 	cmd := &cobra.Command{
 		Use:   "create <title>",
@@ -212,6 +213,9 @@ func ticketCreateCommand() *cobra.Command {
 			setIf(&in.Priority, priority)
 			setIf(&in.Assignee, assignee)
 			setIf(&in.ExternalRef, externalRef)
+			setIf(&in.ParentID, parent)
+			setIf(&in.Wayfinder, wayfinder)
+			setList(&in.DependsOn, dependsOn)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
 			}
@@ -236,6 +240,9 @@ func ticketCreateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&assignee, "assignee", "", "user id")
 	cmd.Flags().StringVar(&externalRef, "external-ref", "", "key in another tracker, e.g. JIRA-123")
 	cmd.Flags().StringVar(&tags, "tags", "", tagHelp())
+	cmd.Flags().StringVar(&parent, "parent", "", "id of the ticket this one sits under")
+	cmd.Flags().StringVar(&wayfinder, "wayfinder", "", wayfinderHelp)
+	cmd.Flags().StringVar(&dependsOn, "depends-on", "", "comma separated ticket ids that block this one")
 	registerTagCompletion(cmd)
 
 	return cmd
@@ -243,6 +250,7 @@ func ticketCreateCommand() *cobra.Command {
 
 func ticketUpdateCommand() *cobra.Command {
 	var slug, title, body, status, priority, assignee, externalRef, tags string
+	var parent, wayfinder, dependsOn string
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -257,6 +265,9 @@ func ticketUpdateCommand() *cobra.Command {
 			setIf(&in.Priority, priority)
 			setIf(&in.Assignee, assignee)
 			setIf(&in.ExternalRef, externalRef)
+			setIf(&in.ParentID, parent)
+			setIf(&in.Wayfinder, wayfinder)
+			setList(&in.DependsOn, dependsOn)
 			if err := setTags(&in.Tags, tags); err != nil {
 				return err
 			}
@@ -286,9 +297,59 @@ func ticketUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVar(&assignee, "assignee", "", "user id")
 	cmd.Flags().StringVar(&externalRef, "external-ref", "", "key in another tracker")
 	cmd.Flags().StringVar(&tags, "tags", "", "replace the tags; "+tagHelp())
+	cmd.Flags().StringVar(&parent, "parent", "", "id of the ticket this one sits under")
+	cmd.Flags().StringVar(&wayfinder, "wayfinder", "", wayfinderHelp)
+	cmd.Flags().StringVar(&dependsOn, "depends-on", "", "replace the blockers; comma separated ticket ids")
 	registerTagCompletion(cmd)
 
 	return cmd
+}
+
+func ticketFrontierCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "frontier <id>",
+		Short: "List a map's takeable children: open, unblocked and unassigned",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			folio, err := api()
+			if err != nil {
+				return err
+			}
+			tickets, err := folio.TicketFrontier(args[0])
+			if err != nil {
+				return err
+			}
+			if flagJSON {
+				return encode(tickets)
+			}
+			if len(tickets) == 0 {
+				fmt.Println("no takeable tickets")
+				return nil
+			}
+			out := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			fmt.Fprintln(out, "ID\tWAYFINDER\tTITLE")
+			for _, t := range tickets {
+				fmt.Fprintf(out, "%s\t%s\t%s\n", t.ID, t.Wayfinder, t.Title)
+			}
+			return out.Flush()
+		},
+	}
+}
+
+const wayfinderHelp = "map, research, prototype, grilling or task"
+
+func setList(dst **[]string, value string) {
+	if value == "" {
+		return
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	*dst = &out
 }
 
 func ticketDeleteCommand() *cobra.Command {
@@ -334,8 +395,12 @@ func renderTickets(tickets []client.Ticket) error {
 	fmt.Fprintln(out, "ID\tSLUG\tSTATUS\tPRIORITY\tPROGRESS\tTITLE\tTAGS")
 	for _, ticket := range tickets {
 		progress := fmt.Sprintf("%d/%d (%d%%)", ticket.Progress.Done, ticket.Progress.Total, ticket.Progress.Percent)
+		status := ticket.Status
+		if ticket.Blocked {
+			status += " (blocked)"
+		}
 		fmt.Fprintf(out, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			ticket.ID, ticket.Slug, ticket.Status, ticket.Priority,
+			ticket.ID, ticket.Slug, status, ticket.Priority,
 			progress, ticket.Title, strings.Join(ticket.Tags, ","))
 	}
 	return out.Flush()
@@ -346,10 +411,20 @@ func renderTicketDetail(ticket client.Ticket) error {
 	fmt.Printf("%s  %s  %s  %d/%d done\n",
 		ticket.ID, ticket.Status, ticket.Priority, ticket.Progress.Done, ticket.Progress.Total)
 
-	for label, value := range map[string]string{"assignee": ticket.Assignee, "external ref": ticket.ExternalRef} {
+	for label, value := range map[string]string{
+		"assignee": ticket.Assignee, "external ref": ticket.ExternalRef,
+		"parent": ticket.ParentID, "wayfinder": ticket.Wayfinder,
+	} {
 		if value != "" {
 			fmt.Printf("%s: %s\n", label, value)
 		}
+	}
+	if len(ticket.DependsOn) > 0 {
+		blocked := ""
+		if ticket.Blocked {
+			blocked = " (blocked)"
+		}
+		fmt.Println("depends on: " + strings.Join(ticket.DependsOn, ", ") + blocked)
 	}
 	if len(ticket.Tags) > 0 {
 		fmt.Println("tags: " + strings.Join(ticket.Tags, ", "))

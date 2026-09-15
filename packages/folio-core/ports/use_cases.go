@@ -65,6 +65,8 @@ type TicketUseCase interface {
 	SetTicketStatus(ctx context.Context, actor Actor, id domain.TicketID, status domain.TicketStatus) (domain.Ticket, error)
 	DeleteTicket(ctx context.Context, actor Actor, id domain.TicketID) error
 
+	Frontier(ctx context.Context, actor Actor, mapID domain.TicketID) ([]domain.Ticket, error)
+
 	GetTicketBrief(ctx context.Context, actor Actor, id domain.TicketID, in BriefOptions) (domain.TicketBrief, error)
 	GetTicketBriefBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string, in BriefOptions) (domain.TicketBrief, error)
 }
@@ -75,6 +77,7 @@ type BriefOptions struct {
 
 type CreateTicketInput struct {
 	ProjectID   domain.ProjectID
+	ParentID    domain.TicketID
 	Slug        string
 	Title       string
 	Body        string
@@ -83,9 +86,12 @@ type CreateTicketInput struct {
 	Assignee    domain.UserID
 	Tags        []string
 	ExternalRef string
+	DependsOn   []domain.TicketID
+	Wayfinder   domain.WayfinderType
 }
 
 type UpdateTicketInput struct {
+	ParentID    *domain.TicketID
 	Slug        *string
 	Title       *string
 	Body        *string
@@ -94,6 +100,8 @@ type UpdateTicketInput struct {
 	Assignee    *domain.UserID
 	Tags        *[]string
 	ExternalRef *string
+	DependsOn   *[]domain.TicketID
+	Wayfinder   *domain.WayfinderType
 }
 
 type TodoUseCase interface {
