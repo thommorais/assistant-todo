@@ -9,7 +9,11 @@ type (
 	TicketID  string
 	TodoID    string
 	CycleID   string
-	JournalID string
-	DocID     string
-	UserID    string
+
+	TicketLogID string
+	PlanLogID   string
+	TodoLogID   string
+	JournalID   string
+	DocID       string
+	UserID      string
 )

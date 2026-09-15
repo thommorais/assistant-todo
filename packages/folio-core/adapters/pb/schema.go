@@ -298,6 +298,92 @@ func ensureCycles(app core.App) error {
 	return app.Save(c)
 }
 
+func ensureWorkLogs(app core.App) error {
+	projects, err := app.FindCollectionByNameOrId(ColProjects)
+	if err != nil {
+		return err
+	}
+	users, err := app.FindCollectionByNameOrId(ColUsers)
+	if err != nil {
+		return err
+	}
+	tickets, err := app.FindCollectionByNameOrId(ColTickets)
+	if err != nil {
+		return err
+	}
+	plans, err := app.FindCollectionByNameOrId(ColPlans)
+	if err != nil {
+		return err
+	}
+	todos, err := app.FindCollectionByNameOrId(ColTodos)
+	if err != nil {
+		return err
+	}
+	cycles, err := app.FindCollectionByNameOrId(ColCycles)
+	if err != nil {
+		return err
+	}
+
+	projectField := func() *core.RelationField {
+		return &core.RelationField{Name: "project", Required: true, CollectionId: projects.Id, CascadeDelete: true, MaxSelect: 1}
+	}
+	bodyField := func() *core.EditorField {
+		return &core.EditorField{Name: "body", MaxSize: 500000}
+	}
+	authorField := func() *core.RelationField {
+		return &core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1}
+	}
+
+	if _, ok := find(app, ColTicketLogs); !ok {
+		c := core.NewBaseCollection(ColTicketLogs)
+		c.Fields.Add(
+			projectField(),
+			&core.RelationField{Name: "ticket", Required: true, CollectionId: tickets.Id, CascadeDelete: true, MaxSelect: 1},
+			&core.RelationField{Name: "cycle", CollectionId: cycles.Id, CascadeDelete: false, MaxSelect: 1},
+			bodyField(),
+			authorField(),
+		)
+		c.Fields.Add(autodates()...)
+		c.AddIndex("idx_journ_ticket_logs_ticket", false, "ticket, created", "")
+		c.AddIndex("idx_journ_ticket_logs_cycle", false, "cycle", "")
+		if err := app.Save(c); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := find(app, ColPlanLogs); !ok {
+		c := core.NewBaseCollection(ColPlanLogs)
+		c.Fields.Add(
+			projectField(),
+			&core.RelationField{Name: "plan", Required: true, CollectionId: plans.Id, CascadeDelete: true, MaxSelect: 1},
+			bodyField(),
+			authorField(),
+		)
+		c.Fields.Add(autodates()...)
+		c.AddIndex("idx_journ_plan_logs_plan", false, "plan, created", "")
+		if err := app.Save(c); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := find(app, ColTodoLogs); !ok {
+		c := core.NewBaseCollection(ColTodoLogs)
+		c.Fields.Add(
+			projectField(),
+			&core.RelationField{Name: "todo", Required: true, CollectionId: todos.Id, CascadeDelete: true, MaxSelect: 1},
+			bodyField(),
+			authorField(),
+		)
+		c.Fields.Add(autodates()...)
+		c.AddIndex("idx_journ_todo_logs_todo", false, "todo, created", "")
+		if err := app.Save(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func ensureDocs(app core.App) error {
 	if _, ok := find(app, ColDocs); ok {
 		return nil
@@ -377,7 +463,7 @@ func applyRules(app core.App) error {
 		return err
 	}
 
-	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColJournal, ColCycles} {
+	for _, name := range []string{ColTickets, ColPlans, ColTodos, ColDocs, ColJournal, ColCycles, ColTicketLogs, ColPlanLogs, ColTodoLogs} {
 		c, err := app.FindCollectionByNameOrId(name)
 		if err != nil {
 			return err

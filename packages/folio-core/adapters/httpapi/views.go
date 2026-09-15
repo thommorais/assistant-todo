@@ -138,6 +138,61 @@ func toCycleView(c domain.Cycle) cycleView {
 	return out
 }
 
+type ticketLogView struct {
+	ID        string `json:"id"`
+	ProjectID string `json:"project_id"`
+	TicketID  string `json:"ticket_id"`
+	CycleID   string `json:"cycle_id,omitempty"`
+	Body      string `json:"body"`
+	CreatedBy string `json:"created_by,omitempty"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func toTicketLogView(l domain.TicketLog) ticketLogView {
+	return ticketLogView{
+		ID: string(l.ID), ProjectID: string(l.ProjectID), TicketID: string(l.TicketID),
+		CycleID: string(l.CycleID), Body: l.Body, CreatedBy: string(l.CreatedBy),
+		CreatedAt: rfc3339(l.CreatedAt), UpdatedAt: rfc3339(l.UpdatedAt),
+	}
+}
+
+type planLogView struct {
+	ID        string `json:"id"`
+	ProjectID string `json:"project_id"`
+	PlanID    string `json:"plan_id"`
+	Body      string `json:"body"`
+	CreatedBy string `json:"created_by,omitempty"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func toPlanLogView(l domain.PlanLog) planLogView {
+	return planLogView{
+		ID: string(l.ID), ProjectID: string(l.ProjectID), PlanID: string(l.PlanID),
+		Body: l.Body, CreatedBy: string(l.CreatedBy),
+		CreatedAt: rfc3339(l.CreatedAt), UpdatedAt: rfc3339(l.UpdatedAt),
+	}
+}
+
+type todoLogView struct {
+	ID        string `json:"id"`
+	ProjectID string `json:"project_id"`
+	TodoID    string `json:"todo_id"`
+	Body      string `json:"body"`
+	CreatedBy string `json:"created_by,omitempty"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+func toTodoLogView(l domain.TodoLog) todoLogView {
+	return todoLogView{
+		ID: string(l.ID), ProjectID: string(l.ProjectID), TodoID: string(l.TodoID),
+		Body: l.Body, CreatedBy: string(l.CreatedBy),
+		CreatedAt: rfc3339(l.CreatedAt), UpdatedAt: rfc3339(l.UpdatedAt),
+	}
+}
+
 type todoView struct {
 	ID        string   `json:"id"`
 	ProjectID string   `json:"project_id"`

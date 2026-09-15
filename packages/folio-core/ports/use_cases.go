@@ -111,6 +111,20 @@ type CycleUseCase interface {
 	ResolveCycle(ctx context.Context, actor Actor, id domain.CycleID, resolution string) (domain.Cycle, error)
 }
 
+type WorkLogUseCase interface {
+	ListTicketLogs(ctx context.Context, actor Actor, ticket domain.TicketID, f domain.TicketLogFilter) ([]domain.TicketLog, error)
+	WriteTicketLog(ctx context.Context, actor Actor, ticket domain.TicketID, body string) (domain.TicketLog, error)
+	DeleteTicketLog(ctx context.Context, actor Actor, id domain.TicketLogID) error
+
+	ListPlanLogs(ctx context.Context, actor Actor, plan domain.PlanID, f domain.PlanLogFilter) ([]domain.PlanLog, error)
+	WritePlanLog(ctx context.Context, actor Actor, plan domain.PlanID, body string) (domain.PlanLog, error)
+	DeletePlanLog(ctx context.Context, actor Actor, id domain.PlanLogID) error
+
+	ListTodoLogs(ctx context.Context, actor Actor, todo domain.TodoID, f domain.TodoLogFilter) ([]domain.TodoLog, error)
+	WriteTodoLog(ctx context.Context, actor Actor, todo domain.TodoID, body string) (domain.TodoLog, error)
+	DeleteTodoLog(ctx context.Context, actor Actor, id domain.TodoLogID) error
+}
+
 type TodoUseCase interface {
 	ListTodos(ctx context.Context, actor Actor, project domain.ProjectID, f domain.TodoFilter) ([]domain.Todo, error)
 	GetTodo(ctx context.Context, actor Actor, id domain.TodoID) (domain.Todo, error)

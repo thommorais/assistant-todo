@@ -17,6 +17,7 @@ type ticketFixture struct {
 	plans      *fakePlans
 	journal    *fakeJournal
 	cycles     *fakeCycles
+	ticketLogs *fakeTicketLogs
 	docs       *fakeDocs
 	ticketSvc  *services.TicketService
 	todoSvc    *services.TodoService
@@ -24,6 +25,7 @@ type ticketFixture struct {
 	docSvc     *services.DocService
 	journalSvc *services.JournalService
 	cycleSvc   *services.CycleService
+	workLogSvc *services.WorkLogService
 	owner      ports.Actor
 	viewer     ports.Actor
 	outside    ports.Actor
@@ -49,6 +51,9 @@ func newTicketFixture(t *testing.T) *ticketFixture {
 	plans := newFakePlans()
 	journal := newFakeJournal()
 	cycles := newFakeCycles()
+	ticketLogs := newFakeTicketLogs()
+	planLogs := newFakePlanLogs()
+	todoLogs := newFakeTodoLogs()
 	docs := newFakeDocs()
 	guard := services.NewProjectGuard(projects)
 	clock := &fakeClock{now: testNow}
@@ -56,13 +61,14 @@ func newTicketFixture(t *testing.T) *ticketFixture {
 	todoSvc := services.NewTodoService(todos, plans, tickets, guard, clock, &seqIDs{prefix: "t"}, nopLogger{})
 
 	return &ticketFixture{
-		tickets: tickets, todos: todos, plans: plans, journal: journal, docs: docs, cycles: cycles,
+		tickets: tickets, todos: todos, plans: plans, journal: journal, docs: docs, cycles: cycles, ticketLogs: ticketLogs,
 		ticketSvc:  services.NewTicketService(tickets, todos, plans, journal, docs, cycles, guard, clock, &seqIDs{prefix: "tk"}, nopLogger{}),
 		todoSvc:    todoSvc,
 		planSvc:    services.NewPlanService(plans, todos, tickets, todoSvc, guard, clock, &seqIDs{prefix: "pl"}, nopLogger{}),
 		docSvc:     services.NewDocService(docs, tickets, guard, clock, &seqIDs{prefix: "d"}, nopLogger{}),
 		journalSvc: services.NewJournalService(journal, tickets, guard, clock, &seqIDs{prefix: "l"}, nopLogger{}),
 		cycleSvc:   services.NewCycleService(cycles, tickets, guard, clock, &seqIDs{prefix: "cy"}, nopLogger{}),
+		workLogSvc: services.NewWorkLogService(ticketLogs, planLogs, todoLogs, tickets, plans, todos, cycles, guard, clock, &seqIDs{prefix: "wl"}, nopLogger{}),
 		owner:      ports.Actor{UserID: "u-owner"},
 		viewer:     ports.Actor{UserID: "u-viewer"},
 		outside:    ports.Actor{UserID: "u-stranger"},

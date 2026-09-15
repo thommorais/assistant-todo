@@ -84,6 +84,30 @@ type CycleRepository interface {
 	Delete(ctx context.Context, id domain.CycleID) error
 }
 
+type TicketLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.TicketLogFilter) ([]domain.TicketLog, error)
+	GetByID(ctx context.Context, id domain.TicketLogID) (domain.TicketLog, error)
+	Create(ctx context.Context, l domain.TicketLog) (domain.TicketLog, error)
+	Update(ctx context.Context, l domain.TicketLog) (domain.TicketLog, error)
+	Delete(ctx context.Context, id domain.TicketLogID) error
+}
+
+type PlanLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.PlanLogFilter) ([]domain.PlanLog, error)
+	GetByID(ctx context.Context, id domain.PlanLogID) (domain.PlanLog, error)
+	Create(ctx context.Context, l domain.PlanLog) (domain.PlanLog, error)
+	Update(ctx context.Context, l domain.PlanLog) (domain.PlanLog, error)
+	Delete(ctx context.Context, id domain.PlanLogID) error
+}
+
+type TodoLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.TodoLogFilter) ([]domain.TodoLog, error)
+	GetByID(ctx context.Context, id domain.TodoLogID) (domain.TodoLog, error)
+	Create(ctx context.Context, l domain.TodoLog) (domain.TodoLog, error)
+	Update(ctx context.Context, l domain.TodoLog) (domain.TodoLog, error)
+	Delete(ctx context.Context, id domain.TodoLogID) error
+}
+
 type DocRepository interface {
 	List(ctx context.Context, project domain.ProjectID, f domain.DocFilter) ([]domain.Doc, error)
 	GetByID(ctx context.Context, id domain.DocID) (domain.Doc, error)

@@ -636,17 +636,179 @@ func (r *fakeCycles) Delete(_ context.Context, id domain.CycleID) error {
 	return nil
 }
 
+type fakeTicketLogs struct {
+	items map[domain.TicketLogID]domain.TicketLog
+}
+
+func newFakeTicketLogs() *fakeTicketLogs {
+	return &fakeTicketLogs{items: map[domain.TicketLogID]domain.TicketLog{}}
+}
+
+func (r *fakeTicketLogs) List(_ context.Context, project domain.ProjectID, f domain.TicketLogFilter) ([]domain.TicketLog, error) {
+	out := []domain.TicketLog{}
+	for _, l := range r.items {
+		if l.ProjectID != project {
+			continue
+		}
+		if f.TicketID != "" && l.TicketID != f.TicketID {
+			continue
+		}
+		if f.CycleID != "" && l.CycleID != f.CycleID {
+			continue
+		}
+		out = append(out, l)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTicketLogs) GetByID(_ context.Context, id domain.TicketLogID) (domain.TicketLog, error) {
+	l, ok := r.items[id]
+	if !ok {
+		return domain.TicketLog{}, domain.ErrNotFound
+	}
+	return l, nil
+}
+
+func (r *fakeTicketLogs) Create(_ context.Context, l domain.TicketLog) (domain.TicketLog, error) {
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakeTicketLogs) Update(_ context.Context, l domain.TicketLog) (domain.TicketLog, error) {
+	if _, ok := r.items[l.ID]; !ok {
+		return domain.TicketLog{}, domain.ErrNotFound
+	}
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakeTicketLogs) Delete(_ context.Context, id domain.TicketLogID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+type fakePlanLogs struct {
+	items map[domain.PlanLogID]domain.PlanLog
+}
+
+func newFakePlanLogs() *fakePlanLogs {
+	return &fakePlanLogs{items: map[domain.PlanLogID]domain.PlanLog{}}
+}
+
+func (r *fakePlanLogs) List(_ context.Context, project domain.ProjectID, f domain.PlanLogFilter) ([]domain.PlanLog, error) {
+	out := []domain.PlanLog{}
+	for _, l := range r.items {
+		if l.ProjectID != project {
+			continue
+		}
+		if f.PlanID != "" && l.PlanID != f.PlanID {
+			continue
+		}
+		out = append(out, l)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakePlanLogs) GetByID(_ context.Context, id domain.PlanLogID) (domain.PlanLog, error) {
+	l, ok := r.items[id]
+	if !ok {
+		return domain.PlanLog{}, domain.ErrNotFound
+	}
+	return l, nil
+}
+
+func (r *fakePlanLogs) Create(_ context.Context, l domain.PlanLog) (domain.PlanLog, error) {
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakePlanLogs) Update(_ context.Context, l domain.PlanLog) (domain.PlanLog, error) {
+	if _, ok := r.items[l.ID]; !ok {
+		return domain.PlanLog{}, domain.ErrNotFound
+	}
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakePlanLogs) Delete(_ context.Context, id domain.PlanLogID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
+type fakeTodoLogs struct {
+	items map[domain.TodoLogID]domain.TodoLog
+}
+
+func newFakeTodoLogs() *fakeTodoLogs {
+	return &fakeTodoLogs{items: map[domain.TodoLogID]domain.TodoLog{}}
+}
+
+func (r *fakeTodoLogs) List(_ context.Context, project domain.ProjectID, f domain.TodoLogFilter) ([]domain.TodoLog, error) {
+	out := []domain.TodoLog{}
+	for _, l := range r.items {
+		if l.ProjectID != project {
+			continue
+		}
+		if f.TodoID != "" && l.TodoID != f.TodoID {
+			continue
+		}
+		out = append(out, l)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (r *fakeTodoLogs) GetByID(_ context.Context, id domain.TodoLogID) (domain.TodoLog, error) {
+	l, ok := r.items[id]
+	if !ok {
+		return domain.TodoLog{}, domain.ErrNotFound
+	}
+	return l, nil
+}
+
+func (r *fakeTodoLogs) Create(_ context.Context, l domain.TodoLog) (domain.TodoLog, error) {
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakeTodoLogs) Update(_ context.Context, l domain.TodoLog) (domain.TodoLog, error) {
+	if _, ok := r.items[l.ID]; !ok {
+		return domain.TodoLog{}, domain.ErrNotFound
+	}
+	r.items[l.ID] = l
+	return l, nil
+}
+
+func (r *fakeTodoLogs) Delete(_ context.Context, id domain.TodoLogID) error {
+	if _, ok := r.items[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(r.items, id)
+	return nil
+}
+
 // compile-time checks that the doubles satisfy the ports they stand in for.
 var (
-	_ ports.ProjectRepository = (*fakeProjects)(nil)
-	_ ports.PlanRepository    = (*fakePlans)(nil)
-	_ ports.TodoRepository    = (*fakeTodos)(nil)
-	_ ports.JournalRepository = (*fakeJournal)(nil)
-	_ ports.DocRepository     = (*fakeDocs)(nil)
-	_ ports.TicketRepository  = (*fakeTickets)(nil)
-	_ ports.CycleRepository   = (*fakeCycles)(nil)
-	_ ports.SearchRepository  = (*fakeSearch)(nil)
-	_ ports.Clock             = (*fakeClock)(nil)
-	_ ports.IDGenerator       = (*seqIDs)(nil)
-	_ ports.Logger            = nopLogger{}
+	_ ports.ProjectRepository   = (*fakeProjects)(nil)
+	_ ports.PlanRepository      = (*fakePlans)(nil)
+	_ ports.TodoRepository      = (*fakeTodos)(nil)
+	_ ports.JournalRepository   = (*fakeJournal)(nil)
+	_ ports.DocRepository       = (*fakeDocs)(nil)
+	_ ports.TicketRepository    = (*fakeTickets)(nil)
+	_ ports.CycleRepository     = (*fakeCycles)(nil)
+	_ ports.TicketLogRepository = (*fakeTicketLogs)(nil)
+	_ ports.PlanLogRepository   = (*fakePlanLogs)(nil)
+	_ ports.TodoLogRepository   = (*fakeTodoLogs)(nil)
+	_ ports.SearchRepository    = (*fakeSearch)(nil)
+	_ ports.Clock               = (*fakeClock)(nil)
+	_ ports.IDGenerator         = (*seqIDs)(nil)
+	_ ports.Logger              = nopLogger{}
 )
