@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useParams } from '@tanstack/react-router'
-import { Heading } from '@thom/ui/heading'
+import { Breadcrumbs } from '_/components/breadcrumbs'
 import { ProjectTabs } from '_/components/project-tabs'
 
 const ProjectLayout = () => {
@@ -7,7 +7,7 @@ const ProjectLayout = () => {
 
 	return (
 		<div className='mx-auto w-full max-w-5xl space-y-6'>
-			<Heading>{slug}</Heading>
+			<Breadcrumbs />
 
 			<ProjectTabs slug={slug} />
 
