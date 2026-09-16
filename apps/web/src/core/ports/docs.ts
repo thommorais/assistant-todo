@@ -16,6 +16,7 @@ export type DocFilter = {
 export type DocsPort = {
 	readonly count: (project: string, filter?: DocFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: DocFilter) => Promise<Result<ReadonlyArray<Doc>>>
+	readonly get: (project: string, slug: string) => Promise<Result<Doc>>
 	readonly subscribeToList: (
 		project: string,
 		update: (doc: Doc, action: ActionEvent) => void,

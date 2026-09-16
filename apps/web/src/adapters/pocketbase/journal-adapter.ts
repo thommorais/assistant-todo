@@ -20,6 +20,7 @@ type JournalRecord = JournJournalResponse<unknown, string[]>
 
 type LogColumns = {
 	'project.slug': string
+	slug: string
 	title: string
 	body: string
 	branch: string
@@ -38,6 +39,7 @@ const toJournalEntry = (record: JournalRecord): JournalEntry => ({
 	ticketId: record.ticket ? toTicketId(record.ticket) : undefined,
 	planId: record.plan ? toPlanId(record.plan) : undefined,
 	todoId: record.todo ? toTodoId(record.todo) : undefined,
+	slug: record.slug,
 	title: record.title,
 	body: record.body ?? '',
 	branch: record.branch ?? '',
@@ -87,6 +89,20 @@ export const createJournalAdapter = (): JournalPort => {
 			return error
 				? err(new Error(`Failed to list logs: ${error.message}`, { cause: error }))
 				: ok(data.map(toJournalEntry))
+		},
+
+		get: async (project, slug): Promise<Result<JournalEntry>> => {
+			// A slug is unique only within a project, so both halves are bound.
+			const { expr, params } = filterFor<LogColumns>()([
+				{ field: 'project.slug', comparator: 'eq', value: project },
+				{ field: 'slug', comparator: 'eq', value: slug },
+			])
+
+			const { data, error } = await tryCatch(collection.getFirstListItem<JournalRecord>(client.filter(expr, params)))
+
+			return error
+				? err(new Error(`Failed to load journal entry ${slug}: ${error.message}`, { cause: error }))
+				: ok(toJournalEntry(data))
 		},
 
 		subscribeToList: async (project, update, filter = {}): Promise<Result<Unsubscribe>> => {

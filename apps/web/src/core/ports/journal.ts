@@ -20,6 +20,7 @@ export type JournalFilter = {
 export type JournalPort = {
 	readonly count: (project: string, filter?: JournalFilter) => Promise<Result<number>>
 	readonly list: (project: string, filter?: JournalFilter) => Promise<Result<ReadonlyArray<JournalEntry>>>
+	readonly get: (project: string, slug: string) => Promise<Result<JournalEntry>>
 	readonly subscribeToList: (
 		project: string,
 		update: (entry: JournalEntry, action: ActionEvent) => void,

@@ -1,12 +1,12 @@
-import { useParams, useSearch } from '@tanstack/react-router'
+import { Link, useParams, useSearch } from '@tanstack/react-router'
 import { Badge } from '@thom/ui/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@thom/ui/card'
 import { useDocs } from '_/app/use-docs'
 import { DocsFilters } from './doc-filters'
 
 const Docs = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/docs' })
-	const search = useSearch({ from: '/_authenticated/$slug/docs' })
+	const { slug } = useParams({ from: '/_authenticated/$slug/docs/' })
+	const search = useSearch({ from: '/_authenticated/$slug/docs/' })
 	const state = useDocs(slug, {
 		ticketId: search.ticket,
 		tags: search.tags,
@@ -38,21 +38,23 @@ const Docs = () => {
 		return (
 			<div className='grid gap-4 sm:grid-cols-2'>
 				{state.docs.map(doc => (
-					<Card key={doc.id} interactive>
-						<CardHeader>
-							<div className='flex items-start justify-between gap-4'>
-								<CardTitle>{doc.title}</CardTitle>
-								{doc.tags.map(tag => (
-									<Badge key={tag} color='muted'>
-										{tag}
-									</Badge>
-								))}
-							</div>
+					<Link key={doc.id} to='/$slug/docs/$doc' params={{ slug, doc: doc.slug }} className='block'>
+						<Card interactive>
+							<CardHeader>
+								<div className='flex items-start justify-between gap-4'>
+									<CardTitle>{doc.title}</CardTitle>
+									{doc.tags.map(tag => (
+										<Badge key={tag} color='muted'>
+											{tag}
+										</Badge>
+									))}
+								</div>
 
-							<CardDescription>{doc.body.slice(0, 140) || 'Empty.'}</CardDescription>
-							<span className='text-dimmer pt-2 text-xs'>{doc.slug}</span>
-						</CardHeader>
-					</Card>
+								<CardDescription>{doc.body.slice(0, 140) || 'Empty.'}</CardDescription>
+								<span className='text-dimmer pt-2 text-xs'>{doc.slug}</span>
+							</CardHeader>
+						</Card>
+					</Link>
 				))}
 			</div>
 		)

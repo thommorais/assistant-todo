@@ -173,3 +173,22 @@
 	transition: 100ms ease;
 	transition-property: height;
 }
+
+/* Shiki emits both themes as custom properties on every token. The dark
+   variant is bound to the same .dark class the rest of the theme uses, so a
+   code block follows the toggle rather than the OS setting. */
+.shiki-host .shiki,
+.shiki-host .shiki span {
+	color: var(--shiki-light);
+	background-color: transparent;
+}
+
+.dark .shiki-host .shiki,
+.dark .shiki-host .shiki span {
+	color: var(--shiki-dark);
+}
+
+.shiki-host pre.shiki {
+	margin: 0;
+	padding: calc(var(--spacing) * 4);
+}

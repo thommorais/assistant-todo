@@ -1,5 +1,7 @@
 import { Link, useMatches, useParams } from '@tanstack/react-router'
 import { House } from 'lucide-react'
+import { useDoc } from '_/app/use-doc'
+import { useJournalEntry } from '_/app/use-journal-entry'
 import { useTicket } from '_/app/use-ticket'
 
 const sectionLabels: Record<string, string> = {
@@ -24,22 +26,44 @@ const Separator = () => (
 	</span>
 )
 
-// The ticket title only exists after its fetch resolves, so the leaf crumb
-// falls back to the slug already in the URL rather than collapsing the trail.
-const useTicketLabel = (slug: string | undefined, ticket: string | undefined) => {
-	const state = useTicket(slug ?? '', ticket ?? '')
+// A record's title only exists after its fetch resolves, so a leaf crumb falls
+// back to the slug already in the URL rather than collapsing the trail.
+const useLeafLabel = (project: string | undefined, params: LeafParams) => {
+	const ticket = useTicket(project ?? '', params.ticket ?? '')
+	const doc = useDoc(project ?? '', params.doc ?? '')
+	const entry = useJournalEntry(project ?? '', params.entry ?? '')
 
-	if (slug === undefined || ticket === undefined) return undefined
+	if (project === undefined) return undefined
 
-	return state.status === 'ready' ? state.ticket.title : ticket
+	if (params.ticket !== undefined) {
+		return ticket.status === 'ready' ? ticket.ticket.title : params.ticket
+	}
+	if (params.doc !== undefined) {
+		return doc.status === 'ready' ? doc.doc.title : params.doc
+	}
+	if (params.entry !== undefined) {
+		return entry.status === 'ready' ? entry.entry.title : params.entry
+	}
+
+	return undefined
+}
+
+type LeafParams = {
+	readonly ticket: string | undefined
+	readonly doc: string | undefined
+	readonly entry: string | undefined
 }
 
 export const Breadcrumbs = () => {
 	const matches = useMatches()
 	const params = useParams({ strict: false })
 	const slug = typeof params.slug === 'string' ? params.slug : undefined
-	const ticket = typeof params.ticket === 'string' ? params.ticket : undefined
-	const ticketLabel = useTicketLabel(slug, ticket)
+	const leaf: LeafParams = {
+		ticket: typeof params.ticket === 'string' ? params.ticket : undefined,
+		doc: typeof params.doc === 'string' ? params.doc : undefined,
+		entry: typeof params.entry === 'string' ? params.entry : undefined,
+	}
+	const leafLabel = useLeafLabel(slug, leaf)
 
 	const routeId = matches.at(-1)?.routeId ?? ''
 	const section = Object.keys(sectionLabels).find(name => routeId.includes(`/$slug/${name}`))
@@ -62,8 +86,8 @@ export const Breadcrumbs = () => {
 		})
 	}
 
-	if (ticketLabel !== undefined) {
-		crumbs.push({ key: 'ticket', label: ticketLabel, title: ticketLabel })
+	if (leafLabel !== undefined) {
+		crumbs.push({ key: 'leaf', label: leafLabel, title: leafLabel })
 	}
 
 	return (

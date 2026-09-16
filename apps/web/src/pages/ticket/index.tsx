@@ -35,12 +35,11 @@ const Section = ({ title, children }: { readonly title: string; readonly childre
 
 const Empty = ({ what }: { readonly what: string }) => <p className='text-dim text-sm'>No {what} on this ticket.</p>
 
-
 const TicketDetail = () => {
 	const { slug, ticket: ticketSlug } = useParams({ from: '/_authenticated/$slug/tickets/$ticket' })
 	const state = useTicket(slug, ticketSlug)
 
-	if (state.status === 'loading') {
+	if (state.status === 'idle' || state.status === 'loading') {
 		return <div className='bg-accent/40 h-32 animate-pulse' />
 	}
 

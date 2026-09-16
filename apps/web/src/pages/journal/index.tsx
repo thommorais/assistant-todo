@@ -1,4 +1,4 @@
-import { useParams, useSearch } from '@tanstack/react-router'
+import { Link, useParams, useSearch } from '@tanstack/react-router'
 import { Badge } from '@thom/ui/badge'
 import { useJournal } from '_/app/use-journal'
 import { LogsFilters } from './journal-filters'
@@ -6,8 +6,8 @@ import { LogsFilters } from './journal-filters'
 const dayMonth = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' })
 
 const Logs = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/journal' })
-	const search = useSearch({ from: '/_authenticated/$slug/journal' })
+	const { slug } = useParams({ from: '/_authenticated/$slug/journal/' })
+	const search = useSearch({ from: '/_authenticated/$slug/journal/' })
 	const state = useJournal(slug, {
 		ticketId: search.ticket,
 		tags: search.tags,
@@ -20,13 +20,13 @@ const Logs = () => {
 	const list = (() => {
 		if (state.status === 'loading') {
 			return (
-			<div className='border-border divide-border divide-y border'>
-				{[0, 1, 2].map(key => (
-					<div key={key} className='bg-accent/40 h-24 animate-pulse' />
-				))}
-			</div>
-		)
-	}
+				<div className='border-border divide-border divide-y border'>
+					{[0, 1, 2].map(key => (
+						<div key={key} className='bg-accent/40 h-24 animate-pulse' />
+					))}
+				</div>
+			)
+		}
 
 		if (state.status === 'failed') {
 			return <p className='text-destructive text-sm'>{state.message}</p>
@@ -37,29 +37,34 @@ const Logs = () => {
 		}
 
 		return (
-		<div className='border-border divide-border divide-y border'>
-			{state.journal.map(entry => (
-				<article key={entry.id} className='space-y-2 px-4 py-4'>
-					<div className='flex items-start justify-between gap-4'>
-						<h3 className='text-sm font-medium'>{entry.title}</h3>
-						<span className='text-dimmer shrink-0 text-xs'>{dayMonth.format(entry.createdAt)}</span>
-					</div>
+			<div className='border-border divide-border divide-y border'>
+				{state.journal.map(entry => (
+					<Link
+						key={entry.id}
+						to='/$slug/journal/$entry'
+						params={{ slug, entry: entry.slug }}
+						className='hover:bg-accent/40 block space-y-2 px-4 py-4 transition-colors'
+					>
+						<div className='flex items-start justify-between gap-4'>
+							<h3 className='text-sm font-medium'>{entry.title}</h3>
+							<span className='text-dimmer shrink-0 text-xs'>{dayMonth.format(entry.createdAt)}</span>
+						</div>
 
-					{entry.body && <p className='text-dim line-clamp-2 text-sm'>{entry.body}</p>}
+						{entry.body && <p className='text-dim line-clamp-2 text-sm'>{entry.body}</p>}
 
-					<div className='flex flex-wrap items-center gap-2 pt-1'>
-						{entry.branch && <span className='text-dimmer font-mono text-xs'>{entry.branch}</span>}
-						{entry.externalRef && <span className='text-dimmer font-mono text-xs'>{entry.externalRef}</span>}
-						{entry.pr && <span className='text-dimmer font-mono text-xs'>#{entry.pr}</span>}
-						{entry.tags.map(tag => (
-							<Badge key={tag} color='muted'>
-								{tag}
-							</Badge>
-						))}
-					</div>
-				</article>
-			))}
-		</div>
+						<div className='flex flex-wrap items-center gap-2 pt-1'>
+							{entry.branch && <span className='text-dimmer font-mono text-xs'>{entry.branch}</span>}
+							{entry.externalRef && <span className='text-dimmer font-mono text-xs'>{entry.externalRef}</span>}
+							{entry.pr && <span className='text-dimmer font-mono text-xs'>#{entry.pr}</span>}
+							{entry.tags.map(tag => (
+								<Badge key={tag} color='muted'>
+									{tag}
+								</Badge>
+							))}
+						</div>
+					</Link>
+				))}
+			</div>
 		)
 	})()
 

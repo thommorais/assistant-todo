@@ -14,13 +14,13 @@ const SORT_LABELS: Record<LogSortField, string> = {
 }
 
 const LogsFilters = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/journal' })
-	const search = useSearch({ from: '/_authenticated/$slug/journal' })
+	const { slug } = useParams({ from: '/_authenticated/$slug/journal/' })
+	const search = useSearch({ from: '/_authenticated/$slug/journal/' })
 	const navigate = useNavigate()
 	const tickets = useTickets(slug)
 
 	const setFilter = (patch: Partial<LogsSearch>) => {
-		void navigate({ from: '/$slug/journal', to: '.', search: (prev: LogsSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/journal/', to: '.', search: (prev: LogsSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const ticketTitle = (id: string): string =>

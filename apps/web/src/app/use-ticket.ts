@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useState } from 'react'
 import { useContainer } from './container'
 
 type TicketState =
+	| { readonly status: 'idle' }
 	| { readonly status: 'loading' }
 	| { readonly status: 'ready'; readonly ticket: Ticket }
 	| { readonly status: 'failed'; readonly message: string }
@@ -11,7 +12,7 @@ type TicketState =
 // CLI and the API address one.
 export const useTicket = (project: string, slug: string): TicketState => {
 	const { tickets } = useContainer()
-	const [state, setState] = useState<TicketState>({ status: 'loading' })
+	const [state, setState] = useState<TicketState>({ status: 'idle' })
 
 	const load = useEffectEvent(async () => {
 		setState({ status: 'loading' })
@@ -23,6 +24,11 @@ export const useTicket = (project: string, slug: string): TicketState => {
 	})
 
 	useEffect(() => {
+		if (!slug) {
+			setState({ status: 'idle' })
+			return
+		}
+
 		load()
 	}, [project, slug])
 

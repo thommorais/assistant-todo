@@ -10,7 +10,7 @@ export type DocsSearch = {
 	readonly sort?: Sort<DocSortField>
 }
 
-export const Route = createFileRoute('/_authenticated/$slug/docs')({
+export const Route = createFileRoute('/_authenticated/$slug/docs/')({
 	validateSearch: (search: Record<string, unknown>): DocsSearch => ({
 		ticket: asString(search.ticket),
 		tags: asStrings(search.tags),

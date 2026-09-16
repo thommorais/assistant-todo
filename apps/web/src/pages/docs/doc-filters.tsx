@@ -15,13 +15,13 @@ const SORT_LABELS: Record<DocSortField, string> = {
 }
 
 const DocsFilters = () => {
-	const { slug } = useParams({ from: '/_authenticated/$slug/docs' })
-	const search = useSearch({ from: '/_authenticated/$slug/docs' })
+	const { slug } = useParams({ from: '/_authenticated/$slug/docs/' })
+	const search = useSearch({ from: '/_authenticated/$slug/docs/' })
 	const navigate = useNavigate()
 	const tickets = useTickets(slug)
 
 	const setFilter = (patch: Partial<DocsSearch>) => {
-		void navigate({ from: '/$slug/docs', to: '.', search: (prev: DocsSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/docs/', to: '.', search: (prev: DocsSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const ticketTitle = (id: string): string =>

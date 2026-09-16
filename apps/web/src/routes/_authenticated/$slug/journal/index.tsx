@@ -10,7 +10,7 @@ export type LogsSearch = {
 	readonly sort?: Sort<LogSortField>
 }
 
-export const Route = createFileRoute('/_authenticated/$slug/journal')({
+export const Route = createFileRoute('/_authenticated/$slug/journal/')({
 	validateSearch: (search: Record<string, unknown>): LogsSearch => ({
 		ticket: asString(search.ticket),
 		tags: asStrings(search.tags),

@@ -148,6 +148,7 @@ export type JournJournalRecord<Tmeta = unknown, Ttags = unknown> = {
 	plan?: RecordIdString
 	pr?: string
 	project: RecordIdString
+	slug: string
 	tags?: null | Ttags
 	ticket?: RecordIdString
 	title: string

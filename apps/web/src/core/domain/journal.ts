@@ -14,6 +14,7 @@ export type JournalEntry = {
 	readonly ticketId: TicketId | undefined
 	readonly planId: PlanId | undefined
 	readonly todoId: TodoId | undefined
+	readonly slug: string
 	readonly title: string
 	readonly body: string
 	readonly branch: string
