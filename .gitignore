@@ -63,3 +63,4 @@ apps/cli/bin/
 apps/web/.intlayer/cache/
 
 .playwright-mcp/
+apps/web/.tanstack/
