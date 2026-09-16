@@ -7,6 +7,7 @@ import { asMember, asMembers, asSort, asString, asStrings } from '_/routes/searc
 export type TodosSearch = {
 	readonly todo?: string
 	readonly ticket?: string
+	readonly plan?: string
 	readonly statuses?: readonly TodoStatus[]
 	readonly priority?: Priority
 	readonly tags?: readonly string[]
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/_authenticated/$slug/todos')({
 	validateSearch: (search: Record<string, unknown>): TodosSearch => ({
 		todo: asString(search.todo),
 		ticket: asString(search.ticket),
+		plan: asString(search.plan),
 		statuses: asMembers(TODO_STATUSES, search.statuses),
 		priority: asMember(PRIORITIES, search.priority),
 		tags: asStrings(search.tags),

@@ -1,5 +1,6 @@
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { DropdownMenuItem } from '@thom/ui/dropdown-menu'
+import { usePlans } from '_/app/use-plans'
 import { useTickets } from '_/app/use-tickets'
 import { PRIORITIES, TODO_STATUSES, type Priority, type TodoStatus } from '_/core/domain/todo'
 import { TODO_SORT_FIELDS, type TodoSortField } from '_/core/ports/sort'
@@ -23,6 +24,7 @@ const TodoFilters = () => {
 	const search = useSearch({ from: '/_authenticated/$slug/todos' })
 	const navigate = useNavigate()
 	const tickets = useTickets(slug)
+	const plans = usePlans(slug)
 
 	const setFilter = (patch: Partial<TodosSearch>) => {
 		void navigate({ from: '/$slug/todos', to: '.', search: (prev: TodosSearch) => ({ ...prev, ...patch }) })
@@ -30,6 +32,9 @@ const TodoFilters = () => {
 
 	const ticketTitle = (id: string): string =>
 		tickets.status === 'ready' ? (tickets.tickets.find(entry => entry.id === id)?.title ?? id) : id
+
+	const planTitle = (id: string): string =>
+		plans.status === 'ready' ? (plans.plans.find(entry => entry.id === id)?.title ?? id) : id
 
 	const chips: ActiveFilter[] = []
 
@@ -39,6 +44,15 @@ const TodoFilters = () => {
 			label: ticketTitle(search.ticket),
 			onRemove: () => {
 				setFilter({ ticket: undefined })
+			},
+		})
+	}
+	if (search.plan !== undefined) {
+		chips.push({
+			key: 'plan',
+			label: planTitle(search.plan),
+			onRemove: () => {
+				setFilter({ plan: undefined })
 			},
 		})
 	}
@@ -128,6 +142,25 @@ const TodoFilters = () => {
 								checked={search.ticket === ticket.id}
 								onCheckedChange={() => {
 									setFilter({ ticket: search.ticket === ticket.id ? undefined : ticket.id })
+								}}
+							/>
+						))}
+				</div>
+			</FilterMenuItem>
+
+			<FilterMenuItem label='Plan'>
+				<div className='max-h-[300px] overflow-y-auto'>
+					{plans.status === 'ready' && plans.plans.length === 0 && (
+						<DropdownMenuItem disabled>No plans found</DropdownMenuItem>
+					)}
+					{plans.status === 'ready' &&
+						plans.plans.map(plan => (
+							<FilterCheckboxItem
+								key={plan.id}
+								label={plan.title}
+								checked={search.plan === plan.id}
+								onCheckedChange={() => {
+									setFilter({ plan: search.plan === plan.id ? undefined : plan.id })
 								}}
 							/>
 						))}

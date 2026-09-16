@@ -7,6 +7,7 @@ import type { Priority, Todo, TodoStatus } from '../domain/todo'
 export type TodoFilter = {
 	readonly sort?: Sort<TodoSortField>
 	readonly ticketId?: string
+	readonly planId?: string
 	readonly status?: readonly TodoStatus[]
 	readonly priority?: Priority
 	readonly tags?: readonly string[]

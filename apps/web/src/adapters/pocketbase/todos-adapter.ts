@@ -21,10 +21,12 @@ type TodoColumns = {
 	'project.slug': string
 	id: string
 	title: string
-	// The stored column is "ticket"; the filter names it ticketId to match
-	// the domain, so the two cannot simply be intersected.
+	// The stored columns are "ticket" and "plan"; the filter names them
+	// ticketId and planId to match the domain, so the two cannot simply be
+	// intersected.
 	ticket: string
-} & Omit<TodoFilter, 'ticketId' | 'sort'>
+	plan: string
+} & Omit<TodoFilter, 'ticketId' | 'planId' | 'sort'>
 
 const toTodo = (record: TodoRecord): Todo => ({
 	id: toTodoId(record.id),
@@ -48,6 +50,7 @@ const columns = (project: string, filter: TodoFilter) =>
 	filterFor<TodoColumns>()([
 		{ field: 'project.slug', comparator: 'eq', value: project },
 		{ field: 'ticket', comparator: 'eq', value: filter.ticketId },
+		{ field: 'plan', comparator: 'eq', value: filter.planId },
 		{ field: 'status', comparator: 'anyOf', value: filter.status },
 		{ field: 'priority', comparator: 'eq', value: filter.priority },
 		{ field: 'tags', comparator: 'containsAll', value: filter.tags },

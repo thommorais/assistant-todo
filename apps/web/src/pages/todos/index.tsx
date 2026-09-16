@@ -49,6 +49,7 @@ const Todos = () => {
 
 	const state = useTodos(slug, {
 		ticketId: search.ticket,
+		planId: search.plan,
 		status: search.statuses,
 		priority: search.priority,
 		tags: search.tags,
