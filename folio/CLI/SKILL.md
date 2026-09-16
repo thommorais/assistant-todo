@@ -182,9 +182,21 @@ an error rather than a no-op. `create` takes the title as a positional argument.
 ```bash
 folio ticket create "Mobile nav" --body "No nav below md." --tags frontend,bug
 folio todo create "Add the hamburger" --ticket <id> --tags frontend,bug
-folio todo update <id> --status done
+folio todo done <id>
 folio journal write "Shipped mobile nav" --branch develop --pr 42 --ticket <id> --tags frontend,release
 ```
+
+`todo start`, `todo done` and `todo cancel` are shortcuts over the same patch
+`--status` writes, so either spelling does the same thing. `--status` stays the
+way to reach the statuses without a shortcut, `pending` and `blocked`.
+
+`todo block <id> --on <ids>` is the exception: it records a dependency rather
+than writing the blocked status, since `blocked` on a read is derived from
+`depends_on` and never persisted. It appends to the set rather than replacing
+it, `--off` drops a blocker, and the two flags are mutually exclusive. The
+explicit status is still `todo update <id> --status blocked`, and the two are
+independent: a todo can carry the status without a dependency, or derive
+blocked without the status.
 
 Deletes cascade downward and are not prompted, since an agent cannot answer a
 prompt. `ticket delete` detaches its plans, todos, journal and docs.

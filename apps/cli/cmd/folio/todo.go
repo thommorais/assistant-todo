@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -22,7 +23,13 @@ func todoCommand() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&flagProject, "project", "p", "", "project id or slug")
 
-	cmd.AddCommand(todoListCommand(), todoGetCommand(), todoCreateCommand(), todoUpdateCommand(), todoDeleteCommand())
+	cmd.AddCommand(
+		todoListCommand(), todoGetCommand(), todoCreateCommand(), todoUpdateCommand(), todoDeleteCommand(),
+		todoStatusCommand("start", "in_progress", "Mark a todo in progress"),
+		todoStatusCommand("done", "done", "Mark a todo done"),
+		todoStatusCommand("cancel", "cancelled", "Cancel a todo"),
+		todoBlockCommand(),
+	)
 
 	return cmd
 }
@@ -232,6 +239,116 @@ func todoDeleteCommand() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+// todoStatusCommand builds a shortcut over UpdateTodo for one fixed status.
+// The status set is small and closed, so the shortcuts cover it without
+// growing an API surface; --status stays valid for every status including
+// these, and both paths land in the same UpdateTodo call.
+func todoStatusCommand(name, status, short string) *cobra.Command {
+	return &cobra.Command{
+		Use:   name + " <id>",
+		Short: short,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			folio, err := api()
+			if err != nil {
+				return err
+			}
+
+			todo, err := folio.UpdateTodo(args[0], client.TodoInput{Status: &status})
+			if err != nil {
+				return err
+			}
+			return renderTodo(todo)
+		},
+	}
+}
+
+// todoBlockCommand edits DependsOn rather than writing the blocked status.
+// Todo.Blocked is derived from DependsOn on read and never persisted
+// (domain/todo.go:49-52), so a shortcut that wrote the status would claim to
+// record what blocks the todo while recording nothing of the sort. Setting
+// DependsOn makes the derived flag true for as long as the blocker is open,
+// which is the state the caller is after; --off is the way back, since
+// nothing else in the CLI can shrink the set. The explicit status stays
+// reachable through `todo update --status blocked`.
+func todoBlockCommand() *cobra.Command {
+	var on, off string
+
+	cmd := &cobra.Command{
+		Use:   "block <id> (--on <ids> | --off <ids>)",
+		Short: "Record or drop a dependency on another todo",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			if (on == "") == (off == "") {
+				return errors.New("pass exactly one of --on or --off")
+			}
+
+			// The self-check only applies to --on: refusing to *remove* a
+			// self-dependency would strand a todo that already has one.
+			self := args[0]
+			if off != "" {
+				self = ""
+			}
+			ids, err := parseBlockers(on+off, self)
+			if err != nil {
+				return err
+			}
+
+			folio, err := api()
+			if err != nil {
+				return err
+			}
+
+			// DependsOn replaces on write, the way --tags does, so read the
+			// current set first: this command edits one blocker and leaves the
+			// rest of the set alone.
+			current, err := folio.GetTodo(args[0])
+			if err != nil {
+				return err
+			}
+
+			depends := []string{}
+			for _, id := range current.DependsOn {
+				if off == "" || !slices.Contains(ids, id) {
+					depends = append(depends, id)
+				}
+			}
+			if on != "" {
+				for _, id := range ids {
+					if !slices.Contains(depends, id) {
+						depends = append(depends, id)
+					}
+				}
+			}
+
+			todo, err := folio.UpdateTodo(args[0], client.TodoInput{DependsOn: &depends})
+			if err != nil {
+				return err
+			}
+			return renderTodo(todo)
+		},
+	}
+
+	cmd.Flags().StringVar(&on, "on", "", "comma separated ids of the todos that block this one")
+	cmd.Flags().StringVar(&off, "off", "", "comma separated ids to stop depending on")
+
+	return cmd
+}
+
+func parseBlockers(value, self string) ([]string, error) {
+	ids := strings.Split(value, ",")
+	for i, id := range ids {
+		ids[i] = strings.TrimSpace(id)
+		if ids[i] == "" {
+			return nil, errors.New("empty todo id")
+		}
+		if self != "" && ids[i] == self {
+			return nil, errors.New("a todo cannot block itself")
+		}
+	}
+	return ids, nil
 }
 
 func setIf(target **string, value string) {
