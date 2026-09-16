@@ -7,6 +7,7 @@ import type { Unsubscribe } from './subscription'
 
 export type TicketFilter = {
 	readonly sort?: Sort<TicketSortField>
+	readonly parentId?: string
 	readonly status?: readonly TicketStatus[]
 	readonly priority?: Priority
 	readonly tags?: readonly string[]

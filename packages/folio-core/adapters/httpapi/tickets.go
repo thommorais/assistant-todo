@@ -58,7 +58,7 @@ func (h *Handler) getTicketBySlug(e *core.RequestEvent) error {
 }
 
 func (h *Handler) getTicketBrief(e *core.RequestEvent) error {
-	in := ports.BriefOptions{RecentLogs: queryInt(e, "recent_logs")}
+	in := ports.BriefOptions{RecentJournal: queryInt(e, "recent_journal")}
 	brief, err := h.tickets.GetTicketBrief(e.Request.Context(), actorOf(e), domain.TicketID(e.Request.PathValue("ticket")), in)
 	if err != nil {
 		return fail(e, err)
@@ -71,7 +71,7 @@ func (h *Handler) getTicketBriefBySlug(e *core.RequestEvent) error {
 	if err != nil {
 		return fail(e, err)
 	}
-	in := ports.BriefOptions{RecentLogs: queryInt(e, "recent_logs")}
+	in := ports.BriefOptions{RecentJournal: queryInt(e, "recent_journal")}
 	brief, err := h.tickets.GetTicketBriefBySlug(e.Request.Context(), actorOf(e), project, e.Request.PathValue("slug"), in)
 	if err != nil {
 		return fail(e, err)
@@ -80,6 +80,9 @@ func (h *Handler) getTicketBriefBySlug(e *core.RequestEvent) error {
 }
 
 type ticketBody struct {
+	ParentID    *string   `json:"parent_id"`
+	DependsOn   *[]string `json:"depends_on"`
+	Wayfinder   *string   `json:"wayfinder"`
 	Slug        *string   `json:"slug"`
 	Title       *string   `json:"title"`
 	Body        *string   `json:"body"`
@@ -101,6 +104,15 @@ func (h *Handler) createTicket(e *core.RequestEvent) error {
 	}
 
 	in := ports.CreateTicketInput{ProjectID: project}
+	if body.ParentID != nil {
+		in.ParentID = domain.TicketID(*body.ParentID)
+	}
+	if body.DependsOn != nil {
+		in.DependsOn = toTicketIDs(*body.DependsOn)
+	}
+	if body.Wayfinder != nil {
+		in.Wayfinder = domain.WayfinderType(*body.Wayfinder)
+	}
 	if body.Slug != nil {
 		in.Slug = *body.Slug
 	}
@@ -154,12 +166,52 @@ func (h *Handler) updateTicket(e *core.RequestEvent) error {
 		a := domain.UserID(*body.Assignee)
 		in.Assignee = &a
 	}
+	if body.ParentID != nil {
+		p := domain.TicketID(*body.ParentID)
+		in.ParentID = &p
+	}
+	if body.DependsOn != nil {
+		deps := toTicketIDs(*body.DependsOn)
+		in.DependsOn = &deps
+	}
+	if body.Wayfinder != nil {
+		w := domain.WayfinderType(*body.Wayfinder)
+		in.Wayfinder = &w
+	}
 
 	ticket, err := h.tickets.UpdateTicket(e.Request.Context(), actorOf(e), domain.TicketID(e.Request.PathValue("ticket")), in)
 	if err != nil {
 		return fail(e, err)
 	}
 	return e.JSON(http.StatusOK, toTicketView(ticket))
+}
+
+func (h *Handler) ticketFrontier(e *core.RequestEvent) error {
+	tickets, err := h.tickets.Frontier(e.Request.Context(), actorOf(e), domain.TicketID(e.Request.PathValue("ticket")))
+	if err != nil {
+		return fail(e, err)
+	}
+	out := make([]ticketView, 0, len(tickets))
+	for _, t := range tickets {
+		out = append(out, toTicketView(t))
+	}
+	return e.JSON(http.StatusOK, map[string]any{"tickets": out})
+}
+
+func toTicketIDs(raw []string) []domain.TicketID {
+	out := make([]domain.TicketID, 0, len(raw))
+	for _, s := range raw {
+		out = append(out, domain.TicketID(s))
+	}
+	return out
+}
+
+func fromTicketIDs(ids []domain.TicketID) []string {
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, string(id))
+	}
+	return out
 }
 
 func (h *Handler) deleteTicket(e *core.RequestEvent) error {

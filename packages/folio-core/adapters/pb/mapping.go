@@ -111,6 +111,25 @@ func fromTodoIDs(ids []domain.TodoID) []string {
 	return out
 }
 
+func toTicketIDs(raw []string) []domain.TicketID {
+	if len(raw) == 0 {
+		return nil
+	}
+	out := make([]domain.TicketID, 0, len(raw))
+	for _, s := range raw {
+		out = append(out, domain.TicketID(s))
+	}
+	return out
+}
+
+func fromTicketIDs(ids []domain.TicketID) []string {
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, string(id))
+	}
+	return out
+}
+
 // isNotFound reports whether an already-mapped error means "absent".
 func isNotFound(err error) bool {
 	return errors.Is(err, domain.ErrNotFound)

@@ -6,7 +6,7 @@ const tabs = [
 	{ to: '/$slug/tickets', label: 'Tickets', exact: false },
 	{ to: '/$slug/plans', label: 'Plans', exact: false },
 	{ to: '/$slug/todos', label: 'Todos', exact: false },
-	{ to: '/$slug/logs', label: 'Logs', exact: false },
+	{ to: '/$slug/journal', label: 'Journal', exact: false },
 	{ to: '/$slug/docs', label: 'Docs', exact: false },
 ] as const
 

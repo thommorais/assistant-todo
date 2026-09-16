@@ -76,6 +76,18 @@ export const createDocsAdapter = (): DocsPort => {
 			return error ? err(new Error(`Failed to list docs: ${error.message}`, { cause: error })) : ok(data.map(toDoc))
 		},
 
+		get: async (project, slug): Promise<Result<Doc>> => {
+			// A slug is unique only within a project, so both halves are bound.
+			const { expr, params } = filterFor<DocColumns>()([
+				{ field: 'project.slug', comparator: 'eq', value: project },
+				{ field: 'slug', comparator: 'eq', value: slug },
+			])
+
+			const { data, error } = await tryCatch(collection.getFirstListItem<DocRecord>(client.filter(expr, params)))
+
+			return error ? err(new Error(`Failed to load doc ${slug}: ${error.message}`, { cause: error })) : ok(toDoc(data))
+		},
+
 		subscribeToList: async (project, update, filter = {}): Promise<Result<Unsubscribe>> => {
 			const { expr, params } = columns(project, filter)
 

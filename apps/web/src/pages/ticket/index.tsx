@@ -2,13 +2,18 @@ import { Link, useParams } from '@tanstack/react-router'
 import { cn } from '@thom/libs/cn'
 import { Badge } from '@thom/ui/badge'
 import { Heading } from '@thom/ui/heading'
+import { useCycles } from '_/app/use-cycles'
 import { useDocs } from '_/app/use-docs'
-import { useLogs } from '_/app/use-logs'
+import { useJournal } from '_/app/use-journal'
 import { usePlans } from '_/app/use-plans'
 import { useTicket } from '_/app/use-ticket'
+import { useTicketLogs } from '_/app/use-ticket-logs'
+import { useTickets } from '_/app/use-tickets'
 import { useTodos } from '_/app/use-todos'
+import { isResolved } from '_/core/domain/cycle'
 import type { TicketStatus } from '_/core/domain/ticket'
 import { TODO_STATUS_LABELS } from '_/pages/todos/status-labels'
+import { MapFrontier } from './map-frontier'
 
 const statusLabels: Record<TicketStatus, string> = {
 	open: 'Open',
@@ -34,7 +39,7 @@ const TicketDetail = () => {
 	const { slug, ticket: ticketSlug } = useParams({ from: '/_authenticated/$slug/tickets/$ticket' })
 	const state = useTicket(slug, ticketSlug)
 
-	if (state.status === 'loading') {
+	if (state.status === 'idle' || state.status === 'loading') {
 		return <div className='bg-accent/40 h-32 animate-pulse' />
 	}
 
@@ -54,8 +59,17 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 	const ticketId = ticket.id
 	const plans = usePlans(project, { ticketId })
 	const todos = useTodos(project, { ticketId })
-	const logs = useLogs(project, { ticketId })
+	const journal = useJournal(project, { ticketId })
 	const docs = useDocs(project, { ticketId })
+	const cycles = useCycles(project, { ticketId })
+	const workLog = useTicketLogs(project, { ticketId })
+
+	const current = cycles.status === 'ready' ? cycles.cycles.at(-1) : undefined
+	const siblings = useTickets(project, {})
+	const parent =
+		ticket.parentId !== undefined && siblings.status === 'ready'
+			? siblings.tickets.find(candidate => candidate.id === ticket.parentId)
+			: undefined
 
 	return (
 		<div className='space-y-8'>
@@ -65,6 +79,12 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 				<div className='flex flex-wrap items-center gap-2'>
 					<span className='text-dim text-xs'>{statusLabels[ticket.status]}</span>
 					<span className='text-dimmer font-mono text-xs'>{ticket.priority}</span>
+					{ticket.wayfinder && <Badge color='neutral'>{ticket.wayfinder}</Badge>}
+					{current && (
+						<Badge color='muted'>
+							cycle {current.ordinal}: {current.phase}
+						</Badge>
+					)}
 					{ticket.externalRef && <span className='text-dimmer font-mono text-xs'>{ticket.externalRef}</span>}
 					{ticket.tags.map(tag => (
 						<Badge key={tag} color='muted'>
@@ -74,7 +94,57 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 				</div>
 
 				{ticket.body && <p className='text-dim text-sm whitespace-pre-line'>{ticket.body}</p>}
+
+				{(parent !== undefined || ticket.dependsOn.length > 0) && (
+					<div className='text-dimmer flex flex-wrap items-center gap-3 text-xs'>
+						{parent !== undefined && (
+							<span>
+								under{' '}
+								<Link
+									to='/$slug/tickets/$ticket'
+									params={{ slug: project, ticket: parent.slug }}
+									className='hover:text-foreground underline underline-offset-2 transition-colors'
+								>
+									{parent.title}
+								</Link>
+							</span>
+						)}
+						{ticket.dependsOn.length > 0 && <span>waits on {ticket.dependsOn.length}</span>}
+					</div>
+				)}
 			</header>
+
+			{ticket.wayfinder === 'map' && <MapFrontier project={project} mapId={ticketId} />}
+
+			{cycles.status === 'ready' && cycles.cycles.length > 0 && (
+				<Section title='Cycles'>
+					<ul className='border-border divide-border divide-y border'>
+						{cycles.cycles.map(cycle => (
+							<li key={cycle.id} className='space-y-1 px-4 py-3 text-sm'>
+								<div className='flex items-center gap-2'>
+									<span className='text-dimmer font-mono text-xs'>{cycle.ordinal}</span>
+									<span>{cycle.phase}</span>
+									{isResolved(cycle) ? <Badge color='muted'>resolved</Badge> : <Badge color='active'>open</Badge>}
+								</div>
+								{cycle.resolution && <p className='text-dim text-xs'>{cycle.resolution}</p>}
+							</li>
+						))}
+					</ul>
+				</Section>
+			)}
+
+			{workLog.status === 'ready' && workLog.logs.length > 0 && (
+				<Section title='Work log'>
+					<ul className='border-border divide-border divide-y border'>
+						{workLog.logs.map(entry => (
+							<li key={entry.id} className='space-y-1 px-4 py-3'>
+								<p className='text-sm whitespace-pre-line'>{entry.body}</p>
+								<p className='text-dimmer text-xs'>{entry.createdAt.toLocaleString()}</p>
+							</li>
+						))}
+					</ul>
+				</Section>
+			)}
 
 			<Section title='Plans'>
 				{plans.status === 'ready' && plans.plans.length === 0 && <Empty what='plans' />}
@@ -132,11 +202,11 @@ const TicketBody = ({ project, ticket }: BodyProps) => {
 				)}
 			</Section>
 
-			<Section title='Logs'>
-				{logs.status === 'ready' && logs.logs.length === 0 && <Empty what='logs' />}
-				{logs.status === 'ready' && logs.logs.length > 0 && (
+			<Section title='Journal'>
+				{journal.status === 'ready' && journal.journal.length === 0 && <Empty what='journal entries' />}
+				{journal.status === 'ready' && journal.journal.length > 0 && (
 					<ul className='border-border divide-border divide-y border'>
-						{logs.logs.map(entry => (
+						{journal.journal.map(entry => (
 							<li key={entry.id} className='px-4 py-3 text-sm'>
 								{entry.title}
 							</li>

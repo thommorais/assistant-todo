@@ -22,7 +22,7 @@ const kindIcons: Record<SearchKind, typeof BookText> = {
 
 const groupLabels: Record<string, string> = {
 	shortcut: 'Shortcuts',
-	log: 'Logs',
+	journal: 'Journal',
 	doc: 'Docs',
 	todo: 'Todos',
 	plan: 'Plans',

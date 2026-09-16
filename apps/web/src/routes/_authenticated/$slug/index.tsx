@@ -7,7 +7,7 @@ const labels: Record<Entity, string> = {
 	tickets: 'Tickets',
 	plans: 'Plans',
 	todos: 'Todos',
-	logs: 'Logs',
+	journal: 'Journal',
 	docs: 'Docs',
 }
 

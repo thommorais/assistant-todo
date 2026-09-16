@@ -65,16 +65,19 @@ type TicketUseCase interface {
 	SetTicketStatus(ctx context.Context, actor Actor, id domain.TicketID, status domain.TicketStatus) (domain.Ticket, error)
 	DeleteTicket(ctx context.Context, actor Actor, id domain.TicketID) error
 
+	Frontier(ctx context.Context, actor Actor, mapID domain.TicketID) ([]domain.Ticket, error)
+
 	GetTicketBrief(ctx context.Context, actor Actor, id domain.TicketID, in BriefOptions) (domain.TicketBrief, error)
 	GetTicketBriefBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string, in BriefOptions) (domain.TicketBrief, error)
 }
 
 type BriefOptions struct {
-	RecentLogs int
+	RecentJournal int
 }
 
 type CreateTicketInput struct {
 	ProjectID   domain.ProjectID
+	ParentID    domain.TicketID
 	Slug        string
 	Title       string
 	Body        string
@@ -83,9 +86,12 @@ type CreateTicketInput struct {
 	Assignee    domain.UserID
 	Tags        []string
 	ExternalRef string
+	DependsOn   []domain.TicketID
+	Wayfinder   domain.WayfinderType
 }
 
 type UpdateTicketInput struct {
+	ParentID    *domain.TicketID
 	Slug        *string
 	Title       *string
 	Body        *string
@@ -94,6 +100,29 @@ type UpdateTicketInput struct {
 	Assignee    *domain.UserID
 	Tags        *[]string
 	ExternalRef *string
+	DependsOn   *[]domain.TicketID
+	Wayfinder   *domain.WayfinderType
+}
+
+type CycleUseCase interface {
+	ListCycles(ctx context.Context, actor Actor, ticket domain.TicketID) ([]domain.Cycle, error)
+	OpenCycle(ctx context.Context, actor Actor, ticket domain.TicketID) (domain.Cycle, error)
+	AdvancePhase(ctx context.Context, actor Actor, id domain.CycleID, phase domain.Phase) (domain.Cycle, error)
+	ResolveCycle(ctx context.Context, actor Actor, id domain.CycleID, resolution string) (domain.Cycle, error)
+}
+
+type WorkLogUseCase interface {
+	ListTicketLogs(ctx context.Context, actor Actor, ticket domain.TicketID, f domain.TicketLogFilter) ([]domain.TicketLog, error)
+	WriteTicketLog(ctx context.Context, actor Actor, ticket domain.TicketID, body string) (domain.TicketLog, error)
+	DeleteTicketLog(ctx context.Context, actor Actor, id domain.TicketLogID) error
+
+	ListPlanLogs(ctx context.Context, actor Actor, plan domain.PlanID, f domain.PlanLogFilter) ([]domain.PlanLog, error)
+	WritePlanLog(ctx context.Context, actor Actor, plan domain.PlanID, body string) (domain.PlanLog, error)
+	DeletePlanLog(ctx context.Context, actor Actor, id domain.PlanLogID) error
+
+	ListTodoLogs(ctx context.Context, actor Actor, todo domain.TodoID, f domain.TodoLogFilter) ([]domain.TodoLog, error)
+	WriteTodoLog(ctx context.Context, actor Actor, todo domain.TodoID, body string) (domain.TodoLog, error)
+	DeleteTodoLog(ctx context.Context, actor Actor, id domain.TodoLogID) error
 }
 
 type TodoUseCase interface {
@@ -145,20 +174,22 @@ type BatchError struct {
 	Reason string
 }
 
-type LogUseCase interface {
-	ListLogs(ctx context.Context, actor Actor, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error)
-	GetLog(ctx context.Context, actor Actor, id domain.LogID) (domain.LogEntry, error)
-	WriteLog(ctx context.Context, actor Actor, in WriteLogInput) (domain.LogEntry, error)
-	UpdateLog(ctx context.Context, actor Actor, id domain.LogID, in UpdateLogInput) (domain.LogEntry, error)
-	AppendToLog(ctx context.Context, actor Actor, id domain.LogID, section string) (domain.LogEntry, error)
-	DeleteLog(ctx context.Context, actor Actor, id domain.LogID) error
+type JournalUseCase interface {
+	ListJournal(ctx context.Context, actor Actor, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
+	GetJournalEntry(ctx context.Context, actor Actor, id domain.JournalID) (domain.JournalEntry, error)
+	GetJournalEntryBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string) (domain.JournalEntry, error)
+	WriteJournalEntry(ctx context.Context, actor Actor, in WriteJournalInput) (domain.JournalEntry, error)
+	UpdateJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, in UpdateJournalInput) (domain.JournalEntry, error)
+	AppendToJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, section string) (domain.JournalEntry, error)
+	DeleteJournalEntry(ctx context.Context, actor Actor, id domain.JournalID) error
 }
 
-type WriteLogInput struct {
+type WriteJournalInput struct {
 	ProjectID   domain.ProjectID
 	TicketID    domain.TicketID
 	PlanID      domain.PlanID
 	TodoID      domain.TodoID
+	Slug        string
 	Title       string
 	Body        string
 	Branch      string
@@ -168,7 +199,7 @@ type WriteLogInput struct {
 	Meta        map[string]any
 }
 
-type UpdateLogInput struct {
+type UpdateJournalInput struct {
 	TicketID    *domain.TicketID
 	PlanID      *domain.PlanID
 	TodoID      *domain.TodoID

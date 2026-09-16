@@ -101,3 +101,74 @@ func Snippet(text string, max int) string {
 	}
 	return strings.TrimRight(cut, " ,.;:") + "…"
 }
+
+func ApplyTicketBlocked(tickets []domain.Ticket) {
+	byID := make(map[domain.TicketID]domain.Ticket, len(tickets))
+	for _, t := range tickets {
+		byID[t.ID] = t
+	}
+	for i, t := range tickets {
+		blocked := false
+		for _, depID := range t.DependsOn {
+			dep, ok := byID[depID]
+			if ok && !dep.Status.IsTerminal() {
+				blocked = true
+				break
+			}
+		}
+		tickets[i].Blocked = blocked
+	}
+}
+
+func CheckNoTicketCycle(candidate domain.Ticket, set []domain.Ticket) error {
+	deps := make(map[domain.TicketID][]domain.TicketID, len(set))
+	for _, t := range set {
+		deps[t.ID] = t.DependsOn
+	}
+	deps[candidate.ID] = candidate.DependsOn
+
+	seen := make(map[domain.TicketID]bool, len(deps))
+	var walk func(domain.TicketID) bool
+	walk = func(id domain.TicketID) bool {
+		if id == candidate.ID {
+			return true
+		}
+		if seen[id] {
+			return false
+		}
+		seen[id] = true
+		for _, next := range deps[id] {
+			if walk(next) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, dep := range candidate.DependsOn {
+		if walk(dep) {
+			return domain.Invalid("depends_on", "introduces a dependency cycle")
+		}
+	}
+	return nil
+}
+
+func CheckNoTicketAncestry(candidate domain.Ticket, set []domain.Ticket) error {
+	parent := make(map[domain.TicketID]domain.TicketID, len(set))
+	for _, t := range set {
+		parent[t.ID] = t.ParentID
+	}
+	parent[candidate.ID] = candidate.ParentID
+
+	seen := make(map[domain.TicketID]bool, len(parent))
+	for id := candidate.ParentID; id != ""; id = parent[id] {
+		if id == candidate.ID {
+			return domain.Invalid("parent", "introduces a parent cycle")
+		}
+		if seen[id] {
+			return nil
+		}
+		seen[id] = true
+	}
+	return nil
+}

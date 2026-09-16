@@ -23,7 +23,7 @@ const PlanFilters = () => {
 	const tickets = useTickets(slug)
 
 	const setFilter = (patch: Partial<PlansSearch>) => {
-		void navigate({ to: '.', search: (prev: PlansSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/plans', to: '.', search: (prev: PlansSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const ticketTitle = (id: string): string =>

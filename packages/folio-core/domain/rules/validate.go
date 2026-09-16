@@ -122,11 +122,14 @@ func ValidateTodo(t domain.Todo) error {
 	return nil
 }
 
-// ValidateLogEntry checks a work log. The body is optional: an entry may be
+// ValidateJournalEntry checks a work log. The body is optional: an entry may be
 // created as a stub and filled in as the work proceeds.
-func ValidateLogEntry(e domain.LogEntry) error {
+func ValidateJournalEntry(e domain.JournalEntry) error {
 	if e.ProjectID == "" {
 		return domain.Invalid("project", "is required")
+	}
+	if err := ValidateSlug("slug", e.Slug); err != nil {
+		return err
 	}
 	if err := required("title", e.Title, TitleMaxLen); err != nil {
 		return err
@@ -141,6 +144,11 @@ func ValidateLogEntry(e domain.LogEntry) error {
 		return err
 	}
 	return optional("external_ref", e.ExternalRef, RefMaxLen)
+}
+
+var wayfinderTypes = map[domain.WayfinderType]bool{
+	domain.WayfinderMap: true, domain.WayfinderResearch: true, domain.WayfinderPrototype: true,
+	domain.WayfinderGrilling: true, domain.WayfinderTask: true,
 }
 
 var ticketStatuses = map[domain.TicketStatus]bool{
@@ -168,6 +176,17 @@ func ValidateTicket(t domain.Ticket) error {
 	}
 	if !priorities[t.Priority] {
 		return domain.Invalid("priority", "must be one of low, medium, high")
+	}
+	if t.ParentID == t.ID && t.ParentID != "" {
+		return domain.Invalid("parent", "a ticket cannot be its own parent")
+	}
+	for _, dep := range t.DependsOn {
+		if dep == t.ID && dep != "" {
+			return domain.Invalid("depends_on", "a ticket cannot depend on itself")
+		}
+	}
+	if t.Wayfinder != "" && !wayfinderTypes[t.Wayfinder] {
+		return domain.Invalid("wayfinder", "must be one of map, research, prototype, grilling, task")
 	}
 	return optional("external_ref", t.ExternalRef, RefMaxLen)
 }

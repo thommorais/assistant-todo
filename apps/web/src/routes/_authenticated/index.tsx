@@ -1,17 +1,19 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Badge } from '@thom/ui/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@thom/ui/card'
-import { Heading } from '@thom/ui/heading'
 import { useProjects } from '_/app/use-projects'
+import { buildInsights } from '_/pages/projects/insights'
+import { SummaryTicker } from '_/pages/projects/summary-ticker'
+import { WelcomeGreeting } from '_/pages/projects/welcome'
 
 const Projects = () => {
 	const state = useProjects()
 
 	return (
 		<div className='mx-auto w-full max-w-5xl space-y-8'>
-			<div className='space-y-1'>
-				<Heading>Projects</Heading>
-				<p className='text-dim text-sm'>Every project you are a member of.</p>
+			<div className='flex w-full flex-col items-center pt-6 pb-4 text-center'>
+				<WelcomeGreeting />
+				{state.status === 'ready' && <SummaryTicker insights={buildInsights(state.projects)} />}
 			</div>
 
 			{state.status === 'loading' && (

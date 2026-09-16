@@ -51,7 +51,7 @@ func loadTab(api *client.Client, which tab, project string) tea.Cmd {
 			todos, err := api.ListTodos(project, client.TodoFilter{})
 			return tabLoaded{tab: which, rows: rows{todos: todos}, err: err}
 		case tabLogs:
-			logs, err := api.ListLogs(project, client.LogFilter{})
+			logs, err := api.ListJournal(project, client.JournalFilter{})
 			return tabLoaded{tab: which, rows: rows{logs: logs}, err: err}
 		case tabDocs:
 			docs, err := api.ListDocs(project, client.DocFilter{})

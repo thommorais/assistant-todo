@@ -3,7 +3,7 @@ package domain
 import "time"
 
 // Doc is durable project knowledge: a spec, a convention, an architecture
-// note. Unlike a LogEntry it is meant to be edited and kept current.
+// note. Unlike a JournalEntry it is meant to be edited and kept current.
 type Doc struct {
 	ID        DocID
 	ProjectID ProjectID
@@ -32,11 +32,13 @@ type DocFilter struct {
 type SearchKind string
 
 const (
-	SearchKindLog    SearchKind = "log"
-	SearchKindDoc    SearchKind = "doc"
-	SearchKindTodo   SearchKind = "todo"
-	SearchKindPlan   SearchKind = "plan"
-	SearchKindTicket SearchKind = "ticket"
+	SearchKindJournal SearchKind = "journal"
+	SearchKindDoc     SearchKind = "doc"
+	SearchKindTodo    SearchKind = "todo"
+	SearchKindPlan    SearchKind = "plan"
+	SearchKindTicket  SearchKind = "ticket"
+	SearchKindWorkLog SearchKind = "worklog"
+	SearchKindCycle   SearchKind = "resolution"
 )
 
 // SearchHit is one result of a cross-collection search, flattened so a client

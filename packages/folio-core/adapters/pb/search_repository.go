@@ -39,8 +39,8 @@ func (r *SearchRepository) Search(ctx context.Context, project domain.ProjectID,
 	all := len(want) == 0
 
 	var hits []domain.SearchHit
-	if all || want[domain.SearchKindLog] {
-		found, err := r.searchLogs(project, q)
+	if all || want[domain.SearchKindJournal] {
+		found, err := r.searchJournal(project, q)
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +76,22 @@ func (r *SearchRepository) Search(ctx context.Context, project domain.ProjectID,
 		hits = append(hits, found...)
 	}
 
+	if all || want[domain.SearchKindWorkLog] {
+		found, err := r.searchWorkLogs(project, q)
+		if err != nil {
+			return nil, err
+		}
+		hits = append(hits, found...)
+	}
+
+	if all || want[domain.SearchKindCycle] {
+		found, err := r.searchResolutions(project, q)
+		if err != nil {
+			return nil, err
+		}
+		hits = append(hits, found...)
+	}
+
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].CreatedAt.After(hits[j].CreatedAt) })
 	return applyPaging(hits, q.Offset, q.Limit), nil
 }
@@ -102,16 +118,16 @@ func textFilter(project domain.ProjectID, q domain.SearchQuery, fields ...string
 	return strings.Join(filter, " && "), params
 }
 
-func (r *SearchRepository) searchLogs(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+func (r *SearchRepository) searchJournal(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
 	filter, params := textFilter(project, q, "title", "body")
-	records, err := r.app.FindRecordsByFilter(ColLogs, filter, "-created", q.Limit, 0, params)
+	records, err := r.app.FindRecordsByFilter(ColJournal, filter, "-created", q.Limit, 0, params)
 	if err != nil {
 		return nil, mapErr(err)
 	}
 	out := make([]domain.SearchHit, 0, len(records))
 	for _, rec := range records {
 		out = append(out, domain.SearchHit{
-			Kind:      domain.SearchKindLog,
+			Kind:      domain.SearchKindJournal,
 			ID:        rec.Id,
 			ProjectID: project,
 			Title:     rec.GetString("title"),
@@ -201,6 +217,69 @@ func (r *SearchRepository) searchTickets(project domain.ProjectID, q domain.Sear
 			Title:     rec.GetString("title"),
 			Snippet:   rules.Snippet(rec.GetString("body"), snippetLen),
 			Tags:      strSlice(rec, "tags"),
+			CreatedAt: rec.GetDateTime("created").Time(),
+		})
+	}
+	return out, nil
+}
+
+// searchWorkLogs spans the three work log collections. They carry no title of
+// their own, so the hit is titled by the parent kind and the body does the
+// work of both title and snippet.
+func (r *SearchRepository) searchWorkLogs(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+	if len(q.Tags) > 0 {
+		return nil, nil
+	}
+	sources := []struct {
+		collection string
+		title      string
+	}{
+		{ColTicketLogs, "Ticket work log"},
+		{ColPlanLogs, "Plan work log"},
+		{ColTodoLogs, "Todo work log"},
+	}
+
+	var out []domain.SearchHit
+	for _, source := range sources {
+		filter, params := textFilter(project, q, "body")
+		records, err := r.app.FindRecordsByFilter(source.collection, filter, "-created", q.Limit, 0, params)
+		if err != nil {
+			return nil, mapErr(err)
+		}
+		for _, rec := range records {
+			out = append(out, domain.SearchHit{
+				Kind:      domain.SearchKindWorkLog,
+				ID:        rec.Id,
+				ProjectID: project,
+				Title:     source.title,
+				Snippet:   rules.Snippet(rec.GetString("body"), snippetLen),
+				CreatedAt: rec.GetDateTime("created").Time(),
+			})
+		}
+	}
+	return out, nil
+}
+
+// searchResolutions finds the one-line answer a cycle closed with, which is
+// the record of why a ticket was done and the reason it can be reviewed.
+func (r *SearchRepository) searchResolutions(project domain.ProjectID, q domain.SearchQuery) ([]domain.SearchHit, error) {
+	if len(q.Tags) > 0 {
+		return nil, nil
+	}
+	filter, params := textFilter(project, q, "resolution")
+	filter += " && resolution != ''"
+	records, err := r.app.FindRecordsByFilter(ColCycles, filter, "-created", q.Limit, 0, params)
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := make([]domain.SearchHit, 0, len(records))
+	for _, rec := range records {
+		out = append(out, domain.SearchHit{
+			Kind:      domain.SearchKindCycle,
+			ID:        rec.Id,
+			ProjectID: project,
+			Title:     "Cycle " + strconv.Itoa(rec.GetInt("ordinal")) + " resolution",
+			Snippet:   rules.Snippet(rec.GetString("resolution"), snippetLen),
 			CreatedAt: rec.GetDateTime("created").Time(),
 		})
 	}

@@ -25,6 +25,7 @@ func toTicket(rec *core.Record) domain.Ticket {
 	return domain.Ticket{
 		ID:          domain.TicketID(rec.Id),
 		ProjectID:   domain.ProjectID(rec.GetString("project")),
+		ParentID:    domain.TicketID(rec.GetString("parent")),
 		Slug:        rec.GetString("slug"),
 		Title:       rec.GetString("title"),
 		Body:        rec.GetString("body"),
@@ -33,6 +34,8 @@ func toTicket(rec *core.Record) domain.Ticket {
 		Assignee:    domain.UserID(rec.GetString("assignee")),
 		Tags:        strSlice(rec, "tags"),
 		ExternalRef: rec.GetString("external_ref"),
+		DependsOn:   toTicketIDs(strSlice(rec, "depends_on")),
+		Wayfinder:   domain.WayfinderType(rec.GetString("wayfinder")),
 		CreatedBy:   domain.UserID(rec.GetString("created_by")),
 		CreatedAt:   rec.GetDateTime("created").Time(),
 		UpdatedAt:   rec.GetDateTime("updated").Time(),
@@ -54,6 +57,9 @@ func (r *TicketRepository) List(ctx context.Context, project domain.ProjectID, f
 	if f.Assignee != "" {
 		exprs = append(exprs, dbx.HashExp{"assignee": string(f.Assignee)})
 	}
+	if f.ParentID != "" {
+		exprs = append(exprs, dbx.HashExp{"parent": string(f.ParentID)})
+	}
 	if q := strings.TrimSpace(f.Search); q != "" {
 		exprs = append(exprs, dbx.Or(
 			dbx.Like("title", q),
@@ -73,6 +79,18 @@ func (r *TicketRepository) List(ctx context.Context, project domain.ProjectID, f
 		out = append(out, toTicket(rec))
 	}
 	return applyPaging(out, f.Offset, f.Limit), nil
+}
+
+func (r *TicketRepository) ListByParent(ctx context.Context, parent domain.TicketID) ([]domain.Ticket, error) {
+	records, err := r.app.FindAllRecords(ColTickets, dbx.HashExp{"parent": string(parent)})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	out := make([]domain.Ticket, 0, len(records))
+	for _, rec := range records {
+		out = append(out, toTicket(rec))
+	}
+	return out, nil
 }
 
 func (r *TicketRepository) GetByID(ctx context.Context, id domain.TicketID) (domain.Ticket, error) {
@@ -123,6 +141,7 @@ func (r *TicketRepository) Update(ctx context.Context, t domain.Ticket) (domain.
 
 func applyTicket(rec *core.Record, t domain.Ticket) {
 	rec.Set("project", string(t.ProjectID))
+	rec.Set("parent", string(t.ParentID))
 	rec.Set("slug", t.Slug)
 	rec.Set("title", t.Title)
 	rec.Set("body", t.Body)
@@ -131,6 +150,8 @@ func applyTicket(rec *core.Record, t domain.Ticket) {
 	rec.Set("assignee", string(t.Assignee))
 	setJSON(rec, "tags", t.Tags)
 	rec.Set("external_ref", t.ExternalRef)
+	setJSON(rec, "depends_on", fromTicketIDs(t.DependsOn))
+	rec.Set("wayfinder", string(t.Wayfinder))
 	if t.CreatedBy != "" {
 		rec.Set("created_by", string(t.CreatedBy))
 	}

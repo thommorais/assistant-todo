@@ -24,7 +24,7 @@ func TestTicketBriefCarriesEveryKind(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.logSvc.WriteLog(ctx, f.owner, ports.WriteLogInput{
+	if _, err := f.journalSvc.WriteJournalEntry(ctx, f.owner, ports.WriteJournalInput{
 		ProjectID: f.project, TicketID: ticket.ID, Title: "Picked FTS5",
 	}); err != nil {
 		t.Fatal(err)
@@ -49,7 +49,7 @@ func TestTicketBriefCarriesEveryKind(t *testing.T) {
 	}{
 		{"plans", len(brief.Plans)},
 		{"todos", len(brief.Todos)},
-		{"logs", len(brief.Logs)},
+		{"journal", len(brief.Journal)},
 		{"docs", len(brief.Docs)},
 	} {
 		if c.n != 1 {
@@ -100,7 +100,7 @@ func TestTicketBriefCapsTheLogs(t *testing.T) {
 	ticket := f.ticket(t, f.project, "Ship search")
 
 	for _, title := range []string{"one", "two", "three"} {
-		if _, err := f.logSvc.WriteLog(ctx, f.owner, ports.WriteLogInput{
+		if _, err := f.journalSvc.WriteJournalEntry(ctx, f.owner, ports.WriteJournalInput{
 			ProjectID: f.project, TicketID: ticket.ID, Title: title,
 		}); err != nil {
 			t.Fatal(err)
@@ -109,18 +109,18 @@ func TestTicketBriefCapsTheLogs(t *testing.T) {
 
 	// The fake ignores Limit, so the assertion is on the bound the service
 	// passes down rather than on the row count it would return.
-	if _, err := f.ticketSvc.GetTicketBrief(ctx, f.owner, ticket.ID, ports.BriefOptions{RecentLogs: 2}); err != nil {
+	if _, err := f.ticketSvc.GetTicketBrief(ctx, f.owner, ticket.ID, ports.BriefOptions{RecentJournal: 2}); err != nil {
 		t.Fatal(err)
 	}
-	if got := f.logs.lastFilter.Limit; got != 2 {
+	if got := f.journal.lastFilter.Limit; got != 2 {
 		t.Errorf("limit = %d, want the requested 2", got)
 	}
 
 	if _, err := f.ticketSvc.GetTicketBrief(ctx, f.owner, ticket.ID, ports.BriefOptions{}); err != nil {
 		t.Fatal(err)
 	}
-	if got := f.logs.lastFilter.Limit; got != services.DefaultRecentLogs {
-		t.Errorf("default limit = %d, want %d", got, services.DefaultRecentLogs)
+	if got := f.journal.lastFilter.Limit; got != services.DefaultRecentJournal {
+		t.Errorf("default limit = %d, want %d", got, services.DefaultRecentJournal)
 	}
 }
 
@@ -143,8 +143,8 @@ func TestTicketBriefWithNoChildrenReturnsEmptySlices(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Nil marshals to JSON null, which forces every client to branch.
-	if brief.Plans == nil || brief.Todos == nil || brief.Logs == nil || brief.Docs == nil {
+	if brief.Plans == nil || brief.Todos == nil || brief.Journal == nil || brief.Docs == nil {
 		t.Errorf("want empty slices, got plans=%v todos=%v logs=%v docs=%v",
-			brief.Plans, brief.Todos, brief.Logs, brief.Docs)
+			brief.Plans, brief.Todos, brief.Journal, brief.Docs)
 	}
 }

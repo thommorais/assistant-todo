@@ -317,3 +317,84 @@ func TestUpdateTodoParsesDueDate(t *testing.T) {
 		t.Fatal("an empty due date must clear it")
 	}
 }
+
+func TestTodoBlockedIsCorrectOnCreateAndList(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+
+	blocker, err := f.todoSvc.CreateTodo(ctx, f.owner, ports.CreateTodoInput{
+		ProjectID: f.project, Title: "Decide the shape",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("a todo created behind an open dependency reports blocked", func(t *testing.T) {
+		got, err := f.todoSvc.CreateTodo(ctx, f.owner, ports.CreateTodoInput{
+			ProjectID: f.project, Title: "Build it",
+			DependsOn: []domain.TodoID{blocker.ID},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !got.Blocked {
+			t.Error("want blocked on create")
+		}
+	})
+
+	t.Run("a dependency excluded by the filter still blocks", func(t *testing.T) {
+		if _, err := f.todoSvc.SetTodoStatus(ctx, f.owner, blocker.ID, domain.TodoInProgress); err != nil {
+			t.Fatal(err)
+		}
+		todos, err := f.todoSvc.ListTodos(ctx, f.owner, f.project, domain.TodoFilter{
+			Status: []domain.TodoStatus{domain.TodoPending},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, todo := range todos {
+			if todo.Title != "Build it" {
+				continue
+			}
+			found = true
+			if !todo.Blocked {
+				t.Error("a dependency filtered out of the result must still block")
+			}
+		}
+		if !found {
+			t.Fatal("the dependent todo should be in a pending-only listing")
+		}
+	})
+}
+
+func TestBlockedIsDerivedWithoutRereadingTheNewTodo(t *testing.T) {
+	f := newTicketFixture(t)
+	ctx := context.Background()
+
+	blocker, err := f.todoSvc.CreateTodo(ctx, f.owner, ports.CreateTodoInput{
+		ProjectID: f.project, Title: "Blocker",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	created, err := f.todoSvc.CreateTodo(ctx, f.owner, ports.CreateTodoInput{
+		ProjectID: f.project, Title: "Dependent", DependsOn: []domain.TodoID{blocker.ID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	delete(f.todos.items, created.ID)
+
+	again, err := f.todoSvc.CreateTodo(ctx, f.owner, ports.CreateTodoInput{
+		ProjectID: f.project, Title: "Dependent again", DependsOn: []domain.TodoID{blocker.ID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !again.Blocked {
+		t.Error("blocked must be derived from the dependencies, not from finding the todo in a listing")
+	}
+}

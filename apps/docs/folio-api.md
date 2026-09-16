@@ -50,7 +50,7 @@ curl -X POST localhost:8090/api/folio/projects/search-rewrite/members \
 ## Tickets
 
 A ticket is a unit of work under a project: a bug, a feature, an
-investigation. Plans, todos, logs and docs each carry an optional `ticket_id`,
+investigation. Plans, todos, journal and docs each carry an optional `ticket_id`,
 so the same four kinds of record hang off a ticket or sit loose under the
 project.
 
@@ -74,7 +74,7 @@ Every read reports `progress`, counted from the ticket's todos the same way a
 plan's is. `external_ref` names the same work in another tracker.
 
 A closed ticket reopens; a cancelled one does not. Deleting a ticket detaches
-its plans, todos, logs and docs rather than deleting them: they fall back to
+its plans, todos, journal and docs rather than deleting them: they fall back to
 the project.
 
 ```bash
@@ -88,12 +88,12 @@ curl -X PATCH localhost:8090/api/folio/tickets/$ID -H "Authorization: $TOKEN" \
 ```
 
 `brief` returns the ticket with everything filed under it in one response:
-`ticket`, `plans`, `todos`, `logs`, `docs`. Todos come back open first, so the
-next step is the first row. Logs are capped at the 10 most recent; `recent_logs`
+`ticket`, `plans`, `todos`, `journal`, `docs`. Todos come back open first, so the
+next step is the first row. Journal entries are capped at the 10 most recent; `recent_journal`
 overrides that. Empty collections are `[]`, never `null`.
 
 ```bash
-curl localhost:8090/api/folio/tickets/$ID/brief?recent_logs=3 -H "Authorization: $TOKEN"
+curl localhost:8090/api/folio/tickets/$ID/brief?recent_journal=3 -H "Authorization: $TOKEN"
 ```
 
 Filing a child under a ticket in another project is rejected, so a ticket
@@ -160,12 +160,12 @@ chronologically.
 
 | Method | Path | Role |
 | --- | --- | --- |
-| GET | `/projects/{project}/logs` | member |
-| POST | `/projects/{project}/logs` | editor |
-| GET | `/logs/{log}` | member |
-| PATCH | `/logs/{log}` | editor |
-| POST | `/logs/{log}/append` | editor |
-| DELETE | `/logs/{log}` | editor |
+| GET | `/projects/{project}/journal` | member |
+| POST | `/projects/{project}/journal` | editor |
+| GET | `/journal/{entry}` | member |
+| PATCH | `/journal/{entry}` | editor |
+| POST | `/journal/{entry}/append` | editor |
+| DELETE | `/journal/{entry}` | editor |
 
 Only `title` is required; an entry may start as a stub and be filled in as the
 work proceeds. `body` is markdown. `branch`, `pr` and `external_ref` anchor the
@@ -174,7 +174,7 @@ is a key in another tracker and is distinct from `ticket_id`, which points at a
 folio ticket.
 
 ```bash
-curl -X POST localhost:8090/api/folio/projects/welligence-web/logs \
+curl -X POST localhost:8090/api/folio/projects/welligence-web/journal \
   -H "Authorization: $TOKEN" -d '{
     "title":"GA4 pageview tracking restored on prod",
     "body":"## Problem\nPR #4484 deleted the gtag config call...",
@@ -182,12 +182,12 @@ curl -X POST localhost:8090/api/folio/projects/welligence-web/logs \
     "tags":["analytics","decision"]}'
 ```
 
-`POST /logs/{log}/append` adds a `section` to the body, separated by a blank
+`POST /journal/{entry}/append` adds a `section` to the body, separated by a blank
 line, so recording later progress on the same work does not mean reading and
 resending the whole entry.
 
 ```bash
-curl -X POST localhost:8090/api/folio/logs/$ID/append -H "Authorization: $TOKEN" \
+curl -X POST localhost:8090/api/folio/journal/$ID/append -H "Authorization: $TOKEN" \
   -d '{"section":"## Ported to r379\nClean cherry-pick, no conflicts."}'
 ```
 

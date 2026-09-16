@@ -8,7 +8,7 @@ import (
 	"folio/folio-core/ports"
 )
 
-const DefaultRecentLogs = 10
+const DefaultRecentJournal = 10
 
 func (s *TicketService) GetTicketBrief(ctx context.Context, actor ports.Actor, id domain.TicketID, in ports.BriefOptions) (domain.TicketBrief, error) {
 	ticket, err := s.GetTicket(ctx, actor, id)
@@ -27,9 +27,9 @@ func (s *TicketService) GetTicketBriefBySlug(ctx context.Context, actor ports.Ac
 }
 
 func (s *TicketService) brief(ctx context.Context, ticket domain.Ticket, in ports.BriefOptions) (domain.TicketBrief, error) {
-	recent := in.RecentLogs
+	recent := in.RecentJournal
 	if recent <= 0 {
-		recent = DefaultRecentLogs
+		recent = DefaultRecentJournal
 	}
 
 	plans, err := s.plans.ListByTicket(ctx, ticket.ID)
@@ -43,7 +43,7 @@ func (s *TicketService) brief(ctx context.Context, ticket domain.Ticket, in port
 	}
 	sortOpenFirst(todos)
 
-	logs, err := s.logs.List(ctx, ticket.ProjectID, domain.LogFilter{TicketID: ticket.ID, Limit: recent})
+	journal, err := s.journal.List(ctx, ticket.ProjectID, domain.JournalFilter{TicketID: ticket.ID, Limit: recent})
 	if err != nil {
 		return domain.TicketBrief{}, err
 	}
@@ -53,12 +53,21 @@ func (s *TicketService) brief(ctx context.Context, ticket domain.Ticket, in port
 		return domain.TicketBrief{}, err
 	}
 
+	cycles, err := s.cycles.ListByTicket(ctx, ticket.ID)
+	if err != nil {
+		return domain.TicketBrief{}, err
+	}
+	if cycles == nil {
+		cycles = []domain.Cycle{}
+	}
+
 	return domain.TicketBrief{
-		Ticket: ticket,
-		Plans:  plans,
-		Todos:  todos,
-		Logs:   logs,
-		Docs:   docs,
+		Ticket:  ticket,
+		Plans:   plans,
+		Todos:   todos,
+		Journal: journal,
+		Docs:    docs,
+		Cycles:  cycles,
 	}, nil
 }
 

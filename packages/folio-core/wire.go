@@ -8,6 +8,7 @@ import (
 
 	pbcore "github.com/pocketbase/pocketbase/core"
 
+	"folio/folio-core/adapters/httpapi"
 	"folio/folio-core/adapters/pb"
 	"folio/folio-core/adapters/system"
 	"folio/folio-core/ports"
@@ -21,7 +22,9 @@ type App struct {
 	Plans    ports.PlanUseCase
 	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
-	Logs     ports.LogUseCase
+	Journal  ports.JournalUseCase
+	Cycles   ports.CycleUseCase
+	WorkLogs ports.WorkLogUseCase
 	Docs     ports.DocUseCase
 	Search   ports.SearchUseCase
 }
@@ -36,8 +39,12 @@ func New(app pbcore.App, logger *slog.Logger) *App {
 	planRepo := pb.NewPlanRepository(app)
 	ticketRepo := pb.NewTicketRepository(app)
 	todoRepo := pb.NewTodoRepository(app)
-	logRepo := pb.NewLogRepository(app)
+	journalRepo := pb.NewJournalRepository(app)
 	docRepo := pb.NewDocRepository(app)
+	cycleRepo := pb.NewCycleRepository(app)
+	ticketLogRepo := pb.NewTicketLogRepository(app)
+	planLogRepo := pb.NewPlanLogRepository(app)
+	todoLogRepo := pb.NewTodoLogRepository(app)
 	searchRepo := pb.NewSearchRepository(app)
 
 	guard := services.NewProjectGuard(projectRepo)
@@ -46,11 +53,27 @@ func New(app pbcore.App, logger *slog.Logger) *App {
 	return &App{
 		Projects: services.NewProjectService(projectRepo, guard, clock, ids, log),
 		Plans:    services.NewPlanService(planRepo, todoRepo, ticketRepo, todos, guard, clock, ids, log),
-		Tickets:  services.NewTicketService(ticketRepo, todoRepo, planRepo, logRepo, docRepo, guard, clock, ids, log),
+		Tickets:  services.NewTicketService(ticketRepo, todoRepo, planRepo, journalRepo, docRepo, cycleRepo, guard, clock, ids, log),
 		Todos:    todos,
-		Logs:     services.NewLogService(logRepo, ticketRepo, guard, clock, ids, log),
+		Journal:  services.NewJournalService(journalRepo, ticketRepo, guard, clock, ids, log),
+		Cycles:   services.NewCycleService(cycleRepo, ticketRepo, guard, clock, ids, log),
+		WorkLogs: services.NewWorkLogService(ticketLogRepo, planLogRepo, todoLogRepo, ticketRepo, planRepo, todoRepo, cycleRepo, guard, clock, ids, log),
 		Docs:     services.NewDocService(docRepo, ticketRepo, guard, clock, ids, log),
 		Search:   services.NewSearchService(searchRepo, guard),
+	}
+}
+
+func (a *App) Deps() httpapi.Deps {
+	return httpapi.Deps{
+		Projects: a.Projects,
+		Plans:    a.Plans,
+		Tickets:  a.Tickets,
+		Todos:    a.Todos,
+		Journal:  a.Journal,
+		Cycles:   a.Cycles,
+		WorkLogs: a.WorkLogs,
+		Docs:     a.Docs,
+		Search:   a.Search,
 	}
 }
 

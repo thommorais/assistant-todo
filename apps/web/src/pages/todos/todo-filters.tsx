@@ -25,7 +25,7 @@ const TodoFilters = () => {
 	const tickets = useTickets(slug)
 
 	const setFilter = (patch: Partial<TodosSearch>) => {
-		void navigate({ to: '.', search: (prev: TodosSearch) => ({ ...prev, ...patch }) })
+		void navigate({ from: '/$slug/todos', to: '.', search: (prev: TodosSearch) => ({ ...prev, ...patch }) })
 	}
 
 	const ticketTitle = (id: string): string =>

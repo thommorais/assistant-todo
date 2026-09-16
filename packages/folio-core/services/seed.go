@@ -18,7 +18,7 @@ type SeedUseCases struct {
 	Plans    ports.PlanUseCase
 	Tickets  ports.TicketUseCase
 	Todos    ports.TodoUseCase
-	Logs     ports.LogUseCase
+	Journal  ports.JournalUseCase
 	Docs     ports.DocUseCase
 }
 
@@ -28,13 +28,13 @@ type SeedReport struct {
 	Tickets  int
 	Plans    int
 	Todos    int
-	Logs     int
+	Journal  int
 	Docs     int
 }
 
 func (r SeedReport) String() string {
-	return fmt.Sprintf("%d projects, %d tickets, %d plans, %d todos, %d logs, %d docs",
-		r.Projects, r.Tickets, r.Plans, r.Todos, r.Logs, r.Docs)
+	return fmt.Sprintf("%d projects, %d tickets, %d plans, %d todos, %d journal, %d docs",
+		r.Projects, r.Tickets, r.Plans, r.Todos, r.Journal, r.Docs)
 }
 
 // Seed writes the demo dataset as the given actor, who becomes the owner of
@@ -105,15 +105,15 @@ func Seed(ctx context.Context, uc SeedUseCases, actor ports.Actor) (SeedReport, 
 			}
 		}
 
-		for _, entry := range spec.logs {
+		for _, entry := range spec.journal {
 			entry.ProjectID = project.ID
 			if len(planIDs) > 0 && entry.PlanID == "" {
 				entry.PlanID = planIDs[0]
 			}
-			if _, err := uc.Logs.WriteLog(ctx, actor, entry); err != nil {
+			if _, err := uc.Journal.WriteJournalEntry(ctx, actor, entry); err != nil {
 				return report, fmt.Errorf("log %q: %w", entry.Title, err)
 			}
-			report.Logs++
+			report.Journal++
 		}
 
 		for _, doc := range spec.docs {

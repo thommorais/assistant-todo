@@ -62,8 +62,9 @@ func main() {
 
 	root.AddCommand(
 		configCommand(),
+		cycleCommand(),
 		docCommand(),
-		logCommand(),
+		journalCommand(),
 		loginCommand(),
 		logoutCommand(),
 		planCommand(),
@@ -73,6 +74,7 @@ func main() {
 		ticketCommand(),
 		todoCommand(),
 		useCommand(),
+		workLogCommand(),
 	)
 
 	if err := root.Execute(); err != nil {

@@ -13,13 +13,13 @@ import (
 )
 
 type tagCount struct {
-	Tag   string `json:"tag"`
-	Total int    `json:"total"`
-	Todos int    `json:"todos"`
-	Plans int    `json:"plans"`
-	Logs  int    `json:"logs"`
-	Docs  int    `json:"docs"`
-	Known bool   `json:"known"`
+	Tag     string `json:"tag"`
+	Total   int    `json:"total"`
+	Todos   int    `json:"todos"`
+	Plans   int    `json:"plans"`
+	Journal int    `json:"journal"`
+	Docs    int    `json:"docs"`
+	Known   bool   `json:"known"`
 }
 
 func tagsCommand() *cobra.Command {
@@ -100,12 +100,12 @@ func collectTags(folio *client.Client, project string) ([]tagCount, error) {
 		add(plan.Tags, func(c *tagCount) { c.Plans++ })
 	}
 
-	logs, err := folio.ListLogs(project, client.LogFilter{})
+	logs, err := folio.ListJournal(project, client.JournalFilter{})
 	if err != nil {
 		return nil, err
 	}
 	for _, entry := range logs {
-		add(entry.Tags, func(c *tagCount) { c.Logs++ })
+		add(entry.Tags, func(c *tagCount) { c.Journal++ })
 	}
 
 	docs, err := folio.ListDocs(project, client.DocFilter{})
@@ -158,7 +158,7 @@ func renderTags(counts []tagCount) error {
 		if !entry.Known {
 			tag += " *"
 		}
-		fmt.Fprintf(out, "%s\t%d\t%d\t%d\t%d\t%d\n", tag, entry.Total, entry.Todos, entry.Plans, entry.Logs, entry.Docs)
+		fmt.Fprintf(out, "%s\t%d\t%d\t%d\t%d\t%d\n", tag, entry.Total, entry.Todos, entry.Plans, entry.Journal, entry.Docs)
 	}
 	if err := out.Flush(); err != nil {
 		return err

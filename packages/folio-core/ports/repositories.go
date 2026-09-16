@@ -58,6 +58,7 @@ type TodoRepository interface {
 // that carries its own plans, todos, logs and docs.
 type TicketRepository interface {
 	List(ctx context.Context, project domain.ProjectID, f domain.TicketFilter) ([]domain.Ticket, error)
+	ListByParent(ctx context.Context, parent domain.TicketID) ([]domain.Ticket, error)
 	GetByID(ctx context.Context, id domain.TicketID) (domain.Ticket, error)
 	GetBySlug(ctx context.Context, project domain.ProjectID, slug string) (domain.Ticket, error)
 	Create(ctx context.Context, t domain.Ticket) (domain.Ticket, error)
@@ -65,14 +66,47 @@ type TicketRepository interface {
 	Delete(ctx context.Context, id domain.TicketID) error
 }
 
-// LogRepository stores the work log. Entries are editable: a log documents
+// JournalRepository stores the work log. Entries are editable: a log documents
 // the state of a piece of work, and that state changes as the work proceeds.
-type LogRepository interface {
-	List(ctx context.Context, project domain.ProjectID, f domain.LogFilter) ([]domain.LogEntry, error)
-	GetByID(ctx context.Context, id domain.LogID) (domain.LogEntry, error)
-	Create(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error)
-	Update(ctx context.Context, e domain.LogEntry) (domain.LogEntry, error)
-	Delete(ctx context.Context, id domain.LogID) error
+type JournalRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
+	GetByID(ctx context.Context, id domain.JournalID) (domain.JournalEntry, error)
+	GetBySlug(ctx context.Context, project domain.ProjectID, slug string) (domain.JournalEntry, error)
+	Create(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
+	Update(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
+	Delete(ctx context.Context, id domain.JournalID) error
+}
+
+type CycleRepository interface {
+	ListByTicket(ctx context.Context, ticket domain.TicketID) ([]domain.Cycle, error)
+	GetByID(ctx context.Context, id domain.CycleID) (domain.Cycle, error)
+	Create(ctx context.Context, c domain.Cycle) (domain.Cycle, error)
+	Update(ctx context.Context, c domain.Cycle) (domain.Cycle, error)
+	Delete(ctx context.Context, id domain.CycleID) error
+}
+
+type TicketLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.TicketLogFilter) ([]domain.TicketLog, error)
+	GetByID(ctx context.Context, id domain.TicketLogID) (domain.TicketLog, error)
+	Create(ctx context.Context, l domain.TicketLog) (domain.TicketLog, error)
+	Update(ctx context.Context, l domain.TicketLog) (domain.TicketLog, error)
+	Delete(ctx context.Context, id domain.TicketLogID) error
+}
+
+type PlanLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.PlanLogFilter) ([]domain.PlanLog, error)
+	GetByID(ctx context.Context, id domain.PlanLogID) (domain.PlanLog, error)
+	Create(ctx context.Context, l domain.PlanLog) (domain.PlanLog, error)
+	Update(ctx context.Context, l domain.PlanLog) (domain.PlanLog, error)
+	Delete(ctx context.Context, id domain.PlanLogID) error
+}
+
+type TodoLogRepository interface {
+	List(ctx context.Context, project domain.ProjectID, f domain.TodoLogFilter) ([]domain.TodoLog, error)
+	GetByID(ctx context.Context, id domain.TodoLogID) (domain.TodoLog, error)
+	Create(ctx context.Context, l domain.TodoLog) (domain.TodoLog, error)
+	Update(ctx context.Context, l domain.TodoLog) (domain.TodoLog, error)
+	Delete(ctx context.Context, id domain.TodoLogID) error
 }
 
 type DocRepository interface {

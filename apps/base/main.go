@@ -43,15 +43,7 @@ func main() {
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		useCases := folio.New(e.App, nil)
-		httpapi.New(httpapi.Deps{
-			Projects: useCases.Projects,
-			Plans:    useCases.Plans,
-			Tickets:  useCases.Tickets,
-			Todos:    useCases.Todos,
-			Logs:     useCases.Logs,
-			Docs:     useCases.Docs,
-			Search:   useCases.Search,
-		}).Mount(e)
+		httpapi.New(useCases.Deps()).Mount(e)
 
 		// Serve the built SPA when a directory is configured. Registered last
 		// so /api and /_ win, and with indexFallback so a deep link like
