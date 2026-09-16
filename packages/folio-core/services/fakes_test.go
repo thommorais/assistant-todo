@@ -394,6 +394,15 @@ func (r *fakeJournal) GetByID(_ context.Context, id domain.JournalID) (domain.Jo
 	return domain.JournalEntry{}, domain.ErrNotFound
 }
 
+func (r *fakeJournal) GetBySlug(_ context.Context, project domain.ProjectID, slug string) (domain.JournalEntry, error) {
+	for _, e := range r.items {
+		if e.ProjectID == project && e.Slug == slug {
+			return e, nil
+		}
+	}
+	return domain.JournalEntry{}, domain.ErrNotFound
+}
+
 func (r *fakeJournal) Create(_ context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
 	if r.failOn == "Create" {
 		return domain.JournalEntry{}, fmt.Errorf("storage exploded")

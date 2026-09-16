@@ -128,6 +128,9 @@ func ValidateJournalEntry(e domain.JournalEntry) error {
 	if e.ProjectID == "" {
 		return domain.Invalid("project", "is required")
 	}
+	if err := ValidateSlug("slug", e.Slug); err != nil {
+		return err
+	}
 	if err := required("title", e.Title, TitleMaxLen); err != nil {
 		return err
 	}

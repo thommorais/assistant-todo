@@ -237,6 +237,7 @@ type journalView struct {
 	TicketID    string         `json:"ticket_id,omitempty"`
 	PlanID      string         `json:"plan_id,omitempty"`
 	TodoID      string         `json:"todo_id,omitempty"`
+	Slug        string         `json:"slug"`
 	Title       string         `json:"title"`
 	Body        string         `json:"body"`
 	Branch      string         `json:"branch,omitempty"`
@@ -252,7 +253,7 @@ type journalView struct {
 func toJournalView(e domain.JournalEntry) journalView {
 	return journalView{
 		ID: string(e.ID), ProjectID: string(e.ProjectID), TicketID: string(e.TicketID),
-		PlanID: string(e.PlanID), TodoID: string(e.TodoID), Title: e.Title, Body: e.Body,
+		PlanID: string(e.PlanID), TodoID: string(e.TodoID), Slug: e.Slug, Title: e.Title, Body: e.Body,
 		Branch: e.Branch, PR: e.PR, ExternalRef: e.ExternalRef,
 		Meta: e.Meta, Tags: orEmpty(e.Tags), CreatedBy: string(e.CreatedBy),
 		CreatedAt: rfc3339(e.CreatedAt), UpdatedAt: rfc3339(e.UpdatedAt),

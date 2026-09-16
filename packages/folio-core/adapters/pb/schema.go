@@ -245,6 +245,7 @@ func ensureJournal(app core.App) error {
 		ticketField(tickets),
 		&core.RelationField{Name: "plan", CollectionId: plans.Id, CascadeDelete: false, MaxSelect: 1},
 		&core.RelationField{Name: "todo", CollectionId: todos.Id, CascadeDelete: false, MaxSelect: 1},
+		&core.TextField{Name: "slug", Required: true, Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`},
 		&core.TextField{Name: "title", Required: true, Max: 200, Presentable: true},
 		&core.EditorField{Name: "body", MaxSize: 500000},
 		&core.TextField{Name: "branch", Max: 200},
@@ -261,6 +262,7 @@ func ensureJournal(app core.App) error {
 	c.AddIndex("idx_journ_journal_branch", false, "branch", "")
 	c.AddIndex("idx_journ_journal_ticket", false, "ticket", "")
 	c.AddIndex("idx_journ_journal_external_ref", false, "external_ref", "")
+	c.AddIndex("idx_journ_journal_slug", true, "project, slug", "")
 
 	return app.Save(c)
 }

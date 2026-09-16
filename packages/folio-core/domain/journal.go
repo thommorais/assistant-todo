@@ -12,6 +12,8 @@ import "time"
 type JournalEntry struct {
 	ID        JournalID
 	ProjectID ProjectID
+	// Slug addresses the entry within its project and survives a title edit.
+	Slug string
 	// PlanID and TodoID are optional back-references to the work the entry
 	// documents.
 	PlanID PlanID

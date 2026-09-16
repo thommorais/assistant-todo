@@ -59,6 +59,18 @@ func queryTime(e *core.RequestEvent, key string) (*time.Time, bool) {
 	return &t, true
 }
 
+func (h *Handler) getJournalEntryBySlug(e *core.RequestEvent) error {
+	project, err := h.resolveProject(e)
+	if err != nil {
+		return fail(e, err)
+	}
+	entry, err := h.journal.GetJournalEntryBySlug(e.Request.Context(), actorOf(e), project, e.Request.PathValue("slug"))
+	if err != nil {
+		return fail(e, err)
+	}
+	return e.JSON(http.StatusOK, toJournalView(entry))
+}
+
 func (h *Handler) getJournalEntry(e *core.RequestEvent) error {
 	entry, err := h.journal.GetJournalEntry(e.Request.Context(), actorOf(e), domain.JournalID(e.Request.PathValue("entry")))
 	if err != nil {
@@ -71,6 +83,7 @@ type logBody struct {
 	TicketID    *string         `json:"ticket_id"`
 	PlanID      *string         `json:"plan_id"`
 	TodoID      *string         `json:"todo_id"`
+	Slug        *string         `json:"slug"`
 	Title       *string         `json:"title"`
 	Body        *string         `json:"body"`
 	Branch      *string         `json:"branch"`
@@ -99,6 +112,9 @@ func (h *Handler) writeJournalEntry(e *core.RequestEvent) error {
 	}
 	if body.TodoID != nil {
 		in.TodoID = domain.TodoID(*body.TodoID)
+	}
+	if body.Slug != nil {
+		in.Slug = *body.Slug
 	}
 	if body.Title != nil {
 		in.Title = *body.Title

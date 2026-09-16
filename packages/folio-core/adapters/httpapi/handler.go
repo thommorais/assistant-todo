@@ -104,6 +104,7 @@ func (h *Handler) Mount(e *core.ServeEvent) {
 
 	g.GET("/projects/{project}/journal", h.listJournal)
 	g.POST("/projects/{project}/journal", h.writeJournalEntry)
+	g.GET("/projects/{project}/journal/{slug}", h.getJournalEntryBySlug)
 	g.GET("/journal/{entry}", h.getJournalEntry)
 	g.PATCH("/journal/{entry}", h.updateJournalEntry)
 	g.POST("/journal/{entry}/append", h.appendJournalEntry)

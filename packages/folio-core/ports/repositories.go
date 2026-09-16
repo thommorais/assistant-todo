@@ -71,6 +71,7 @@ type TicketRepository interface {
 type JournalRepository interface {
 	List(ctx context.Context, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
 	GetByID(ctx context.Context, id domain.JournalID) (domain.JournalEntry, error)
+	GetBySlug(ctx context.Context, project domain.ProjectID, slug string) (domain.JournalEntry, error)
 	Create(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
 	Update(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error)
 	Delete(ctx context.Context, id domain.JournalID) error

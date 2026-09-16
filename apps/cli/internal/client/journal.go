@@ -13,6 +13,7 @@ type JournalEntry struct {
 	TicketID    string         `json:"ticket_id,omitempty"`
 	PlanID      string         `json:"plan_id,omitempty"`
 	TodoID      string         `json:"todo_id,omitempty"`
+	Slug        string         `json:"slug"`
 	Title       string         `json:"title"`
 	Body        string         `json:"body"`
 	Branch      string         `json:"branch,omitempty"`
@@ -28,6 +29,7 @@ type LogInput struct {
 	TicketID    *string   `json:"ticket_id,omitempty"`
 	PlanID      *string   `json:"plan_id,omitempty"`
 	TodoID      *string   `json:"todo_id,omitempty"`
+	Slug        *string   `json:"slug,omitempty"`
 	Title       *string   `json:"title,omitempty"`
 	Body        *string   `json:"body,omitempty"`
 	Branch      *string   `json:"branch,omitempty"`
@@ -94,6 +96,12 @@ func (c *Client) ListJournal(project string, filter JournalFilter) ([]JournalEnt
 func (c *Client) GetJournalEntry(id string) (JournalEntry, error) {
 	var entry JournalEntry
 	err := c.do(http.MethodGet, "/api/folio/journal/"+id, nil, &entry)
+	return entry, err
+}
+
+func (c *Client) GetJournalEntryBySlug(project, slug string) (JournalEntry, error) {
+	var entry JournalEntry
+	err := c.do(http.MethodGet, "/api/folio/projects/"+project+"/journal/"+slug, nil, &entry)
 	return entry, err
 }
 

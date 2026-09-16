@@ -177,6 +177,7 @@ type BatchError struct {
 type JournalUseCase interface {
 	ListJournal(ctx context.Context, actor Actor, project domain.ProjectID, f domain.JournalFilter) ([]domain.JournalEntry, error)
 	GetJournalEntry(ctx context.Context, actor Actor, id domain.JournalID) (domain.JournalEntry, error)
+	GetJournalEntryBySlug(ctx context.Context, actor Actor, project domain.ProjectID, slug string) (domain.JournalEntry, error)
 	WriteJournalEntry(ctx context.Context, actor Actor, in WriteJournalInput) (domain.JournalEntry, error)
 	UpdateJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, in UpdateJournalInput) (domain.JournalEntry, error)
 	AppendToJournalEntry(ctx context.Context, actor Actor, id domain.JournalID, section string) (domain.JournalEntry, error)
@@ -188,6 +189,7 @@ type WriteJournalInput struct {
 	TicketID    domain.TicketID
 	PlanID      domain.PlanID
 	TodoID      domain.TodoID
+	Slug        string
 	Title       string
 	Body        string
 	Branch      string

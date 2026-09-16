@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"folio/cli/internal/client"
+	"folio/cli/internal/config"
 )
 
 func bodyFrom(value string) (string, error) {
@@ -91,8 +92,8 @@ func journalListCommand() *cobra.Command {
 
 func journalGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "get <id>",
-		Short: "Show one entry with its body",
+		Use:   "get <id-or-slug>",
+		Short: "Show one entry with its body; a slug needs --project",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
 			folio, err := api()
@@ -100,7 +101,16 @@ func journalGetCommand() *cobra.Command {
 				return err
 			}
 
-			entry, err := folio.GetJournalEntry(args[0])
+			// A slug is unique only within a project, so a slug needs the
+			// project route; ids resolve without one.
+			get := folio.GetJournalEntry
+			if project := config.Project(flagProject); project != "" {
+				get = func(ref string) (client.JournalEntry, error) {
+					return folio.GetJournalEntryBySlug(project, ref)
+				}
+			}
+
+			entry, err := get(args[0])
 			if err != nil {
 				return err
 			}
@@ -113,7 +123,7 @@ func journalGetCommand() *cobra.Command {
 }
 
 func journalWriteCommand() *cobra.Command {
-	var body, branch, pr, ticket, externalRef, plan, todo, tags string
+	var slug, body, branch, pr, ticket, externalRef, plan, todo, tags string
 
 	cmd := &cobra.Command{
 		Use:   "write <title>",
@@ -131,6 +141,7 @@ func journalWriteCommand() *cobra.Command {
 			}
 
 			in := client.LogInput{Title: &args[0]}
+			setIf(&in.Slug, slug)
 			setIf(&in.Body, text)
 			setIf(&in.Branch, branch)
 			setIf(&in.PR, pr)
@@ -155,6 +166,7 @@ func journalWriteCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&slug, "slug", "", "derived from the title when omitted")
 	cmd.Flags().StringVar(&body, "body", "", "markdown body, or - for stdin")
 	cmd.Flags().StringVar(&branch, "branch", "", "git branch")
 	cmd.Flags().StringVar(&pr, "pr", "", "pull request number")
@@ -309,6 +321,7 @@ func renderLogs(entries []client.JournalEntry) error {
 func renderLogDetail(entry client.JournalEntry) error {
 	fmt.Println(entry.Title)
 	fmt.Println(strings.Repeat("=", len(entry.Title)))
+	fmt.Printf("slug: %s\n", entry.Slug)
 
 	for label, value := range map[string]string{"branch": entry.Branch, "pr": entry.PR, "external ref": entry.ExternalRef} {
 		if value != "" {

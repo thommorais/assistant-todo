@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"folio/folio-core/domain"
@@ -71,6 +72,13 @@ func (s *JournalService) GetJournalEntry(ctx context.Context, actor ports.Actor,
 	return entry, nil
 }
 
+func (s *JournalService) GetJournalEntryBySlug(ctx context.Context, actor ports.Actor, project domain.ProjectID, slug string) (domain.JournalEntry, error) {
+	if _, err := s.guard.EnsureRead(ctx, actor, project); err != nil {
+		return domain.JournalEntry{}, err
+	}
+	return s.repo.GetBySlug(ctx, project, slug)
+}
+
 func (s *JournalService) WriteJournalEntry(ctx context.Context, actor ports.Actor, in ports.WriteJournalInput) (domain.JournalEntry, error) {
 	if _, err := s.guard.EnsureWrite(ctx, actor, in.ProjectID); err != nil {
 		return domain.JournalEntry{}, err
@@ -80,10 +88,16 @@ func (s *JournalService) WriteJournalEntry(ctx context.Context, actor ports.Acto
 		return domain.JournalEntry{}, err
 	}
 
+	slug, err := s.freeSlug(ctx, in.ProjectID, in.Slug, in.Title)
+	if err != nil {
+		return domain.JournalEntry{}, err
+	}
+
 	now := s.clock.Now()
 	entry := domain.JournalEntry{
 		ID:          domain.JournalID(s.ids.NewID()),
 		ProjectID:   in.ProjectID,
+		Slug:        slug,
 		TicketID:    in.TicketID,
 		PlanID:      in.PlanID,
 		TodoID:      in.TodoID,
@@ -102,6 +116,54 @@ func (s *JournalService) WriteJournalEntry(ctx context.Context, actor ports.Acto
 		return domain.JournalEntry{}, err
 	}
 	return s.repo.Create(ctx, entry)
+}
+
+// freeSlug conflicts on an explicit slug, the way a doc does, but suffixes a
+// derived one: journal titles repeat by nature, and refusing the second "fix
+// the build" would refuse to record work that happened.
+func (s *JournalService) freeSlug(ctx context.Context, project domain.ProjectID, requested, title string) (string, error) {
+	if slug := strings.TrimSpace(requested); slug != "" {
+		free, err := s.slugFree(ctx, project, slug)
+		if err != nil {
+			return "", err
+		}
+		if !free {
+			return "", domain.ErrConflict
+		}
+		return slug, nil
+	}
+
+	base := rules.Slugify(title)
+	if base == "" {
+		base = "entry"
+	}
+	// Leaves room for a suffix inside the 60-character column.
+	if len(base) > 50 {
+		base = strings.TrimRight(base[:50], "-")
+	}
+
+	candidate := base
+	for n := 2; ; n++ {
+		free, err := s.slugFree(ctx, project, candidate)
+		if err != nil {
+			return "", err
+		}
+		if free {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, n)
+	}
+}
+
+func (s *JournalService) slugFree(ctx context.Context, project domain.ProjectID, slug string) (bool, error) {
+	_, err := s.repo.GetBySlug(ctx, project, slug)
+	if err != nil {
+		if notFound(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
 }
 
 func (s *JournalService) UpdateJournalEntry(ctx context.Context, actor ports.Actor, id domain.JournalID, in ports.UpdateJournalInput) (domain.JournalEntry, error) {

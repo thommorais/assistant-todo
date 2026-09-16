@@ -187,7 +187,7 @@ func TestCanTransitionTodo(t *testing.T) {
 }
 
 func TestValidateJournalEntry(t *testing.T) {
-	valid := domain.JournalEntry{ProjectID: "p1", Title: "Restored GA4 pageview tracking", Body: "The config call was deleted."}
+	valid := domain.JournalEntry{ProjectID: "p1", Slug: "restored-ga4-pageview-tracking", Title: "Restored GA4 pageview tracking", Body: "The config call was deleted."}
 
 	if err := rules.ValidateJournalEntry(valid); err != nil {
 		t.Fatalf("want nil, got %v", err)
@@ -198,6 +198,22 @@ func TestValidateJournalEntry(t *testing.T) {
 		bad.Title = "   "
 		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
 			t.Fatal("an entry without a title could never be found again")
+		}
+	})
+
+	t.Run("requires a slug", func(t *testing.T) {
+		bad := valid
+		bad.Slug = ""
+		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
+			t.Fatal("an entry without a slug has no URL")
+		}
+	})
+
+	t.Run("rejects a slug that is not kebab-case", func(t *testing.T) {
+		bad := valid
+		bad.Slug = "Restored GA4"
+		if !errors.Is(rules.ValidateJournalEntry(bad), domain.ErrValidation) {
+			t.Fatal("a slug with spaces or capitals would not survive a URL")
 		}
 	})
 

@@ -27,6 +27,7 @@ func toJournalEntry(rec *core.Record) domain.JournalEntry {
 	return domain.JournalEntry{
 		ID:          domain.JournalID(rec.Id),
 		ProjectID:   domain.ProjectID(rec.GetString("project")),
+		Slug:        rec.GetString("slug"),
 		PlanID:      domain.PlanID(rec.GetString("plan")),
 		TodoID:      domain.TodoID(rec.GetString("todo")),
 		Title:       rec.GetString("title"),
@@ -113,6 +114,18 @@ func (r *JournalRepository) GetByID(ctx context.Context, id domain.JournalID) (d
 	return toJournalEntry(rec), nil
 }
 
+func (r *JournalRepository) GetBySlug(ctx context.Context, project domain.ProjectID, slug string) (domain.JournalEntry, error) {
+	rec, err := r.app.FindFirstRecordByFilter(
+		ColJournal,
+		"project = {:project} && slug = {:slug}",
+		dbx.Params{"project": string(project), "slug": slug},
+	)
+	if err != nil {
+		return domain.JournalEntry{}, mapErr(err)
+	}
+	return toJournalEntry(rec), nil
+}
+
 func (r *JournalRepository) Create(ctx context.Context, e domain.JournalEntry) (domain.JournalEntry, error) {
 	collection, err := r.app.FindCollectionByNameOrId(ColJournal)
 	if err != nil {
@@ -141,6 +154,7 @@ func (r *JournalRepository) Update(ctx context.Context, e domain.JournalEntry) (
 
 func applyJournalEntry(rec *core.Record, e domain.JournalEntry) {
 	rec.Set("project", string(e.ProjectID))
+	rec.Set("slug", e.Slug)
 	rec.Set("plan", string(e.PlanID))
 	rec.Set("todo", string(e.TodoID))
 	rec.Set("title", e.Title)

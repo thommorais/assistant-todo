@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
+
+	"folio/folio-core/domain/rules"
 )
 
 // Register installs the folio schema. It is idempotent: an existing
@@ -58,6 +60,9 @@ func Register(app core.App) error {
 	}
 	if err := alterForWayfinder(app); err != nil {
 		return fmt.Errorf("alter wayfinder: %w", err)
+	}
+	if err := alterForJournalSlug(app); err != nil {
+		return fmt.Errorf("alter journal slug: %w", err)
 	}
 	if err := applyRules(app); err != nil {
 		return fmt.Errorf("rules: %w", err)
@@ -160,4 +165,85 @@ func find(app core.App, name string) (*core.Collection, bool) {
 		return nil, false
 	}
 	return c, true
+}
+
+// alterForJournalSlug backfills a slug onto entries that predate the column.
+// The field is added nullable, filled, and only then made required and
+// unique: a required unique column cannot be added in one step over rows that
+// all hold an empty value.
+func alterForJournalSlug(app core.App) error {
+	c, err := app.FindCollectionByNameOrId(ColJournal)
+	if err != nil {
+		return err
+	}
+	if c.Fields.GetByName("slug") != nil {
+		return nil
+	}
+
+	c.Fields.Add(&core.TextField{Name: "slug", Max: 60, Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$`})
+	if err := app.Save(c); err != nil {
+		return fmt.Errorf("add slug field: %w", err)
+	}
+
+	records, err := app.FindAllRecords(ColJournal)
+	if err != nil {
+		return fmt.Errorf("load journal: %w", err)
+	}
+
+	taken := make(map[string]map[string]bool)
+	for _, record := range records {
+		project := record.GetString("project")
+		if taken[project] == nil {
+			taken[project] = make(map[string]bool)
+		}
+		if slug := record.GetString("slug"); slug != "" {
+			taken[project][slug] = true
+		}
+	}
+
+	for _, record := range records {
+		if record.GetString("slug") != "" {
+			continue
+		}
+		project := record.GetString("project")
+		slug := uniqueSlug(rules.Slugify(record.GetString("title")), taken[project])
+
+		taken[project][slug] = true
+		record.Set("slug", slug)
+		if err := app.Save(record); err != nil {
+			return fmt.Errorf("backfill slug for %s: %w", record.Id, err)
+		}
+	}
+
+	c, err = app.FindCollectionByNameOrId(ColJournal)
+	if err != nil {
+		return err
+	}
+	if field, ok := c.Fields.GetByName("slug").(*core.TextField); ok {
+		field.Required = true
+	}
+	c.AddIndex("idx_journ_journal_slug", true, "project, slug", "")
+
+	return app.Save(c)
+}
+
+// uniqueSlug takes the lowest free numeric suffix. A title that slugifies to
+// nothing (emoji, CJK) falls back to "entry".
+func uniqueSlug(base string, taken map[string]bool) string {
+	if base == "" {
+		base = "entry"
+	}
+	// Leaves room for a suffix inside the 60-character column.
+	if len(base) > 50 {
+		base = strings.TrimRight(base[:50], "-")
+	}
+	if !taken[base] {
+		return base
+	}
+	for n := 2; ; n++ {
+		candidate := fmt.Sprintf("%s-%d", base, n)
+		if !taken[candidate] {
+			return candidate
+		}
+	}
 }
